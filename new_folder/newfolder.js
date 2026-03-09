@@ -4,7 +4,7 @@ import React from 'react'
 export default function newfolder() {
   return (
     <View>
-      <Text>newfolder</Text>
+      <Text>angelie</Text>
     </View>
   )
 }
