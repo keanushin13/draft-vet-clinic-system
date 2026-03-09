@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Quicksand:wght@600;700&display=swap');
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 25px;
+}
+
+.inventory-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-box {
+  background: white;
+  padding: 15px 25px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.stat-box.warning .stat-num { color: #ef6c00; }
+.stat-label { font-size: 13px; color: #888; margin-bottom: 5px; }
+.stat-num { font-size: 24px; font-weight: 700; color: #255065; }
+
+.add-item-btn {
+  background-color: #63b6c5;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inventory-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-table th {
+  text-align: left;
+  padding: 15px;
+  color: #255065;
+  border-bottom: 2px solid #f0f4f6;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inventory-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f8fafb;
+  font-size: 14px;
+  color: #444;
+}
+
+.item-name-cell { font-weight: 600; color: #255065; }
+
+.cat-badge {
+  background: #f0f7f9;
+  color: #438fb5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.stock-status {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stock-status.in-stock { background: #e8f5e9; color: #2e7d32; }
+.stock-status.low-stock { background: #fff3e0; color: #ef6c00; }
+.stock-status.out-of-stock { background: #ffebee; color: #c62828; }
+
+.stock-btn {
+  background: none;
+  border: 1px solid #c9eaf7;
+  color: #438fb5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.stock-btn:hover { background: #438fb5; color: white; }

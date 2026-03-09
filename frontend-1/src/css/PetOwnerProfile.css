@@ -1,0 +1,134 @@
+/* Sidebar/Nav CSS - Keep your existing sidebar styles */
+.sidebar-divider, .logout-item {
+    display: none; /* Removes logout from sidebar */
+}
+
+/* Profile Content Layout Styles */
+.dashboard-scroll-body {
+    padding: 30px;
+}
+
+.profile-layout {
+    display: flex;
+    gap: 30px;
+}
+
+.profile-card-side {
+    width: 300px;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    text-align: center;
+    height: fit-content;
+}
+
+.profile-avatar-box {
+    position: relative;
+    width: 120px;
+    margin: 0 auto 20px;
+}
+
+.profile-avatar-box img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.change-photo-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #438fb5;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.user-role-badge {
+    color: #438fb5;
+    font-weight: 600;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* THE RED LOGOUT BUTTON */
+.content-logout-btn {
+    margin-top: 30px;
+    width: 100%;
+    background-color: #ff4d4d; /* Red */
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.content-logout-btn:hover {
+    background-color: #cc0000;
+}
+
+/* Right Side Form Styles */
+.profile-details-side {
+    flex: 1;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.save-btn-rect {
+    background-color: #438fb5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.password-link {
+    background: none;
+    border: none;
+    color: #438fb5;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+}

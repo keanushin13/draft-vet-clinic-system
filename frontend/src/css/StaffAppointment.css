@@ -1,0 +1,91 @@
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.view-toggle {
+  display: flex;
+  background: #f0f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.view-toggle button {
+  padding: 6px 15px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #777;
+  border-radius: 6px;
+}
+
+.view-toggle button.active {
+  background: white;
+  color: #255065;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.add-apt-btn {
+  background-color: #63b6c5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-container {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.calendar-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid #eee;
+  border-left: 1px solid #eee;
+}
+
+.weekday-label {
+  padding: 12px;
+  text-align: center;
+  font-weight: 700;
+  color: #63b6c5;
+  background: #f9fdfd;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.calendar-day {
+  min-height: 110px;
+  padding: 8px;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.day-num { font-size: 14px; color: #999; }
+
+.event-item {
+  font-size: 10px;
+  padding: 3px 6px;
+  margin-top: 4px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.event-item.confirmed { background: #e3f2fd; color: #1976d2; }
+.event-item.pending { background: #fff3e0; color: #e65100; }

@@ -1,0 +1,27 @@
+/* Sidebar Nav adjustment to push Logout to bottom */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Specific Logout Styling */
+.logout-item {
+  margin-top: auto; /* Pushes button to bottom of sidebar */
+  margin-bottom: 20px;
+  background-color: rgba(255, 0, 0, 0.1); /* Light red background tint */
+  transition: 0.3s ease;
+}
+
+.logout-item span {
+  color: #ff4d4d !important; /* Bold Red text color */
+  font-weight: 600;
+}
+
+.logout-item:hover {
+  background-color: #ff4d4d !important; /* Solid red on hover */
+}
+
+.logout-item:hover span {
+  color: white !important; /* White text on hover */
+}

@@ -1,0 +1,44 @@
+/* Sidebar & Icon Consistency */
+.nav-logo { width: 30px; height: auto; object-fit: contain; margin-right: 10px; }
+.nav-icon { width: 20px; height: 20px; object-fit: contain; margin-right: 12px; flex-shrink: 0; }
+.top-icon { width: 22px; height: 22px; object-fit: contain; }
+.top-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; }
+
+/* Scrollable Area */
+.dashboard-scroll-body { flex: 1; padding: 25px; overflow-y: auto; background: linear-gradient(145deg, #ffffff 0%, #e1f2f8 100%); }
+
+/* Controls */
+.appointment-header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.toggle-group { background: #e1f2f8; padding: 5px; border-radius: 10px; display: flex; gap: 5px; }
+.toggle-btn { border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; background: transparent; color: #438fb5; font-weight: 500; }
+.toggle-btn.active { background: white; color: #255065; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.book-btn-rect { background: #438fb5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+
+/* Calendar */
+.calendar-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.calendar-month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.calendar-month-header h3 { color: #255065; margin: 0; }
+.nav-arrow { background: #f0f7fa; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; margin-left: 5px; }
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid #eee; }
+.weekday-label { background: #f8fbff; padding: 12px; text-align: center; font-weight: 600; color: #888; font-size: 13px; border-bottom: 1px solid #eee; }
+.calendar-day { background: white; min-height: 90px; padding: 8px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; }
+.day-num { font-weight: 600; color: #333; font-size: 14px; }
+
+.event-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-top: 4px; font-weight: 600; }
+.event-badge.confirmed { background: #e6f7ef; color: #28a745; border-left: 3px solid #28a745; }
+.event-badge.pending { background: #fff9e6; color: #f4b41a; border-left: 3px solid #f4b41a; }
+
+/* List View */
+.list-view-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.apt-table { width: 100%; border-collapse: collapse; }
+.apt-table th { text-align: left; padding: 15px; color: #888; font-size: 13px; border-bottom: 2px solid #f0f7fa; }
+.apt-table td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #444; }
+.bold-txt { font-weight: 600; color: #255065; }
+
+.status-tag { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+.status-tag.confirmed { background: #e6f7ef; color: #28a745; }
+.status-tag.pending { background: #fff9e6; color: #f4b41a; }
+
+.cancel-btn { background: #fff1f1; color: #d9534f; border: 1px solid #d9534f; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.empty-state { text-align: center; padding: 40px; color: #666; }

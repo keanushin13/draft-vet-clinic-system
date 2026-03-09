@@ -1,0 +1,135 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#e0f4f9',
+  },
+  topHeader: {
+    backgroundColor: '#2c4760',
+    height: 90,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 30,
+  },
+  headerLogo: {
+    width: 35,
+    height: 35,
+    marginRight: 12,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 26,
+    fontWeight: 'bold',
+  },
+  titleBar: {
+    backgroundColor: '#5ba1a6',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  topIcon: {
+    width: 22,
+    height: 22,
+  },
+  profileSection: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 4,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#5ba1a6',
+    marginBottom: 15,
+  },
+  staffName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2c4760',
+  },
+  staffRole: {
+    fontSize: 14,
+    color: '#5ba1a6',
+    fontWeight: '600',
+  },
+  infoSection: {
+    padding: 20,
+  },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 2,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#888',
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 2,
+  },
+  logoutButton: {
+    margin: 20,
+    backgroundColor: '#ff6b6b',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  bottomNav: {
+    height: 70,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  navItem: {
+    alignItems: 'center',
+  },
+  navIcon: {
+    width: 24,
+    height: 24,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#333',
+    marginTop: 4,
+  },
+  container: { flex: 1, padding: 20 },
+  logoutButton: { padding: 15, backgroundColor: "#2c7be5", borderRadius: 10 },
+  logoutText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
+  confirmBtn: { backgroundColor: "#ff4d4d", padding: 10, borderRadius: 10, marginBottom: 10, width: "80%", alignItems: "center" },
+  cancelBtn: { backgroundColor: "#ccc", padding: 10, borderRadius: 10, width: "80%", alignItems: "center" },
+
+});

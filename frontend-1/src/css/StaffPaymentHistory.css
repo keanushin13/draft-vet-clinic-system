@@ -1,0 +1,46 @@
+/* Container & Layout */
+.dashboard-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; font-family: 'Poppins', sans-serif; background: #f0f7fa; }
+.sidebar { width: 260px; background: linear-gradient(180deg, #438fb5 0%, #255065 100%); color: white; flex-shrink: 0; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Fixed Header and Scrollable Body */
+.top-bar { height: 70px; background: #63b6c5; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; color: white; }
+.dashboard-scroll-body { flex: 1; padding: 25px; overflow-y: auto; background: linear-gradient(145deg, #ffffff 0%, #e1f2f8 100%); }
+
+/* Icon Fixes (Proper sizing) */
+.nav-logo { width: 30px; margin-right: 10px; }
+.nav-icon { width: 18px; height: 18px; margin-right: 12px; }
+.top-icon { width: 20px; }
+.top-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; cursor: pointer; }
+
+/* Summary Cards */
+.payment-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+.summary-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border-left: 5px solid #63b6c5; }
+.summary-label { font-size: 13px; color: #666; }
+.summary-value { font-size: 24px; font-weight: 700; color: #255065; margin-top: 5px; }
+.yellow-text { color: #f4b41a; }
+
+/* Table Section */
+.payment-table-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.table-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.payment-search-input { padding: 10px 15px; width: 300px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+
+/* Table Styling */
+.payment-table { width: 100%; border-collapse: collapse; text-align: left; }
+.payment-table th { padding: 15px; border-bottom: 2px solid #f0f7fa; color: #888; font-size: 13px; font-weight: 500; }
+.payment-table td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+
+.txn-id-cell { color: #438fb5; font-weight: 600; }
+.owner-cell { display: flex; flex-direction: column; }
+.owner-cell small { color: #888; }
+.amount-bold { font-weight: 600; color: #333; }
+
+/* Status Pills */
+.status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.status-pill.paid { background: #e6f7ef; color: #28a745; }
+.status-pill.pending { background: #fff9e6; color: #f4b41a; }
+.status-pill.refunded { background: #feecef; color: #dc3545; }
+
+/* Buttons */
+.btn-receipt { padding: 6px 15px; background: #78a9bb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s; }
+.btn-receipt:hover { background: #255065; }

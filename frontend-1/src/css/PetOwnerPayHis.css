@@ -1,0 +1,36 @@
+/* Maintain your existing dashboard/sidebar CSS here */
+
+.payment-table th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payment-table tr:hover {
+  background-color: #fcfcfc;
+}
+
+.export-btn:hover {
+  background-color: #255065 !important;
+  transition: 0.3s;
+}
+
+.status-pill.paid {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+}
+
+.status-pill.pending {
+  background-color: #fff4e5;
+  color: #b45309;
+}
+
+/* Ensure scannability on small screens */
+@media (max-width: 768px) {
+  .dashboard-welcome-card {
+    padding: 10px;
+  }
+  .payment-table {
+    min-width: 600px;
+  }
+}
