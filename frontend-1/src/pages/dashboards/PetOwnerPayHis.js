@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../../css/PetOwnerPayHis.css";
 
 // ASSETS
@@ -15,118 +15,274 @@ import userIcon from "../../assets/User_Icon.png";
 
 const PetOwnerPayHis = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Mock data for payments
-  const [payments] = useState([
-    { id: "TXN-1001", date: "Oct 12, 2025", pet: "Bella", service: "Vaccination", amount: "₱1,200.00", status: "Paid" },
-    { id: "TXN-1002", date: "Oct 15, 2025", pet: "Max", service: "General Checkup", amount: "₱850.00", status: "Paid" },
-    { id: "TXN-1003", date: "Oct 20, 2025", pet: "Bella", service: "Grooming", amount: "₱1,500.00", status: "Pending" }
-  ]);
+  const [payments, setPayments] = useState([]);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const rowsPerPage = 5;
+
+  // ✅ SIDEBAR MENU (REUSABLE)
+  const menuItems = [
+    { path: "/pet-owner", label: "Dashboard", icon: dashboardIcon },
+    { path: "/pet-owner-appointments", label: "Appointment", icon: appointmentIcon },
+    { path: "/pet-owner-pets", label: "My Pets", icon: petsIcon },
+    { path: "/pet-owner-messages", label: "Messages", icon: messageIcon },
+    { path: "/pet-owner-records", label: "Medical Records", icon: medicalIcon },
+    { path: "/pet-owner-payments", label: "Payment History", icon: paymentIcon },
+  ];
+
+  // ✅ SAFE NAVIGATION (PREVENT REDUNDANT CLICK)
+  const handleNavigate = (path) => {
+    if (location.pathname !== path) {
+      navigate(path);
+    }
+  };
 
   useEffect(() => {
-    if (!user || user.role !== "pet_owner") {
-      navigate("/login");
+  const storedUser = JSON.parse(localStorage.getItem("user")) || null;
+
+  if (!storedUser || storedUser.role !== "pet_owner") {
+    navigate("/login");
+    return;
+  }
+
+  const appointments =
+    JSON.parse(localStorage.getItem("petOwnerAppointments")) || [];
+
+  const converted = appointments.map((apt) => ({
+    id: "TXN-" + apt.id,
+    date: `Sep ${apt.day}, 2025`,
+    pet: apt.petName,
+    service: apt.reason,
+    amount: "₱500.00",
+    status: apt.status === "confirmed" ? "Paid" : "Pending",
+    method: apt.paymentMethod || "N/A",
+    reference: apt.paymentReference || "N/A",
+    vet: apt.vet || "N/A",
+    time: apt.time || "N/A",
+  }));
+
+  setPayments(converted);
+}, [navigate]);
+
+  const filteredPayments = useMemo(() => {
+    return payments.filter(
+      (payment) =>
+        payment.pet.toLowerCase().includes(search.toLowerCase()) ||
+        payment.service.toLowerCase().includes(search.toLowerCase()) ||
+        payment.id.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [payments, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / rowsPerPage));
+  const indexOfLast = currentPage * rowsPerPage;
+  const indexOfFirst = indexOfLast - rowsPerPage;
+  const currentPayments = filteredPayments.slice(indexOfFirst, indexOfLast);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-  }, [navigate, user]);
+  }, [currentPage, totalPages]);
 
   return (
     <div className="dashboard-container">
       {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <img src={pawLogo} alt="Logo" />
+          <img src={pawLogo} alt="Logo" className="nav-logo" />
           <span>PawCruz</span>
         </div>
 
         <nav className="sidebar-nav">
-          <div className="nav-item" onClick={() => navigate("/pet-owner")}>
-            <img src={dashboardIcon} alt="" />
-            <span>Dashboard</span>
-          </div>
-          <div className="nav-item" onClick={() => navigate("/pet-owner-appointments")}>
-            <img src={appointmentIcon} alt="" />
-            <span>Appointment</span>
-          </div>
-          <div className="nav-item" onClick={() => navigate("/pet-owner-pets")}>
-            <img src={petsIcon} alt="" />
-            <span>My Pets</span>
-          </div>
-          <div className="nav-item" onClick={() => navigate("/pet-owner-messages")}>
-            <img src={messageIcon} alt="" />
-            <span>Messages</span>
-          </div>
-          <div className="nav-item" onClick={() => navigate("/pet-owner-records")}>
-            <img src={medicalIcon} alt="" />
-            <span>Medical Records</span>
-          </div>
-          <div className="nav-item active" onClick={() => navigate("/pet-owner-payments")}>
-            <img src={paymentIcon} alt="" />
-            <span>Payment History</span>
-          </div>
+          {menuItems.map((item) => (
+            <div
+              key={item.path}
+              className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
+              onClick={() => handleNavigate(item.path)}
+            >
+              <img src={item.icon} alt={item.label} className="nav-icon" />
+              <span>{item.label}</span>
+            </div>
+          ))}
         </nav>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
       <main className="main-area">
         <header className="top-bar">
           <h2>Payment History</h2>
+
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/pet-owner-notifications")}>
-              <img src={bellIcon} alt="Notifications" />
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/pet-owner-notifications")}
+            >
+              <img src={bellIcon} alt="Notifications" className="top-icon" />
             </button>
-            <div className="user-profile" onClick={() => navigate("/pet-owner-profile")}>
-              <img src={userIcon} alt="User" />
+
+            <div
+              className="user-profile"
+              onClick={() => navigate("/pet-owner-profile")}
+            >
+              <img src={userIcon} alt="User" className="top-avatar" />
             </div>
           </div>
         </header>
 
         <section className="content-body">
-            <div className="dashboard-welcome-card" style={{background: 'white', padding: '20px', borderRadius: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', overflowX: 'auto'}}>
-              {payments.length > 0 ? (
-                <table className="payment-table" style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left'}}>
+          <div className="dashboard-welcome-card">
+            {payments.length > 0 ? (
+              <>
+                <input
+                  type="text"
+                  placeholder="Search by transaction ID, pet, or service..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="search-input"
+                />
+
+                <table className="payment-table">
                   <thead>
-                    <tr style={{borderBottom: '2px solid #f0f0f0'}}>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Date</th>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Pet</th>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Service</th>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Amount</th>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Status</th>
-                      <th style={{padding: '12px', color: '#888', fontWeight: '600'}}>Action</th>
+                    <tr>
+                      <th>Date</th>
+                      <th>Pet</th>
+                      <th>Service</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
+
                   <tbody>
-                    {payments.map((pay) => (
-                      <tr key={pay.id} style={{borderBottom: '1px solid #f9f9f9'}}>
-                        <td style={{padding: '15px 12px', fontSize: '14px'}}>{pay.date}</td>
-                        <td style={{padding: '15px 12px', fontSize: '14px'}}>{pay.pet}</td>
-                        <td style={{padding: '15px 12px', fontSize: '14px'}}>{pay.service}</td>
-                        <td style={{padding: '15px 12px', fontSize: '14px', fontWeight: '600'}}>{pay.amount}</td>
-                        <td style={{padding: '15px 12px'}}>
-                          <span className={`status-pill ${pay.status.toLowerCase()}`} style={{
-                            padding: '4px 10px', 
-                            borderRadius: '20px', 
-                            fontSize: '12px', 
-                            fontWeight: '500',
-                            backgroundColor: pay.status === 'Paid' ? '#e6f4ea' : '#fff4e5',
-                            color: pay.status === 'Paid' ? '#1e7e34' : '#b45309'
-                          }}>
+                    {currentPayments.map((pay) => (
+                      <tr
+                        key={pay.id}
+                        className="clickable-row"
+                        onClick={() => setSelectedReceipt(pay)}
+                      >
+                        <td>{pay.date}</td>
+                        <td>{pay.pet}</td>
+                        <td>{pay.service}</td>
+                        <td>{pay.amount}</td>
+
+                        <td>
+                          <span className={`status-pill ${pay.status.toLowerCase()}`}>
                             {pay.status}
                           </span>
                         </td>
-                        <td style={{padding: '15px 12px'}}>
-                          <button style={{background: 'none', border: 'none', color: '#438fb5', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline'}}>View Receipt</button>
+
+                        <td>
+                          <button
+                            className="view-receipt-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReceipt(pay);
+                            }}
+                          >
+                            View Receipt
+                          </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              ) : (
-                <p style={{color: '#555', textAlign: 'center'}}>No transaction history available. Your receipts and invoices will be listed here after payment.</p>
-              )}
-            </div>
+
+                <div className="pagination">
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Prev
+                  </button>
+
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p>No payment history yet.</p>
+            )}
+          </div>
         </section>
       </main>
+
+      {/* RECEIPT MODAL */}
+      {selectedReceipt && (
+        <div className="pet-modal" onClick={() => setSelectedReceipt(null)}>
+          <div
+            className="pet-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Payment Receipt</h3>
+
+            <div className="form-group">
+              <label>Transaction ID</label>
+              <p>{selectedReceipt.id}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Pet</label>
+              <p>{selectedReceipt.pet}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Service</label>
+              <p>{selectedReceipt.service}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Date & Time</label>
+              <p>{selectedReceipt.date} - {selectedReceipt.time}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Veterinarian</label>
+              <p>{selectedReceipt.vet}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Payment Method</label>
+              <p>{selectedReceipt.method}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Reference</label>
+              <p>{selectedReceipt.reference}</p>
+            </div>
+
+            <div className="form-group">
+              <label>Amount</label>
+              <p>{selectedReceipt.amount}</p>
+            </div>
+
+            <div className="modal-action-row">
+              <button
+                className="add-pet-btn-rect"
+                onClick={() => setSelectedReceipt(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
