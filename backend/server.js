@@ -15,7 +15,8 @@ const app = express();
 ========================= */
 const allowedOrigins = [
    "http://localhost:3000", // React Web Admin
-   "http://localhost:8081"  // Expo Web
+   "http://localhost:8081", // Expo Web
+   
 ];
 
 app.use(cors({

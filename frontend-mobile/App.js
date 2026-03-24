@@ -44,6 +44,7 @@ import PetOwnerAppointment from './src/screens/dashboards/PetOwner/PetOwnerAppoi
 import PetOwnerDashboard from './src/screens/dashboards/PetOwner/PetOwnerDashboard';
 import PetOwnerMedRec from './src/screens/dashboards/PetOwner/PetOwnerMedRec';
 import PetOwnerMessages from './src/screens/dashboards/PetOwner/PetOwnerMessages';
+import PetOwnerMessageThread from './src/screens/dashboards/PetOwner/PetOwnerMessageThread';
 import PetOwnerMyPets from './src/screens/dashboards/PetOwner/PetOwnerMyPets';
 import PetOwnerNotif from './src/screens/dashboards/PetOwner/PetOwnerNotif';
 import PetOwnerProfile from './src/screens/dashboards/PetOwner/PetOwnerProfile';
@@ -122,6 +123,7 @@ export default function App() {
         <Stack.Screen name="PetOwnerAppointment" component={PetOwnerAppointment} />
         <Stack.Screen name="PetOwnerMedRec" component={PetOwnerMedRec} />
         <Stack.Screen name="PetOwnerMessages" component={PetOwnerMessages} />
+        <Stack.Screen name="PetOwnerMessageThread" component={PetOwnerMessageThread} />
         <Stack.Screen name="PetOwnerMyPets" component={PetOwnerMyPets} />
         <Stack.Screen name="PetOwnerNotif" component={PetOwnerNotif} />
         <Stack.Screen name="PetOwnerProfile" component={PetOwnerProfile} />

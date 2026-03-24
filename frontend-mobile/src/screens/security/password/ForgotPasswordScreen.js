@@ -1,11 +1,24 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import API from "../../../api/api"; // adjust path if needed
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ImageBackground,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import API from "../../../api/api";
+import resetBg from "../../assets/reset.jpg";
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(""); // success | error
+  const [status, setStatus] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
@@ -32,98 +45,160 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Reset Password</Text>
-
-      <Text style={styles.subtitle}>
-        Enter your email and we’ll send a reset link.
-      </Text>
-
-      {message !== "" && (
-        <Text
-          style={[
-            styles.message,
-            status === "success" ? styles.success : styles.error,
-          ]}
+    <ImageBackground
+      source={resetBg}
+      style={styles.background}
+      imageStyle={styles.bgImage}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.overlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.keyboardContainer}
         >
-          {message}
-        </Text>
-      )}
+          <View style={styles.card}>
+            <View style={styles.topAccent} />
 
-      <TextInput
-        placeholder="example@email.com"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        editable={!loading && status !== "success"}
-      />
+            <Text style={styles.title}>Reset Password</Text>
 
-      {status === "success" ? (
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("login")}
-        >
-          <Text style={styles.buttonText}>Back to Login</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={() => navigation.goBack()}
-            disabled={loading}
-          >
-            <Text>Cancel</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "Sending..." : "Send Link"}
+            <Text style={styles.subtitle}>
+              Enter your email and we’ll send a reset link.
             </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+
+            {message !== "" && (
+              <Text
+                style={[
+                  styles.message,
+                  status === "success" ? styles.success : styles.error,
+                ]}
+              >
+                {message}
+              </Text>
+            )}
+
+            <TextInput
+              placeholder="example@email.com"
+              placeholderTextColor="#8d98a5"
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              editable={!loading && status !== "success"}
+            />
+
+            {status === "success" ? (
+              <TouchableOpacity
+                style={styles.fullButton}
+                onPress={() => navigation.navigate("login")}
+              >
+                <LinearGradient
+                  colors={["#1f6d8c", "#173f5c"]}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.buttonText}>Back to Login</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.row}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => navigation.goBack()}
+                  disabled={loading}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleSubmit}
+                  disabled={loading}
+                >
+                  <LinearGradient
+                    colors={["#1f6d8c", "#173f5c"]}
+                    style={styles.buttonGradient}
+                  >
+                    <Text style={styles.buttonText}>
+                      {loading ? "Sending..." : "Send Link"}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    padding: 25,
+  },
+
+  bgImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(10,20,30,0.30)",
+    padding: 20,
+  },
+
+  keyboardContainer: {
+    flex: 1,
     justifyContent: "center",
-    backgroundColor: "#f4f6f8",
+  },
+
+  card: {
+    backgroundColor: "rgba(73, 96, 128, 0.65)",
+    borderRadius: 28,
+    padding: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+
+  topAccent: {
+    width: 60,
+    height: 5,
+    borderRadius: 10,
+    backgroundColor: "#9edcff",
+    alignSelf: "center",
+    marginBottom: 15,
   },
 
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 26,
+    fontWeight: "800",
     textAlign: "center",
+    color: "#fff",
+    marginBottom: 8,
   },
 
   subtitle: {
     textAlign: "center",
-    marginVertical: 15,
-    color: "#666",
+    color: "#d8e9f3",
+    marginBottom: 20,
+    fontSize: 14,
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255,255,255,0.95)",
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 20,
+    borderColor: "#dce8ef",
+    marginBottom: 15,
+    color: "#243746",
   },
 
   message: {
     textAlign: "center",
     marginBottom: 15,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
+    fontWeight: "600",
   },
 
   success: {
@@ -138,27 +213,43 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
   },
 
   cancelBtn: {
     flex: 1,
     padding: 15,
-    backgroundColor: "#ddd",
-    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: 12,
     alignItems: "center",
+    marginRight: 5,
+  },
+
+  cancelText: {
+    color: "#173f5c",
+    fontWeight: "600",
   },
 
   button: {
     flex: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginLeft: 5,
+  },
+
+  fullButton: {
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+
+  buttonGradient: {
     padding: 15,
-    backgroundColor: "#2c7be5",
-    borderRadius: 10,
     alignItems: "center",
+    borderRadius: 12,
   },
 
   buttonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "800",
   },
 });

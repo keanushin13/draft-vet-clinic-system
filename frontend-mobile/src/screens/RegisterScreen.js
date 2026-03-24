@@ -2,23 +2,27 @@ import { Dropdown } from 'react-native-element-dropdown';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import API from "../api/api";
-import { Alert } from "react-native";
+import { Video, ResizeMode } from 'expo-av';
 
 import {
-  Image, KeyboardAvoidingView, Platform,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
   ScrollView,
-  Text, TextInput, TouchableOpacity,
-  View, StyleSheet
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 
 import CustomModal from "../components/CustomModal";
 
-const RegisterScreen = ({ navigation }) => {
+const { width, height } = Dimensions.get("window");
 
-  /* ================================
-     STATE MANAGEMENT
-  =================================*/
+const RegisterScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -37,22 +41,15 @@ const RegisterScreen = ({ navigation }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  /* Modal State */
   const [modal, setModal] = useState({
     visible: false,
     message: ""
   });
 
-  /* ================================
-     INPUT HANDLER
-  =================================*/
   const handleChange = (name, value) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  /* ================================
-     VALIDATION LOGIC
-  =================================*/
   const isStrongPassword = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
     return regex.test(password);
@@ -77,11 +74,7 @@ const RegisterScreen = ({ navigation }) => {
     return null;
   };
 
-  /* ================================
-     SUBMIT REGISTER
-  =================================*/
   const handleSubmit = async () => {
-
     const validationError = validate();
 
     if (validationError) {
@@ -94,12 +87,10 @@ const RegisterScreen = ({ navigation }) => {
 
       await API.post("/users/register", formData);
 
-      // SHOW MODAL FIRST (NO NAVIGATION HERE)
       setModal({
         visible: true,
         message: "Registration successful! Please verify your email."
       });
-
     } catch (err) {
       setModal({
         visible: true,
@@ -110,12 +101,8 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
-  /* ================================
-     MODAL CLOSE HANDLER
-  =================================*/
   const closeModal = () => {
     const success = modal.message.includes("successful");
-
     setModal({ visible: false, message: "" });
 
     if (success) {
@@ -123,33 +110,66 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
-
   return (
+    <View style={styles.container}>
+      {/* FULL SCREEN VIDEO */}
+      <View style={styles.videoContainer}>
+        <Video
+          source={require('./assets/login.mp4')}
+          style={styles.backgroundVideo}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping
+          isMuted
+        />
+      </View>
 
-    <LinearGradient colors={['#729cb1', '#406076']} style={styles.container}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.innerContainer} showsVerticalScrollIndicator={false}>
+      {/* OVERLAY */}
+      <LinearGradient
+        colors={[
+          'rgba(7, 18, 28, 0.45)',
+          'rgba(11, 30, 46, 0.35)',
+          'rgba(24, 48, 66, 0.55)'
+        ]}
+        style={styles.overlay}
+      />
 
-            {/* Minimalist Header */}
+      {/* CONTENT */}
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.innerContainer}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.headerContainer}>
-              <Image source={require('./assets/paw1.png')} style={styles.logo} resizeMode="contain" />
+              <View style={styles.logoWrap}>
+                <Image
+                  source={require('./assets/paw1.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
               <Text style={styles.brandText}>PawCruz</Text>
             </View>
 
-            {/* Glassmorphism Card */}
             <View style={styles.card}>
+              <View style={styles.topAccent} />
+
               <Text style={styles.titleLarge}>Create Account</Text>
-              <Text style={styles.registerSubText}>Join our community and start managing your pets today.</Text>
+              <Text style={styles.registerSubText}>
+                Join our pet care platform and create your account to get started.
+              </Text>
 
               <Text style={styles.label}>Join As</Text>
-
               <View style={styles.pickerContainer}>
                 <Dropdown
-                  activeColor="#f2f6fc"
-                  placeholderStyle={{ color: '#9aa7b2' }}
-                  selectedTextStyle={{ color: '#1a3c5a' }}
-                  itemTextStyle={{ color: '#1a3c5a' }}
+                  activeColor="#eef6fb"
+                  placeholderStyle={styles.dropdownPlaceholder}
+                  selectedTextStyle={styles.dropdownSelectedText}
+                  itemTextStyle={styles.dropdownItemText}
                   style={styles.dropdown}
                   containerStyle={styles.dropdownContainer}
                   data={roleOptions}
@@ -162,47 +182,77 @@ const RegisterScreen = ({ navigation }) => {
               </View>
 
               <Text style={styles.label}>Username</Text>
-              <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#999" value={formData.username}
-                onChangeText={(v) => handleChange("username", v)} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter username"
+                placeholderTextColor="#8d98a5"
+                value={formData.username}
+                onChangeText={(v) => handleChange("username", v)}
+              />
 
               <Text style={styles.label}>Email Address</Text>
-              <TextInput style={styles.input} placeholder="name@gmail.com" keyboardType="email-address" placeholderTextColor="#999" value={formData.email}
-                onChangeText={(v) => handleChange("email", v)} />
+              <TextInput
+                style={styles.input}
+                placeholder="name@gmail.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor="#8d98a5"
+                value={formData.email}
+                onChangeText={(v) => handleChange("email", v)}
+              />
 
               <Text style={styles.label}>Password</Text>
-              <TextInput style={styles.input} placeholder="••••••••" secureTextEntry={!showPass} placeholderTextColor="#999" value={formData.password}
-                onChangeText={(v) => handleChange("password", v)} />
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                secureTextEntry={!showPass}
+                placeholderTextColor="#8d98a5"
+                value={formData.password}
+                onChangeText={(v) => handleChange("password", v)}
+              />
 
-              <Text style={styles.label}>ConfirmPassword</Text>
-              <TextInput style={styles.input} placeholder="••••••••" secureTextEntry={!showConfirm} placeholderTextColor="#999"
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                secureTextEntry={!showConfirm}
+                placeholderTextColor="#8d98a5"
                 value={formData.confirmPassword}
-                onChangeText={(v) => handleChange("confirmPassword", v)} />
+                onChangeText={(v) => handleChange("confirmPassword", v)}
+              />
 
-              <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleSubmit}
-                disabled={loading}>
-                <Text style={styles.buttonText}>
-                  {loading ? "Processing..." : "Sign Up"}
-                </Text>
+              <TouchableOpacity
+                style={styles.button}
+                activeOpacity={0.9}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                <LinearGradient
+                  colors={['#1f6d8c', '#173f5c']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.buttonText}>
+                    {loading ? "Processing..." : "Sign Up"}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <TouchableOpacity onPress={() => navigation.navigate('login')}>
                 <Text style={styles.footerText}>
                   Already a member? <Text style={styles.loginLink}>Log In</Text>
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <CustomModal
-              show={modal.visible}
-              onClose={closeModal}
-            >
+            <CustomModal show={modal.visible} onClose={closeModal}>
               <Text>{modal.message}</Text>
             </CustomModal>
-
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -211,112 +261,228 @@ export default RegisterScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#08131d',
+    position: 'relative',
   },
+
+  flex: {
+    flex: 1,
+  },
+
+  safeArea: {
+    flex: 1,
+    zIndex: 3,
+  },
+
+  videoContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: width,
+    height: height,
+    zIndex: 0,
+    overflow: 'hidden',
+  },
+
+  backgroundVideo: {
+    width: width,
+    height: height,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: width,
+    height: height,
+    zIndex: 1,
+  },
+
   innerContainer: {
     flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 34,
+    paddingHorizontal: 18,
+    zIndex: 3,
   },
+
   headerContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 22,
   },
+
+  logoWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+
   logo: {
     width: 38,
     height: 38,
-    marginRight: 10,
   },
+
   brandText: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    fontSize: 30,
+    color: '#ffffff',
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
+
   card: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Glass effect
-    borderRadius: 30,
-    padding: 25,
+    maxWidth: 410,
+    borderRadius: 28,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    backgroundColor: 'rgba(73, 96, 128, 0.62)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255,255,255,0.20)',
+    overflow: 'hidden',
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 10 },
-      android: { elevation: 5 },
-      web: { boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)' }
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 14 },
+        shadowOpacity: 0.22,
+        shadowRadius: 22,
+      },
+      android: {
+        elevation: 10,
+      },
+      web: {
+        boxShadow: '0 16px 42px rgba(0,0,0,0.28)',
+        backdropFilter: 'blur(14px)',
+      }
     }),
   },
-  titleLarge: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+
+  topAccent: {
+    width: 72,
+    height: 5,
+    borderRadius: 10,
+    backgroundColor: '#9edcff',
+    alignSelf: 'center',
+    marginBottom: 16,
+    opacity: 0.9,
   },
+
+  titleLarge: {
+    fontSize: 29,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
   registerSubText: {
     fontSize: 14,
-    color: '#e0f2f1',
-    marginBottom: 25,
-    lineHeight: 20,
+    color: '#d8e9f3',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 21,
+    paddingHorizontal: 6,
   },
+
   label: {
-    color: '#fff',
+    color: '#f4fbff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 8,
     marginLeft: 4,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
+
   pickerContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    marginBottom: 18,
-    height: 50,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderRadius: 16,
+    marginBottom: 16,
+    height: 54,
     justifyContent: 'center',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#dce8ef',
   },
+
   dropdown: {
-    height: 50,
-    paddingHorizontal: 15,
-    color: '#1a3c5a',
+    height: 54,
+    paddingHorizontal: 16,
   },
 
   dropdownContainer: {
-    borderRadius: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  dropdownPlaceholder: {
+    color: '#8393a1',
+    fontSize: 15,
+  },
+
+  dropdownSelectedText: {
+    color: '#173f5c',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  dropdownItemText: {
+    color: '#173f5c',
+    fontSize: 15,
   },
 
   input: {
-    backgroundColor: '#fff',
-    height: 50,
-    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    height: 54,
+    borderRadius: 16,
     paddingHorizontal: 18,
-    marginBottom: 18,
+    marginBottom: 16,
     fontSize: 15,
-    color: '#333',
+    color: '#243746',
+    borderWidth: 1,
+    borderColor: '#dce8ef',
   },
+
   button: {
-    backgroundColor: '#1a3c5a',
-    height: 55,
-    borderRadius: 15,
+    marginTop: 8,
+    marginBottom: 18,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  buttonGradient: {
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
   },
+
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
+
   footerText: {
-    color: '#fff',
+    color: '#eef7fc',
     textAlign: 'center',
     fontSize: 14,
   },
+
   loginLink: {
-    color: '#1a3c5a', // Dark blue to stand out for clicking
-    fontWeight: 'bold',
+    color: '#9edcff',
+    fontWeight: '800',
     textDecorationLine: 'underline',
   },
 });
