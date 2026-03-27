@@ -52,29 +52,38 @@ export const styles = StyleSheet.create({
   brandSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 12,
   },
 
   logoWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    width: 64,
+    height: 64,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
   },
 
   headerLogo: {
-    width: 25,
-    height: 25,
+    width: 48,
+    height: 48,
+  },
+
+  brandBlock: {
+    flex: 1,
   },
 
   headerTitle: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     color: '#ffffff',
+  },
+
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#c3ddee',
+    marginTop: 3,
   },
 
   notifButton: {
@@ -107,6 +116,35 @@ export const styles = StyleSheet.create({
     tintColor: '#ffffff',
   },
 
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  profileButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    overflow: 'hidden',
+  },
+
+  profileIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#ffffff',
+  },
+
+  profileButtonImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   headerBottomRow: {
     marginTop: 14,
     paddingTop: 14,
@@ -117,14 +155,21 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  ownerSummary: {
-    flex: 1,
+  headerBottomRowWrap: {
+    overflow: 'hidden',
   },
 
-  headerSubtitle: {
+  ownerSummary: {
+    flex: 1,
+    alignItems: 'flex-end',
+    marginLeft: 12,
+  },
+
+  headerCaption: {
     fontSize: 12,
     color: '#b8d4e5',
     fontWeight: '700',
+    textAlign: 'right',
   },
 
   ownerName: {
@@ -132,6 +177,7 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#ffffff',
     marginTop: 4,
+    textAlign: 'right',
   },
 
   ownerBadge: {
@@ -146,6 +192,67 @@ export const styles = StyleSheet.create({
 
   ownerBadgeText: {
     fontSize: 12,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
+  menuTriggerButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  menuTriggerIcon: {
+    width: 30,
+    height: 30,
+    tintColor: '#ffffff',
+  },
+
+  headerMenuPanel: {
+    marginTop: 14,
+    width: '100%',
+    padding: 14,
+    borderRadius: 28,
+    backgroundColor: 'rgba(19, 61, 88, 0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignSelf: 'stretch',
+  },
+
+  headerMenuItem: {
+    minHeight: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+
+  headerMenuItemIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+
+  headerMenuItemIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#ffffff',
+  },
+
+  headerMenuItemLabel: {
+    flex: 1,
+    fontSize: 14,
     fontWeight: '800',
     color: '#ffffff',
   },
@@ -295,17 +402,17 @@ export const styles = StyleSheet.create({
   },
 
   aiCard: {
-    backgroundColor: '#fcfeff',
+    backgroundColor: '#f8fcff',
     borderRadius: 28,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#edf7fd',
+    borderColor: '#dceef8',
     marginBottom: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#b7e6ff',
+        shadowColor: '#88bddf',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.18,
         shadowRadius: 18,
       },
       android: {
@@ -324,7 +431,7 @@ export const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 20,
-    backgroundColor: '#26b14f',
+    backgroundColor: '#245f8e',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -362,14 +469,14 @@ export const styles = StyleSheet.create({
 
   scoreItem: {
     width: '48%',
-    backgroundColor: '#f4fbff',
+    backgroundColor: '#f1f8fd',
     borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 10,
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#d7edf9',
+    borderColor: '#d5e8f4',
   },
 
   scoreCircle: {
@@ -382,9 +489,9 @@ export const styles = StyleSheet.create({
   },
 
   greenCircle: {
-    backgroundColor: '#e6f8eb',
+    backgroundColor: '#e8f3fb',
     borderWidth: 3,
-    borderColor: '#27b446',
+    borderColor: '#2f78ad',
   },
 
   yellowCircle: {
@@ -494,19 +601,17 @@ export const styles = StyleSheet.create({
 
   bottomNav: {
     position: 'absolute',
-    left: 18,
     right: 18,
     bottom: 16,
-    height: 86,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    borderWidth: 1,
-    borderColor: '#d7e9f2',
-    flexDirection: 'row',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#173f5c',
+    borderWidth: 2,
+    borderColor: '#8fc7e8',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    justifyContent: 'center',
+    padding: 10,
     ...Platform.select({
       ios: {
         shadowColor: '#7da5bc',
@@ -521,47 +626,44 @@ export const styles = StyleSheet.create({
   },
 
   navItem: {
-    flex: 1,
+    width: '100%',
     height: '100%',
-    borderRadius: 22,
+    borderRadius: 37,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    marginHorizontal: 4,
   },
 
   activeNavItem: {
-    backgroundColor: '#173f5c',
+    backgroundColor: 'transparent',
   },
 
   navIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
-    backgroundColor: '#edf6fb',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#eaf6ff',
+    borderWidth: 1,
+    borderColor: '#c8e4f5',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   activeNavIconWrap: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: '#eaf6ff',
   },
 
   navIcon: {
-    width: 21,
-    height: 21,
-    tintColor: '#6b8798',
+    width: 24,
+    height: 24,
+    tintColor: '#173f5c',
   },
 
   activeNavIcon: {
-    tintColor: '#ffffff',
+    tintColor: '#173f5c',
   },
 
   navLabel: {
-    marginLeft: 10,
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6b8798',
+    display: 'none',
   },
 
   activeNavLabel: {

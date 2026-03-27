@@ -36,7 +36,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
   },
 
   brandSection: {
@@ -44,6 +43,19 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     marginRight: 12,
+  },
+
+  logoWrap: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+
+  headerLogo: {
+    width: 48,
+    height: 48,
   },
 
   backButton: {
@@ -82,6 +94,65 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  notifButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  notifBadge: {
+    position: 'absolute',
+    top: 11,
+    right: 12,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#f47c6b',
+    borderWidth: 2,
+    borderColor: '#245f8e',
+  },
+
+  notifIcon: {
+    width: 21,
+    height: 21,
+    tintColor: '#ffffff',
+  },
+
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  profileButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    overflow: 'hidden',
+  },
+
+  profileIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#ffffff',
+  },
+
+  profileButtonImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   headerBadge: {
     minHeight: 42,
     borderRadius: 18,
@@ -100,13 +171,23 @@ export const styles = StyleSheet.create({
   },
 
   headerBottomRow: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.18)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
 
+  headerBottomRowWrap: {
+    overflow: 'hidden',
+  },
+
   ownerSummary: {
     flex: 1,
+    alignItems: 'flex-end',
+    marginLeft: 12,
   },
 
   headerCaption: {
@@ -122,6 +203,68 @@ export const styles = StyleSheet.create({
     lineHeight: 26,
     color: '#ffffff',
     fontWeight: '900',
+    textAlign: 'right',
+  },
+
+  menuTriggerButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  menuTriggerIcon: {
+    width: 30,
+    height: 30,
+    tintColor: '#ffffff',
+  },
+
+  headerMenuPanel: {
+    marginTop: 14,
+    width: '100%',
+    padding: 14,
+    borderRadius: 28,
+    backgroundColor: 'rgba(19, 61, 88, 0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignSelf: 'stretch',
+  },
+
+  headerMenuItem: {
+    minHeight: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+
+  headerMenuItemIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+
+  headerMenuItemIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#ffffff',
+  },
+
+  headerMenuItemLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
   },
 
   scrollContent: {
@@ -320,19 +463,17 @@ export const styles = StyleSheet.create({
 
   bottomNav: {
     position: 'absolute',
-    left: 18,
     right: 18,
     bottom: 16,
-    height: 86,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    borderWidth: 1,
-    borderColor: '#d7e9f2',
-    flexDirection: 'row',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#173f5c',
+    borderWidth: 2,
+    borderColor: '#8fc7e8',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    justifyContent: 'center',
+    padding: 10,
     ...Platform.select({
       ios: {
         shadowColor: '#7da5bc',
@@ -347,34 +488,43 @@ export const styles = StyleSheet.create({
   },
 
   navItem: {
-    flex: 1,
+    width: '100%',
     height: '100%',
-    borderRadius: 22,
+    borderRadius: 37,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    marginHorizontal: 4,
+  },
+
+  activeNavItem: {
+    backgroundColor: 'transparent',
   },
 
   navIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
-    backgroundColor: '#edf6fb',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#eaf6ff',
+    borderWidth: 1,
+    borderColor: '#c8e4f5',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   navIcon: {
-    width: 21,
-    height: 21,
-    tintColor: '#6b8798',
+    width: 24,
+    height: 24,
+    tintColor: '#173f5c',
+  },
+
+  activeNavIconWrap: {
+    backgroundColor: '#eaf6ff',
+  },
+
+  activeNavIcon: {
+    tintColor: '#173f5c',
   },
 
   navLabel: {
-    marginLeft: 10,
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6b8798',
+    display: 'none',
   },
 });

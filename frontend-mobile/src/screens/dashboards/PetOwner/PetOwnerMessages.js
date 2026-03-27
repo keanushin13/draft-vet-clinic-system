@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
   SafeAreaView,
   ScrollView,
@@ -72,29 +74,50 @@ const CONVERSATIONS = [
 
 const PetOwnerMessages = ({ navigation, route }) => {
   const loggedInUser = route?.params?.user;
+  const scrollViewRef = useRef(null);
+  const profileImageUri = loggedInUser?.profileImageUri || loggedInUser?.avatar || '';
+  const headerDisplayName =
+    loggedInUser?.username ||
+    loggedInUser?.name ||
+    loggedInUser?.fullName ||
+    'Pet Owner';
+  const headerMenuAnimation = useRef(new Animated.Value(0)).current;
+  const lowerHeaderAnimation = useRef(new Animated.Value(1)).current;
+  const isHeaderMenuAnimating = useRef(false);
+  const isLowerHeaderVisible = useRef(true);
+  const lastScrollY = useRef(0);
+  const [isHeaderMenuVisible, setIsHeaderMenuVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
-
-  const bottomNavItems = [
+  const headerMenuItems = [
     {
-      key: 'home',
-      label: 'Home',
+      key: 'dashboard',
+      label: 'Dashboard',
       icon: require('../../assets/Dashboard_Icon.png'),
       route: 'petowner-screen',
-      active: false,
+    },
+    {
+      key: 'appointment',
+      label: 'Appointment',
+      icon: require('../../assets/Appointment_Icon.png'),
+      route: 'PetOwnerAppointment',
+    },
+    {
+      key: 'mypets',
+      label: 'My Pets',
+      icon: require('../../assets/Pets_Icon.png'),
+      route: 'PetOwnerMyPets',
     },
     {
       key: 'messages',
       label: 'Messages',
       icon: require('../../assets/Message_Icon.png'),
       route: 'PetOwnerMessages',
-      active: true,
     },
     {
-      key: 'account',
-      label: 'Account',
-      icon: require('../../assets/User_Icon.png'),
-      route: 'PetOwnerProfile',
-      active: false,
+      key: 'medical',
+      label: 'Medical Records',
+      icon: require('../../assets/Medical_Icon.png'),
+      route: 'PetOwnerMedRec',
     },
   ];
 
@@ -107,6 +130,97 @@ const PetOwnerMessages = ({ navigation, route }) => {
       ),
     [searchText],
   );
+
+  const openHeaderMenu = () => {
+    if (isHeaderMenuVisible || isHeaderMenuAnimating.current) {
+      return;
+    }
+
+    isHeaderMenuAnimating.current = true;
+    setIsHeaderMenuVisible(true);
+    headerMenuAnimation.stopAnimation();
+    Animated.timing(headerMenuAnimation, {
+      toValue: 1,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      isHeaderMenuAnimating.current = false;
+    });
+  };
+
+  const closeHeaderMenu = (onClosed) => {
+    if (isHeaderMenuAnimating.current) {
+      return;
+    }
+
+    if (!isHeaderMenuVisible) {
+      onClosed?.();
+      return;
+    }
+
+    isHeaderMenuAnimating.current = true;
+    headerMenuAnimation.stopAnimation();
+    Animated.timing(headerMenuAnimation, {
+      toValue: 0,
+      duration: 220,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      isHeaderMenuAnimating.current = false;
+      setIsHeaderMenuVisible(false);
+      onClosed?.();
+    });
+  };
+
+  const toggleHeaderMenu = () => {
+    if (isHeaderMenuVisible) {
+      closeHeaderMenu();
+      return;
+    }
+
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    openHeaderMenu();
+  };
+
+  const handleHeaderMenuPress = (routeName) => {
+    closeHeaderMenu();
+    navigation.navigate(routeName, { user: loggedInUser });
+  };
+
+  const animateLowerHeader = (toValue) => {
+    const shouldBeVisible = toValue === 1;
+
+    if (isLowerHeaderVisible.current === shouldBeVisible) {
+      return;
+    }
+
+    isLowerHeaderVisible.current = shouldBeVisible;
+    lowerHeaderAnimation.stopAnimation();
+    Animated.timing(lowerHeaderAnimation, {
+      toValue,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleScroll = (event) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+
+    if (currentScrollY > lastScrollY.current + 4 && currentScrollY > 8) {
+      if (isHeaderMenuVisible) {
+        closeHeaderMenu(() => animateLowerHeader(0));
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+      animateLowerHeader(0);
+    } else if (currentScrollY < lastScrollY.current - 4 || currentScrollY <= 0) {
+      animateLowerHeader(1);
+    }
+
+    lastScrollY.current = currentScrollY;
+  };
 
   return (
     <LinearGradient
@@ -121,40 +235,174 @@ const PetOwnerMessages = ({ navigation, route }) => {
           style={styles.headerBar}
         >
           <View style={styles.headerTopRow}>
-            <View style={styles.brandSection}>
-              <TouchableOpacity
-                style={styles.logoWrap}
-                onPress={() => navigation.navigate('petowner-screen', { user: loggedInUser })}
-                activeOpacity={0.85}
-              >
+            <TouchableOpacity
+              style={styles.brandSection}
+              onPress={() => navigation.navigate('petowner-screen', { user: loggedInUser })}
+              activeOpacity={0.85}
+            >
+              <View style={styles.logoWrap}>
                 <Image
                   source={require('../../assets/paw1.png')}
                   style={styles.headerLogo}
                   resizeMode="contain"
                 />
-              </TouchableOpacity>
+              </View>
 
               <View style={styles.brandBlock}>
                 <Text style={styles.headerTitle}>PawCruz</Text>
               </View>
-            </View>
+            </TouchableOpacity>
 
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.notifButton}
+                onPress={() => navigation.navigate('PetOwnerNotif', { user: loggedInUser })}
+                activeOpacity={0.85}
+              >
+                <View style={styles.notifBadge} />
+                <Image
+                  source={require('../../assets/Bell_Icon.png')}
+                  style={styles.notifIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => navigation.navigate('PetOwnerProfile', { user: loggedInUser })}
+                activeOpacity={0.85}
+              >
+                {profileImageUri ? (
+                  <Image
+                    source={{ uri: profileImageUri }}
+                    style={styles.profileButtonImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={require('../../assets/User_Icon.png')}
+                    style={styles.profileIcon}
+                    resizeMode="contain"
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Animated.View
+            style={[
+              styles.headerBottomRowWrap,
+              {
+                maxHeight: lowerHeaderAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 96],
+                }),
+                opacity: lowerHeaderAnimation,
+                transform: [
+                  {
+                    translateY: lowerHeaderAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-18, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <View style={styles.headerBottomRow}>
             <TouchableOpacity
-              style={styles.notifButton}
-              onPress={() => navigation.navigate('PetOwnerNotif', { user: loggedInUser })}
+              style={styles.menuTriggerButton}
+              onPress={toggleHeaderMenu}
               activeOpacity={0.85}
             >
-              <View style={styles.notifBadge} />
               <Image
-                source={require('../../assets/Bell_Icon.png')}
-                style={styles.notifIcon}
+                source={require('../../assets/List.png')}
+                style={styles.menuTriggerIcon}
                 resizeMode="contain"
               />
             </TouchableOpacity>
-          </View>
+
+            <View style={styles.ownerSummary}>
+              <Text style={styles.headerCaption}>Message center</Text>
+              <Text style={styles.ownerName}>{headerDisplayName}</Text>
+            </View>
+            </View>
+          </Animated.View>
+
+          {isHeaderMenuVisible ? (
+            <Animated.View
+              style={[
+                styles.headerMenuPanel,
+                {
+                  opacity: headerMenuAnimation,
+                  transform: [
+                    {
+                      translateY: headerMenuAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-18, 0],
+                      }),
+                    },
+                    {
+                      scale: headerMenuAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.96, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              {headerMenuItems.map((item, index) => {
+                const itemEnterStart = index * 0.08;
+                const itemOpacity = headerMenuAnimation.interpolate({
+                  inputRange: [itemEnterStart, itemEnterStart + 0.45, 1],
+                  outputRange: [0, 1, 1],
+                  extrapolate: 'clamp',
+                });
+                const itemTranslateY = headerMenuAnimation.interpolate({
+                  inputRange: [itemEnterStart, 1],
+                  outputRange: [14, 0],
+                  extrapolate: 'clamp',
+                });
+                const itemScale = headerMenuAnimation.interpolate({
+                  inputRange: [itemEnterStart, 1],
+                  outputRange: [0.97, 1],
+                  extrapolate: 'clamp',
+                });
+
+                return (
+                  <Animated.View
+                    key={item.key}
+                    style={{
+                      opacity: itemOpacity,
+                      transform: [{ translateY: itemTranslateY }, { scale: itemScale }],
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={styles.headerMenuItem}
+                      onPress={() => handleHeaderMenuPress(item.route)}
+                      activeOpacity={0.88}
+                    >
+                      <View style={styles.headerMenuItemIconWrap}>
+                        <Image
+                          source={item.icon}
+                          style={styles.headerMenuItemIcon}
+                          resizeMode="contain"
+                        />
+                      </View>
+                      <Text style={styles.headerMenuItemLabel}>{item.label}</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+            </Animated.View>
+          ) : null}
         </LinearGradient>
 
         <ScrollView
+          ref={scrollViewRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
@@ -233,27 +481,19 @@ const PetOwnerMessages = ({ navigation, route }) => {
         </ScrollView>
 
         <View style={styles.bottomNav}>
-          {bottomNavItems.map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              style={[styles.navItem, item.active && styles.activeNavItem]}
-              onPress={() => navigation.navigate(item.route, { user: loggedInUser })}
-              activeOpacity={0.9}
-            >
-              <View
-                style={[styles.navIconWrap, item.active && styles.activeNavIconWrap]}
-              >
-                <Image
-                  source={item.icon}
-                  style={[styles.navIcon, item.active && styles.activeNavIcon]}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={[styles.navLabel, item.active && styles.activeNavLabel]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.navItem, styles.activeNavItem]}
+            onPress={() => navigation.navigate('PetOwnerMessages', { user: loggedInUser })}
+            activeOpacity={0.9}
+          >
+            <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>
+              <Image
+                source={require('../../assets/support.png')}
+                style={[styles.navIcon, styles.activeNavIcon]}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </LinearGradient>
