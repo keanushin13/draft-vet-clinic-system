@@ -334,12 +334,12 @@ export const styles = StyleSheet.create({
 
   heroSlideCard: {
     marginTop: 12,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(2, 0, 0, 0.14)',
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(0, 0, 0, 0.18)',
   },
 
   heroSlideTopRow: {
@@ -366,7 +366,7 @@ export const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.34)',
+    backgroundColor: 'rgba(0, 0, 0, 0.34)',
     marginLeft: 6,
   },
 
@@ -399,6 +399,64 @@ export const styles = StyleSheet.create({
     color: '#d5ecf8',
     marginTop: 3,
     fontWeight: '600',
+  },
+
+  servicesSlideshowCard: {
+    height: 180,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginTop: 18,
+    marginBottom: 18,
+    padding: 14,
+    backgroundColor: 'rgba(127, 211, 255, 0.16)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#88bddf',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.18,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
+  servicesSlideshowFrame: {
+    flex: 1,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(143, 199, 232, 0.18)',
+  },
+
+  servicesSlideshowImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  servicesSlideshowDots: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  servicesSlideshowDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.52)',
+    marginHorizontal: 4,
+  },
+
+  servicesSlideshowDotActive: {
+    width: 20,
+    backgroundColor: '#ffffff',
   },
 
   aiCard: {

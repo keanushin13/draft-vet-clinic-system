@@ -405,30 +405,105 @@ export const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
+  avatarSection: {
+    marginRight: 14,
+    position: 'relative',
+    width: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   avatarWrap: {
-    width: 86,
-    height: 86,
-    borderRadius: 24,
-    backgroundColor: '#d9ecf8',
+    width: 94,
+    height: 94,
+    borderRadius: 28,
+    backgroundColor: '#d7ebf8',
+    borderWidth: 2,
+    borderColor: '#edf7fd',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#9cc6de',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.22,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 7,
+      },
+    }),
   },
 
   avatar: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     tintColor: '#173f5c',
   },
 
   avatarCustom: {
     width: '100%',
     height: '100%',
-    borderRadius: 24,
+    borderRadius: 28,
+  },
+
+  avatarPlusButton: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#245f8e',
+    borderWidth: 3,
+    borderColor: '#fcfeff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f2d45',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+
+  avatarPlusText: {
+    fontSize: 24,
+    lineHeight: 26,
+    fontWeight: '900',
+    color: '#ffffff',
   },
 
   profileTopContent: {
     flex: 1,
+    justifyContent: 'center',
+    minHeight: 94,
+    paddingTop: 1,
+  },
+
+  profileTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#e9f5fc',
+    borderWidth: 1,
+    borderColor: '#d2e9f6',
+    marginBottom: 10,
+  },
+
+  profileTagText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#245f8e',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   profileName: {
@@ -441,17 +516,23 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#68869c',
-    marginTop: 5,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+
+  profileHint: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#245f8e',
+    marginTop: 8,
   },
 
   infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
   },
 
   infoItem: {
-    width: '48%',
+    width: '100%',
     backgroundColor: '#f4fbff',
     borderRadius: 18,
     borderWidth: 1,
@@ -494,6 +575,10 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  requiredMark: {
+    color: '#d14b4b',
+  },
+
   inputField: {
     minHeight: 50,
     borderRadius: 16,
@@ -506,27 +591,10 @@ export const styles = StyleSheet.create({
     color: '#173f5c',
   },
 
-  photoSourceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 2,
-    marginBottom: 10,
-  },
-
-  photoSourceButton: {
-    width: '48%',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#d7edf9',
-    backgroundColor: '#f4fbff',
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-
-  photoSourceText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#173f5c',
+  disabledInputField: {
+    backgroundColor: '#eef3f7',
+    borderColor: '#d8e3ec',
+    color: '#6c8293',
   },
 
   actionCard: {
@@ -739,6 +807,58 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  photoModalCard: {
+    width: '100%',
+    backgroundColor: '#f8fcff',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#dbeef8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f2d45',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.16,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+
+  photoOptionButton: {
+    minHeight: 52,
+    borderRadius: 18,
+    backgroundColor: '#f4fbff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  photoOptionText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  photoOptionCancelButton: {
+    minHeight: 52,
+    borderRadius: 18,
+    backgroundColor: '#e7edf2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+
+  photoOptionCancelText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#4f6a7b',
+  },
+
   modalButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -767,6 +887,16 @@ export const styles = StyleSheet.create({
     backgroundColor: '#173f5c',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  modalPrimaryButtonFull: {
+    width: '100%',
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: '#173f5c',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 18,
   },
 
   modalPrimaryText: {

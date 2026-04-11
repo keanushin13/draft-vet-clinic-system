@@ -74,6 +74,13 @@ export const styles = StyleSheet.create({
     color: '#ffffff',
   },
 
+  headerSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#c3ddee',
+  },
+
   notifButton: {
     width: 46,
     height: 46,
@@ -177,6 +184,29 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  backTriggerButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 14,
+  },
+
+  backTriggerIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#ffffff',
   },
 
   menuTriggerIcon: {
@@ -288,30 +318,450 @@ export const styles = StyleSheet.create({
     }),
   },
 
-  searchInputWrap: {
-    height: 42,
+  optionsCard: {
+    backgroundColor: '#f8fcff',
+    borderRadius: 26,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#dceef8',
+    marginBottom: 18,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#7da5bc',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.14,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 7,
+      },
+    }),
+  },
+
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf4f8',
+  },
+
+  optionIconWrap: {
+    width: 48,
+    height: 48,
     borderRadius: 18,
+    backgroundColor: '#e8f3fb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+
+  optionIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#173f5c',
+  },
+
+  optionContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+
+  optionTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+
+  optionTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+    marginRight: 10,
+  },
+
+  optionSubtitle: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#5d7b91',
+    fontWeight: '600',
+  },
+
+  optionBadge: {
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+    backgroundColor: '#e7f4fb',
+    borderWidth: 1,
+    borderColor: '#cfe6f3',
+  },
+
+  optionBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#245f8e',
+  },
+
+  optionArrow: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#245f8e',
+    marginTop: -2,
+  },
+
+  disclaimerCard: {
+    marginHorizontal: 18,
+    marginTop: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderRadius: 22,
+    backgroundColor: '#eef8ff',
+    borderWidth: 1,
+    borderColor: '#d5ebf8',
+  },
+
+  disclaimerText: {
+    textAlign: 'center',
+    fontSize: 13,
+    lineHeight: 21,
+    color: '#587286',
+    fontWeight: '600',
+  },
+
+  chatArea: {
+    flex: 1,
+  },
+
+  chatContent: {
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    paddingBottom: 26,
+    flexGrow: 1,
+  },
+
+  quickAssistMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 170,
+  },
+
+  quickAssistMessageCard: {
+    flex: 1,
+    maxWidth: '84%',
+    backgroundColor: '#fcfeff',
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 18,
+    borderWidth: 1,
+    borderColor: '#dceef8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#88bddf',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.18,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
+  quickAssistMessageText: {
+    fontSize: 17,
+    lineHeight: 29,
+    color: '#173f5c',
+    fontWeight: '600',
+  },
+
+  quickAssistActionButton: {
+    marginTop: 20,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#245f8e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  quickAssistActionButtonText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
+  quickAssistSecondaryActionButton: {
+    marginTop: 12,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3b77a8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+
+  quickAssistMessageTime: {
+    marginLeft: 10,
+    marginBottom: 14,
+    fontSize: 12,
+    color: '#d5ecf8',
+    fontWeight: '700',
+  },
+
+  conversationCard: {
+    backgroundColor: '#fcfeff',
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 18,
+    borderWidth: 1,
+    borderColor: '#dceef8',
+    marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#88bddf',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.18,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
+  conversationCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+
+  conversationCardTextWrap: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  conversationCardTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    color: '#173f5c',
+    fontWeight: '800',
+  },
+
+  conversationCardTime: {
+    fontSize: 12,
+    color: '#8aa2b4',
+    fontWeight: '700',
+    marginTop: 3,
+  },
+
+  conversationCardPill: {
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#e8f4fb',
+    borderWidth: 1,
+    borderColor: '#d1e8f4',
+  },
+
+  conversationCardPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#245f8e',
+  },
+
+  conversationCardPreview: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#47657a',
+    fontWeight: '600',
+  },
+
+  conversationCardFooter: {
+    marginTop: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  conversationCardUnread: {
+    minWidth: 32,
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    backgroundColor: '#245f8e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  conversationCardUnreadText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+
+  conversationCardAction: {
+    minWidth: 126,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#245f8e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+
+  conversationCardActionText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 18,
+    backgroundColor: 'rgba(8, 29, 42, 0.86)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+
+  input: {
+    flex: 1,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#f8fcff',
+    borderWidth: 1,
+    borderColor: '#dceef8',
+    paddingHorizontal: 20,
+    fontSize: 16,
+    color: '#173f5c',
+  },
+
+  sendButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginLeft: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#245f8e',
+  },
+
+  sendIcon: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginLeft: 1,
+  },
+
+  sendImage: {
+    width: 20,
+    height: 20,
+    tintColor: '#ffffff',
+  },
+
+  inlineInputWrap: {
+    flex: 1,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#f8fcff',
+    borderWidth: 1,
+    borderColor: '#dceef8',
+    paddingLeft: 20,
+    paddingRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  inlineInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#173f5c',
+  },
+
+  inlineSendImage: {
+    width: 20,
+    height: 20,
+    tintColor: '#245f8e',
+    marginLeft: 12,
+  },
+
+  searchInputWrap: {
+    minHeight: 48,
+    borderRadius: 20,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#d7edf9',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    marginBottom: 12,
   },
 
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: '#173f5c',
     paddingRight: 10,
   },
 
+  searchIconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#e8f3fb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   searchIcon: {
-    width: 16,
-    height: 16,
-    tintColor: '#6e8a9d',
+    width: 18,
+    height: 18,
+    tintColor: '#245f8e',
+  },
+
+  searchDropdown: {
+    marginTop: 12,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    overflow: 'hidden',
+  },
+
+  searchDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf4f8',
+  },
+
+  searchDropdownTextWrap: {
+    flex: 1,
+    marginRight: 10,
+  },
+
+  searchDropdownTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  searchDropdownSubtitle: {
+    fontSize: 11,
+    lineHeight: 17,
+    color: '#5d7b91',
+    fontWeight: '600',
   },
 
   messageRow: {

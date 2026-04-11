@@ -13,17 +13,17 @@ const app = express();
 /* =========================
    CORS
 ========================= */
-const allowedOrigins = [
+const allowedOrigins = new Set([
    "http://localhost:3000", // React Web Admin
    "http://localhost:8081", // Expo Web
-   
-];
+   process.env.CLIENT_URL, // LAN web frontend used by email links
+].filter(Boolean));
 
 app.use(cors({
    origin: function (origin, callback) {
       // allow requests with no origin like Postman
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
+      if (!allowedOrigins.has(origin)) {
          const msg = "The CORS policy for this site does not allow access from the specified Origin.";
          return callback(new Error(msg), false);
       }

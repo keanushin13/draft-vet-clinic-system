@@ -79,7 +79,7 @@ const AdminNotif = ({ navigation }) => {
           <Text style={[styles.navLabel, { color: '#000000' }]}>Messages</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AdminProfile')}>
-          <Image source={require('../../assets/User_Icon.png')} style={[styles.navIcon, { tintColor: '#2c4760' }]} />
+          <Image source={require('../../assets/Profile.png')} style={[styles.navIcon, { tintColor: '#2c4760' }]} />
           <Text style={[styles.navLabel, { color: '#2c4760' }]}>Account</Text>
         </TouchableOpacity>
       </View>

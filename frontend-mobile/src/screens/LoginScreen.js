@@ -113,11 +113,17 @@ export default function LoginScreen({ navigation }) {
       });
 
       if (response.requiresOtp) {
-        navigation.navigate("otp", { email: response.email });
+        navigation.navigate("otp", {
+          email: response.email,
+          user: response.user ? { ...response.user, email: response.user.email || response.email } : null,
+        });
         return;
       }
 
-      handleOtpSuccess(response.user);
+      handleOtpSuccess({
+        ...response.user,
+        email: response.user?.email || response.email,
+      });
     } catch (error) {
       const status = error.response?.status;
       const message = error.response?.data?.message || "Something went wrong";

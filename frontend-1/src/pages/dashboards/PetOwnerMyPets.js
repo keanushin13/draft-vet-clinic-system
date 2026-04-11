@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import paymentIcon from "../../assets/payment_icon.png";
 import petsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const defaultPets = [
   {
@@ -253,7 +253,7 @@ const PetOwnerMyPets = () => {
                   <div className="pet-card-body">
                     <h4>{pet.name}</h4>
                     <p className="pet-breed">
-                      {pet.breed} • {pet.species}
+                      {pet.breed} â€¢ {pet.species}
                     </p>
 
                     <div className="pet-stats-row">

@@ -6,8 +6,8 @@ const AdminUserManagement = ({ navigation }) => {
   const [search, setSearch] = useState('');
 
   const users = [
-    { id: '1', name: 'Maria Santos', uid: 'USR-000076', email: 'maria@example.com', role: 'Pet Owner', avatar: require('../../assets/User_Icon.png') },
-    { id: '2', name: 'John Reyes', uid: 'USR-000074', email: 'john@example.com', role: 'Staff', avatar: require('../../assets/User_Icon.png') },
+    { id: '1', name: 'Maria Santos', uid: 'USR-000076', email: 'maria@example.com', role: 'Pet Owner', avatar: require('../../assets/Profile.png') },
+    { id: '2', name: 'John Reyes', uid: 'USR-000074', email: 'john@example.com', role: 'Staff', avatar: require('../../assets/Profile.png') },
   ];
 
   const renderUser = ({ item }) => (
@@ -19,16 +19,16 @@ const AdminUserManagement = ({ navigation }) => {
           <Text style={styles.userDetail}>{item.uid}  |  {item.email}</Text>
           <View style={styles.roleContainer}>
             <View style={styles.roleLabel}><Text style={styles.roleLabelText}>ROLE</Text></View>
-            <View style={styles.roleBadge}><Text style={styles.roleBadgeText}>👤 {item.role}</Text></View>
+            <View style={styles.roleBadge}><Text style={styles.roleBadgeText}>ðŸ‘¤ {item.role}</Text></View>
           </View>
         </View>
       </View>
       
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.miniBtn}><Text style={styles.miniBtnText}>☑ Edit</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.miniBtn}><Text style={styles.miniBtnText}>â˜‘ Edit</Text></TouchableOpacity>
         <div style={styles.rightActions}>
-          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#6a9ab0'}]}><Text style={styles.actionBtnText}>🖊 Edit</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#b36a6a'}]}><Text style={styles.actionBtnText}>🗑 Delete</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#6a9ab0'}]}><Text style={styles.actionBtnText}>ðŸ–Š Edit</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, {backgroundColor: '#b36a6a'}]}><Text style={styles.actionBtnText}>ðŸ—‘ Delete</Text></TouchableOpacity>
         </div>
       </View>
     </View>
@@ -63,14 +63,14 @@ const AdminUserManagement = ({ navigation }) => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Text style={{marginRight: 8}}>🔍</Text>
+          <Text style={{marginRight: 8}}>ðŸ”</Text>
           <TextInput placeholder="Search users" style={styles.searchInput} value={search} onChangeText={setSearch} />
         </View>
 
         {/* Role Dropdown Mock */}
         <TouchableOpacity style={styles.roleFilter}>
-          <Text>🛡 Role: All</Text>
-          <Text>▼</Text>
+          <Text>ðŸ›¡ Role: All</Text>
+          <Text>â–¼</Text>
         </TouchableOpacity>
 
         <FlatList
@@ -101,7 +101,7 @@ const AdminUserManagement = ({ navigation }) => {
 
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AdminProfile')}>
           <Image 
-            source={require('../../assets/User_Icon.png')} 
+            source={require('../../assets/Profile.png')} 
             style={[styles.navIcon, {tintColor: '#2c4760'}]} 
           />
           <Text style={[styles.navLabel, {color: '#2c4760'}]}>Account</Text>

@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import paymentIcon from "../../assets/payment_icon.png";
 import petsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 // Note: Ensure you have a placeholder or actual image for the pet illustration
 import petPlaceholder from "../../assets/paw.png";
 
@@ -107,7 +107,7 @@ const PetOwnerDashboard = () => {
                 <div className="card-header">
                   <img src={bellIcon} className="tiny-icon" alt="" />
                   <h4>Alerts</h4>
-                  <span className="chevron-link">›</span>
+                  <span className="chevron-link">â€º</span>
                 </div>
                 <div className="item-row">
                   <div>
@@ -129,14 +129,14 @@ const PetOwnerDashboard = () => {
               <div className="glass-card">
                 <div className="card-header">
                   <h4>History</h4>
-                  <span className="chevron-link">›</span>
+                  <span className="chevron-link">â€º</span>
                 </div>
                 <div className="item-row">
-                  <p className="item-main">₱1000 Vaccination</p>
+                  <p className="item-main">â‚±1000 Vaccination</p>
                   <span className="status-label">Paid</span>
                 </div>
                 <div className="item-row">
-                  <p className="item-main">₱1200 Consultation</p>
+                  <p className="item-main">â‚±1200 Consultation</p>
                   <span className="status-label">Paid</span>
                 </div>
               </div>
@@ -154,13 +154,13 @@ const PetOwnerDashboard = () => {
             <div className="bottom-section-card">
               <div className="section-header">
                 <h4>Upcoming Appointments</h4>
-                <span className="blue-link" onClick={() => navigate("/pet-owner-appointments")}>View All ›</span>
+                <span className="blue-link" onClick={() => navigate("/pet-owner-appointments")}>View All â€º</span>
               </div>
               
               <div className="appointment-flex">
                 <div className="calendar-box">
                    <div className="cal-header">
-                      <span>‹</span> <strong>September 2025</strong> <span>›</span>
+                      <span>â€¹</span> <strong>September 2025</strong> <span>â€º</span>
                    </div>
                    <div className="cal-placeholder-grid"></div>
                 </div>
@@ -174,7 +174,7 @@ const PetOwnerDashboard = () => {
                       <p className="doc-sub">Bella (Golden Retriever)</p>
                     </div>
                   </div>
-                  <p className="view-all-link" onClick={() => navigate("/pet-owner-appointments")}>View All ›</p>
+                  <p className="view-all-link" onClick={() => navigate("/pet-owner-appointments")}>View All â€º</p>
                 </div>
               </div>
             </div>

@@ -12,6 +12,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../../styles/PetOwnerDashboardDesign';
 
+const DEFAULT_PROFILE_IMAGE = require('../../assets/Profile.png');
+
 const PetOwnerDashboard = ({ navigation, route }) => {
   const loggedInUser = route?.params?.user;
   const headerDisplayName =
@@ -59,6 +61,21 @@ const PetOwnerDashboard = ({ navigation, route }) => {
   ];
 
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const [activeServiceSlide, setActiveServiceSlide] = useState(0);
+  const serviceSlides = [
+    {
+      key: 'service-1',
+      image: require('../../assets/petowner1.png'),
+    },
+    {
+      key: 'service-2',
+      image: require('../../assets/petowner2.png'),
+    },
+    {
+      key: 'service-3',
+      image: require('../../assets/petowner3.png'),
+    },
+  ];
   const headerMenuItems = [
     {
       key: 'dashboard',
@@ -99,6 +116,14 @@ const PetOwnerDashboard = ({ navigation, route }) => {
 
     return () => clearInterval(interval);
   }, [heroSlides.length]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveServiceSlide((current) => (current + 1) % serviceSlides.length);
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, [serviceSlides.length]);
 
   const openHeaderMenu = () => {
     if (isHeaderMenuVisible || isHeaderMenuAnimating.current) {
@@ -250,7 +275,7 @@ const PetOwnerDashboard = ({ navigation, route }) => {
                   />
                 ) : (
                   <Image
-                    source={require('../../assets/User_Icon.png')}
+                    source={DEFAULT_PROFILE_IMAGE}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -293,7 +318,7 @@ const PetOwnerDashboard = ({ navigation, route }) => {
             </TouchableOpacity>
 
             <View style={styles.ownerSummary}>
-              <Text style={styles.headerCaption}>Welcome back</Text>
+              <Text style={styles.headerCaption}>Welcome</Text>
               <Text style={styles.ownerName}>{headerDisplayName}</Text>
             </View>
             </View>
@@ -382,29 +407,6 @@ const PetOwnerDashboard = ({ navigation, route }) => {
             end={{ x: 1, y: 1 }}
             style={styles.welcomeCard}
           >
-            <View style={styles.welcomeHeaderRow}>
-              <View style={styles.welcomeTextWrap}>
-                <Text style={styles.welcomeSmall}>Hello there,</Text>
-                <Text style={styles.welcomeText}>Welcome, {headerDisplayName}</Text>
-              </View>
-
-              <View style={styles.welcomeProfileAvatarWrap}>
-                {profileImageUri ? (
-                  <Image
-                    source={{ uri: profileImageUri }}
-                    style={styles.welcomeProfileAvatarCustom}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Image
-                    source={require('../../assets/paw1.png')}
-                    style={styles.welcomeProfileAvatar}
-                    resizeMode="contain"
-                  />
-                )}
-              </View>
-            </View>
-
             <View style={styles.heroSlideCard}>
               <View style={styles.heroSlideTopRow}>
                 <Text style={styles.heroSlideLabel}>
@@ -496,7 +498,7 @@ const PetOwnerDashboard = ({ navigation, route }) => {
           </View>
 
           <View style={styles.sectionHeaderWrap}>
-            <Text style={styles.sectionTitle}>Quick Access</Text>
+            <Text style={styles.sectionTitle}>Services</Text>
             <Text style={styles.sectionSubtitle}>Main tools and features</Text>
           </View>
 
@@ -548,12 +550,39 @@ const PetOwnerDashboard = ({ navigation, route }) => {
               <Text style={styles.menuLabel}>Records</Text>
             </TouchableOpacity>
           </View>
+
+          <LinearGradient
+            colors={['#6f95b8', '#5f86a8', '#4b6f8d']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.servicesSlideshowCard}
+          >
+            <View style={styles.servicesSlideshowFrame}>
+              <Image
+                source={serviceSlides[activeServiceSlide].image}
+                style={styles.servicesSlideshowImage}
+                resizeMode="cover"
+              />
+            </View>
+
+            <View style={styles.servicesSlideshowDots}>
+              {serviceSlides.map((slide, index) => (
+                <View
+                  key={slide.key}
+                  style={[
+                    styles.servicesSlideshowDot,
+                    index === activeServiceSlide && styles.servicesSlideshowDotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          </LinearGradient>
         </ScrollView>
 
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, styles.activeNavItem]}
-            onPress={() => navigation.navigate('PetOwnerMessages', { user: loggedInUser })}
+            onPress={() => navigation.navigate('PetOwnerQuickAssist', { user: loggedInUser })}
             activeOpacity={0.9}
           >
             <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>

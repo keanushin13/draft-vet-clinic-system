@@ -12,7 +12,7 @@ import messageIcon from "../../../assets/Message_Icon.png";
 import pawLogo from "../../../assets/paw.png";
 import payHistoryIcon from "../../../assets/payment_icon.png";
 import petsProfileIcon from "../../../assets/Pets_Icon.png";
-import userIcon from "../../../assets/User_Icon.png";
+import userIcon from "../../../assets/Profile.png";
 import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffActivityLog = () => {

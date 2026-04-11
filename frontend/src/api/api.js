@@ -1,10 +1,14 @@
 import axios from "axios";
 
+const API_BASE_URL =
+    process.env.REACT_APP_API_URL ||
+    `http://${window.location.hostname}:5000/api`;
+
 /* =========================
    AXIOS INSTANCE
 ========================= */
 const API = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: API_BASE_URL,
     withCredentials: true, // REQUIRED for CSRF cookies
 });
 

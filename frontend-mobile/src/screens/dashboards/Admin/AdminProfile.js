@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // ✅ import useState
+import React, { useState } from 'react'; // âœ… import useState
 import {
     Image,
     SafeAreaView,
@@ -104,7 +104,7 @@ const AdminProfile = ({ navigation }) => {
 
         <TouchableOpacity style={styles.navItem}>
           <Image 
-            source={require('../../assets/User_Icon.png')} 
+            source={require('../../assets/Profile.png')} 
             style={[styles.navIcon, {tintColor: '#2c4760'}]} 
             resizeMode="contain" 
           />

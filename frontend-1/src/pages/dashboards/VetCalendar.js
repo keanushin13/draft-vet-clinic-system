@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import inventoryIcon from "../../assets/payment_icon.png";
 import patientsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const VetCalendar = () => {
   const navigate = useNavigate();
@@ -215,10 +215,10 @@ const VetCalendar = () => {
 
               <div className="calendar-actions">
                 <button type="button" className="month-btn">
-                  ←
+                  â†
                 </button>
                 <button type="button" className="month-btn">
-                  →
+                  â†’
                 </button>
                 <button type="button" className="add-apt-btn" onClick={openAddModal}>
                   + Add Appointment
@@ -285,7 +285,7 @@ const VetCalendar = () => {
                   className="modal-close-btn"
                   onClick={closeAddModal}
                 >
-                  ×
+                  Ã—
                 </button>
               </div>
 

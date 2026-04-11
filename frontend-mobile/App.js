@@ -20,14 +20,19 @@ import AdminUserManagement from './src/screens/dashboards/Admin/AdminUserManagem
 
 // Staff Screens
 import StaffAppointment from './src/screens/dashboards/Staff/StaffAppointment';
+import StaffAppointmentList from './src/screens/dashboards/Staff/StaffAppointmentList';
 import StaffDashboard from './src/screens/dashboards/Staff/StaffDashboard';
 import StaffInventory from './src/screens/dashboards/Staff/StaffInventory';
 import StaffLogs from './src/screens/dashboards/Staff/StaffLogs';
 import StaffMessages from './src/screens/dashboards/Staff/StaffMessages';
-import StaffMyPets from './src/screens/dashboards/Staff/StaffMyPets';
+import StaffPetsProfile from './src/screens/dashboards/Staff/StaffPetsProfile';
+import StaffPetsProfileEdit from './src/screens/dashboards/Staff/StaffPetsProfileEdit';
 import StaffNotif from './src/screens/dashboards/Staff/StaffNotif';
 import StaffPayHis from './src/screens/dashboards/Staff/StaffPayHis';
 import StaffProfile from './src/screens/dashboards/Staff/StaffProfile';
+import StaffQuickAssist from './src/screens/dashboards/Staff/StaffQuickAssist';
+import StaffCreateAccount from './src/screens/dashboards/Staff/StaffCreateAccount';
+import StaffManageAccount from './src/screens/dashboards/Staff/StaffManageAccount';
 import StaffUserManagement from './src/screens/dashboards/Staff/StaffUserManagement';
 
 // Vet Screens
@@ -41,13 +46,18 @@ import VetProfile from './src/screens/dashboards/Veterinary/VetProfile';
 
 // Pet Owner Screens
 import PetOwnerAppointment from './src/screens/dashboards/PetOwner/PetOwnerAppointment';
+import PetOwnerAppointmentSchedule from './src/screens/dashboards/PetOwner/PetOwnerAppointmentSchedule';
 import PetOwnerDashboard from './src/screens/dashboards/PetOwner/PetOwnerDashboard';
 import PetOwnerMedRec from './src/screens/dashboards/PetOwner/PetOwnerMedRec';
 import PetOwnerMessages from './src/screens/dashboards/PetOwner/PetOwnerMessages';
-import PetOwnerMessageThread from './src/screens/dashboards/PetOwner/PetOwnerMessageThread';
 import PetOwnerMyPets from './src/screens/dashboards/PetOwner/PetOwnerMyPets';
 import PetOwnerNotif from './src/screens/dashboards/PetOwner/PetOwnerNotif';
+import PetOwnerMyPetsEdit from './src/screens/dashboards/PetOwner/PetOwnerMyPetsEdit';
+import PetOwnerMyPetsView from './src/screens/dashboards/PetOwner/PetOwnerMyPetsView';
 import PetOwnerProfile from './src/screens/dashboards/PetOwner/PetOwnerProfile';
+import PetOwnerQuickAssist from './src/screens/dashboards/PetOwner/PetOwnerQuickAssist';
+import PetOwnerStaffMessages from './src/screens/dashboards/PetOwner/PetOwnerStaffMessages';
+import PetOwnerVetMessages from './src/screens/dashboards/PetOwner/PetOwnerVetMessages';
 
 const Stack = createNativeStackNavigator();
 
@@ -100,12 +110,18 @@ export default function App() {
         {/* Staff Flow */}
         <Stack.Screen name="staff-screen" component={StaffDashboard} />
         <Stack.Screen name="StaffAppointment" component={StaffAppointment} />
-        <Stack.Screen name="StaffMyPets" component={StaffMyPets} />
+        <Stack.Screen name="StaffAppointmentList" component={StaffAppointmentList} />
+        <Stack.Screen name="StaffPetsProfile" component={StaffPetsProfile} />
+        <Stack.Screen name="StaffPetsProfileEdit" component={StaffPetsProfileEdit} />
+        <Stack.Screen name="StaffMyPets" component={StaffPetsProfile} />
         <Stack.Screen name="StaffInventory" component={StaffInventory} />
         <Stack.Screen name="StaffPayHis" component={StaffPayHis} />
         <Stack.Screen name="StaffLogs" component={StaffLogs} />
         <Stack.Screen name="StaffMessages" component={StaffMessages} />
         <Stack.Screen name="StaffProfile" component={StaffProfile} />
+        <Stack.Screen name="StaffQuickAssist" component={StaffQuickAssist} />
+        <Stack.Screen name="StaffCreateAccount" component={StaffCreateAccount} />
+        <Stack.Screen name="StaffManageAccount" component={StaffManageAccount} />
         <Stack.Screen name="StaffUserManagement" component={StaffUserManagement} />
         <Stack.Screen name="StaffNotif" component={StaffNotif} />
 
@@ -121,10 +137,15 @@ export default function App() {
         {/* Pet Owner Flow */}
         <Stack.Screen name="petowner-screen" component={PetOwnerDashboard} />
         <Stack.Screen name="PetOwnerAppointment" component={PetOwnerAppointment} />
+        <Stack.Screen name="PetOwnerAppointmentSchedule" component={PetOwnerAppointmentSchedule} />
         <Stack.Screen name="PetOwnerMedRec" component={PetOwnerMedRec} />
         <Stack.Screen name="PetOwnerMessages" component={PetOwnerMessages} />
-        <Stack.Screen name="PetOwnerMessageThread" component={PetOwnerMessageThread} />
+        <Stack.Screen name="PetOwnerStaffMessages" component={PetOwnerStaffMessages} />
+        <Stack.Screen name="PetOwnerVetMessages" component={PetOwnerVetMessages} />
+        <Stack.Screen name="PetOwnerQuickAssist" component={PetOwnerQuickAssist} />
         <Stack.Screen name="PetOwnerMyPets" component={PetOwnerMyPets} />
+        <Stack.Screen name="PetOwnerMyPetsEdit" component={PetOwnerMyPetsEdit} />
+        <Stack.Screen name="PetOwnerMyPetsView" component={PetOwnerMyPetsView} />
         <Stack.Screen name="PetOwnerNotif" component={PetOwnerNotif} />
         <Stack.Screen name="PetOwnerProfile" component={PetOwnerProfile} />
       </Stack.Navigator>

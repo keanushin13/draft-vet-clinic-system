@@ -6,9 +6,9 @@ const AdminMessages = ({ navigation }) => {
   const [search, setSearch] = useState('');
 
   const messages = [
-    { id: '1', name: 'Reizzan Ewan', lastMsg: "You: You're welcome! 🐾", time: '12/13/2025', avatar: require('../../assets/User_Icon.png') },
-    { id: '2', name: 'Dr. Sarah Dela Cruz', lastMsg: "Dr. Sarah: You're welcome, see you on the follow-up che...", time: '10:58am', avatar: require('../../assets/User_Icon.png') },
-    { id: '3', name: 'Dr. Michael Cruz', lastMsg: 'Dr. Michael: Please make sure na mapainom po sya nung vita....', time: '12/13/2025', avatar: require('../../assets/User_Icon.png') },
+    { id: '1', name: 'Reizzan Ewan', lastMsg: "You: You're welcome! ðŸ¾", time: '12/13/2025', avatar: require('../../assets/Profile.png') },
+    { id: '2', name: 'Dr. Sarah Dela Cruz', lastMsg: "Dr. Sarah: You're welcome, see you on the follow-up che...", time: '10:58am', avatar: require('../../assets/Profile.png') },
+    { id: '3', name: 'Dr. Michael Cruz', lastMsg: 'Dr. Michael: Please make sure na mapainom po sya nung vita....', time: '12/13/2025', avatar: require('../../assets/Profile.png') },
   ];
 
   const renderItem = ({ item }) => (
@@ -52,7 +52,7 @@ const AdminMessages = ({ navigation }) => {
           value={search}
           onChangeText={setSearch}
         />
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Text style={styles.searchIcon}>ðŸ”</Text>
       </View>
 
       <FlatList
@@ -75,7 +75,7 @@ const AdminMessages = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AdminProfile')}>
-          <Image source={require('../../assets/User_Icon.png')} style={[styles.navIcon, {tintColor: '#000000'}]} />
+          <Image source={require('../../assets/Profile.png')} style={[styles.navIcon, {tintColor: '#000000'}]} />
           <Text style={[styles.navLabel, {color: '#000000'}]}>Account</Text>
         </TouchableOpacity>
       </View>

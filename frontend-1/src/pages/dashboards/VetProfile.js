@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; // ✅ added useState
+import { useEffect, useState } from "react"; // âœ… added useState
 import { useNavigate } from "react-router-dom";
 import "../../css/VetProfile.css";
 import Modal from "../security/Modal"; // adjust path if needed
@@ -13,7 +13,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import inventoryIcon from "../../assets/payment_icon.png";
 import patientsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const VetProfile = () => {
   const navigate = useNavigate();

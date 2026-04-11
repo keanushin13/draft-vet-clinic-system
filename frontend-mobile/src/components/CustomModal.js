@@ -5,7 +5,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TouchableWithoutFeedback,
+  Pressable,
 } from "react-native";
 
 export default function CustomModal({ show, onClose, children, extraAction }) {
@@ -13,23 +13,25 @@ export default function CustomModal({ show, onClose, children, extraAction }) {
 
   return (
     <Modal transparent animationType="fade">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalBox}>
-              {/* Close Button */}
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Text style={styles.closeText}>×</Text>
-              </TouchableOpacity>
+      <View style={styles.overlay}>
+        <Pressable
+          style={[styles.backdrop, StyleSheet.absoluteFillObject]}
+          onPress={onClose}
+          accessibilityLabel="Dismiss dialog"
+          accessibilityRole="button"
+        />
+        <View style={styles.modalBox}>
+          {/* Close Button */}
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <Text style={styles.closeText}>×</Text>
+          </TouchableOpacity>
 
-              <View style={styles.body}>
-                <Text style={styles.modalText}>{children}</Text>
-                {extraAction && <View style={styles.extraAction}>{extraAction}</View>}
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
+          <View style={styles.body}>
+            <Text style={styles.modalText}>{children}</Text>
+            {extraAction && <View style={styles.extraAction}>{extraAction}</View>}
+          </View>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
@@ -37,9 +39,11 @@ export default function CustomModal({ show, onClose, children, extraAction }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)", // lighter overlay for softer look
     justifyContent: "center",
     alignItems: "center",
+  },
+  backdrop: {
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   modalBox: {
     width: "85%",
@@ -54,7 +58,9 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     // Shadow for Android
     elevation: 12,
-  }, modalText: {
+    zIndex: 1,
+  },
+  modalText: {
     color: '#888', // PawCruz brand color
     fontSize: 16,
     textAlign: "center",

@@ -392,6 +392,57 @@ export const styles = StyleSheet.create({
     }),
   },
 
+  searchBarWrap: {
+    minHeight: 56,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#f6fbff',
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
+  searchBarIcon: {
+    width: 19,
+    height: 19,
+    tintColor: '#5f7f94',
+    marginRight: 10,
+  },
+
+  searchBarInput: {
+    flex: 1,
+    minHeight: 48,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#173f5c',
+  },
+
+  searchEmptyState: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#f4fbff',
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    marginBottom: 12,
+  },
+
+  searchEmptyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#173f5c',
+    marginBottom: 6,
+  },
+
+  searchEmptyText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: '#5f7f94',
+  },
+
   petRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -794,6 +845,11 @@ export const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
+  editAvatarWrap: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+
   photoPickerLabel: {
     marginTop: 12,
     fontSize: 12,
@@ -801,29 +857,29 @@ export const styles = StyleSheet.create({
     color: '#173f5c',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
 
-  photoSourceRow: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-
-  photoSourceButton: {
-    width: '48%',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#d7edf9',
-    backgroundColor: '#f4fbff',
-    paddingVertical: 14,
+  avatarAddButton: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#173f5c',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    justifyContent: 'center',
     alignItems: 'center',
   },
 
-  photoSourceText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#173f5c',
+  avatarAddButtonText: {
+    fontSize: 21,
+    lineHeight: 21,
+    fontWeight: '900',
+    color: '#ffffff',
+    marginTop: -1,
   },
 
   formCard: {
@@ -842,6 +898,11 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+
+  requiredMark: {
+    color: '#d84343',
+    fontWeight: '900',
   },
 
   readOnlyField: {
@@ -869,6 +930,169 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 14,
     fontWeight: '700',
+    color: '#173f5c',
+  },
+
+  textAreaField: {
+    minHeight: 108,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#173f5c',
+  },
+
+  pickerFieldWrap: {
+    minHeight: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  enhancedFieldCard: {
+    backgroundColor: '#f4fbff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    padding: 12,
+  },
+
+  dropdownShell: {
+    minHeight: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+
+  searchableDropdown: {
+    minHeight: 50,
+  },
+
+  searchableDropdownContainer: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+
+  dropdownPlaceholder: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#87a0b1',
+  },
+
+  dropdownSelectedText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  dropdownItemText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#173f5c',
+  },
+
+  dropdownIcon: {
+    width: 18,
+    height: 18,
+  },
+
+  inlineFieldHint: {
+    marginTop: 10,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#5f7f94',
+  },
+
+  stackedInputField: {
+    marginTop: 12,
+  },
+
+  birthdayFieldCard: {
+    backgroundColor: '#eff8ff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#cfe6f5',
+    padding: 14,
+  },
+
+  birthdayInfoText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#5f7f94',
+    marginBottom: 12,
+  },
+
+  calendarTriggerButton: {
+    minHeight: 64,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  calendarTriggerLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  calendarTriggerValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  calendarTriggerIconImage: {
+    width: 26,
+    height: 26,
+    tintColor: '#173f5c',
+  },
+
+  birthdayAgeSummary: {
+    marginTop: 12,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+
+  birthdayAgeLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  birthdayAgeValue: {
+    fontSize: 16,
+    fontWeight: '800',
     color: '#173f5c',
   },
 
@@ -903,6 +1127,24 @@ export const styles = StyleSheet.create({
     color: '#173f5c',
   },
 
+  photoOptionButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: '#f4fbff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+
+  photoOptionButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(5, 18, 28, 0.48)',
@@ -912,6 +1154,26 @@ export const styles = StyleSheet.create({
   },
 
   modalCard: {
+    width: '100%',
+    backgroundColor: '#f8fcff',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#dbeef8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f2d45',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.16,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+
+  calendarModalCard: {
     width: '100%',
     backgroundColor: '#f8fcff',
     borderRadius: 26,
@@ -996,6 +1258,130 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#ffffff',
+  },
+
+  calendarHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    marginBottom: 18,
+    paddingHorizontal: 2,
+  },
+
+  calendarNavButton: {
+    minWidth: 82,
+    minHeight: 46,
+    borderRadius: 18,
+    backgroundColor: '#e8f2f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+
+  calendarNavButtonDisabled: {
+    opacity: 0.45,
+  },
+
+  calendarNavButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  calendarTitleWrap: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 12,
+    justifyContent: 'center',
+  },
+
+  calendarActiveMonth: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#173f5c',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  calendarPickerWrapYear: {
+    width: '100%',
+    minHeight: 50,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+
+  calendarPickerDropdown: {
+    minHeight: 46,
+  },
+
+  calendarWeekHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  calendarWeekLabel: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+  },
+
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+  },
+
+  calendarDayCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  calendarDayCellEmpty: {
+    backgroundColor: 'transparent',
+  },
+
+  calendarDayCellDisabled: {
+    backgroundColor: '#eef3f7',
+  },
+
+  calendarDayCellSelected: {
+    backgroundColor: '#173f5c',
+  },
+
+  calendarDayText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  calendarDayTextEmpty: {
+    color: 'transparent',
+  },
+
+  calendarDayTextDisabled: {
+    color: '#aabac6',
+  },
+
+  calendarDayTextSelected: {
+    color: '#ffffff',
+  },
+
+  calendarDonePlaceholder: {
+    width: '48%',
+    minHeight: 48,
   },
 
   bottomNav: {

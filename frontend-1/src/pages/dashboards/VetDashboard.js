@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import inventoryIcon from "../../assets/payment_icon.png";
 import patientsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const VetDashboard = () => {
   const navigate = useNavigate();
@@ -80,8 +80,8 @@ const VetDashboard = () => {
             <div className="card-stat">
               <div className="card-header-row"><img src={appointmentIcon} alt="" /> <h4>Today's Appointment</h4></div>
               <div className="card-content">
-                <p><span>● Pending</span> <strong>7</strong></p>
-                <p><span>● Confirmed</span> <strong>4</strong></p>
+                <p><span>â— Pending</span> <strong>7</strong></p>
+                <p><span>â— Confirmed</span> <strong>4</strong></p>
               </div>
               <button className="card-btn-blue">View Calendar</button>
             </div>
@@ -111,24 +111,24 @@ const VetDashboard = () => {
               <h4>Today's Appointments</h4>
               <div className="date-badge">Tuesday, Sep 9</div>
               <div className="list-entry">
-                <div className="avatar-placeholder">👤</div>
+                <div className="avatar-placeholder">ðŸ‘¤</div>
                 <div className="entry-info">
                   <p className="p-main">Dr. Sarah Dela Cruz</p>
                   <p className="p-sub">Bella (Golden Retriever)</p>
                 </div>
               </div>
               <div className="list-entry">
-                <div className="avatar-placeholder">👤</div>
+                <div className="avatar-placeholder">ðŸ‘¤</div>
                 <div className="entry-info">
                   <p className="p-main">Dr. Micheal Cruz</p>
                   <p className="p-sub">Max (Persian)</p>
                 </div>
               </div>
-              <p className="text-link">View All ›</p>
+              <p className="text-link">View All â€º</p>
             </div>
 
             <div className="card-details">
-              <h4>⚠️ Inventory Alerts</h4>
+              <h4>âš ï¸ Inventory Alerts</h4>
               <div className="alert-row"><span>2 Medications Low</span><small>Sep 13</small></div>
               <div className="alert-row"><span>1 Expiring Soon</span><small>Sep 13</small></div>
               <button className="card-btn-blue">View More</button>

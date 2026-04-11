@@ -12,6 +12,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../../styles/PetOwnerMedRecDesign';
 
+const DEFAULT_PROFILE_IMAGE = require('../../assets/Profile.png');
+
 const PET_RECORDS = [
   {
     id: 'pet-1',
@@ -440,7 +442,7 @@ const PetOwnerMedRec = ({ navigation, route }) => {
                   />
                 ) : (
                   <Image
-                    source={require('../../assets/User_Icon.png')}
+                    source={DEFAULT_PROFILE_IMAGE}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -566,21 +568,6 @@ const PetOwnerMedRec = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <LinearGradient
-            colors={['#7aa4c8', '#698fb0', '#567997']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <Text style={styles.heroEyebrow}>Health overview</Text>
-            <Text style={styles.heroTitle}>Medical records and predictive care</Text>
-            <Text style={styles.heroDescription}>
-              View diagnoses and treatments, access medications and lab results,
-              and get predictive health analysis that helps detect potential
-              issues early.
-            </Text>
-          </LinearGradient>
-
           <View style={styles.sectionHeaderWrap}>
             <Text style={styles.sectionTitle}>Choose Pet</Text>
             <Text style={styles.sectionSubtitle}>
@@ -762,7 +749,7 @@ const PetOwnerMedRec = ({ navigation, route }) => {
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, styles.activeNavItem]}
-            onPress={() => navigation.navigate('PetOwnerMessages', { user: loggedInUser })}
+            onPress={() => navigation.navigate('PetOwnerQuickAssist', { user: loggedInUser })}
             activeOpacity={0.9}
           >
             <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>

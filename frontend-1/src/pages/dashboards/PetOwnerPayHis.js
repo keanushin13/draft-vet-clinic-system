@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import paymentIcon from "../../assets/payment_icon.png";
 import petsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const PetOwnerPayHis = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const PetOwnerPayHis = () => {
 
   const rowsPerPage = 5;
 
-  // ✅ SIDEBAR MENU (REUSABLE)
+  // âœ… SIDEBAR MENU (REUSABLE)
   const menuItems = [
     { path: "/pet-owner", label: "Dashboard", icon: dashboardIcon },
     { path: "/pet-owner-appointments", label: "Appointment", icon: appointmentIcon },
@@ -35,7 +35,7 @@ const PetOwnerPayHis = () => {
     { path: "/pet-owner-payments", label: "Payment History", icon: paymentIcon },
   ];
 
-  // ✅ SAFE NAVIGATION (PREVENT REDUNDANT CLICK)
+  // âœ… SAFE NAVIGATION (PREVENT REDUNDANT CLICK)
   const handleNavigate = (path) => {
     if (location.pathname !== path) {
       navigate(path);
@@ -58,7 +58,7 @@ const PetOwnerPayHis = () => {
     date: `Sep ${apt.day}, 2025`,
     pet: apt.petName,
     service: apt.reason,
-    amount: "₱500.00",
+    amount: "â‚±500.00",
     status: apt.status === "confirmed" ? "Paid" : "Pending",
     method: apt.paymentMethod || "N/A",
     reference: apt.paymentReference || "N/A",

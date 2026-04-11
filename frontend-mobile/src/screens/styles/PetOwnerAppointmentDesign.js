@@ -223,6 +223,11 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
+  flowHeaderTextWrap: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+
   ownerSummary: {
     flex: 1,
     alignItems: 'flex-end',
@@ -414,6 +419,204 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
+  reasonCard: {
+    width: '48%',
+    minHeight: 72,
+    borderRadius: 20,
+    backgroundColor: '#eef8ff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 10,
+    justifyContent: 'center',
+  },
+
+  reasonCardActive: {
+    backgroundColor: '#173f5c',
+    borderColor: '#173f5c',
+  },
+
+  reasonCardTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#173f5c',
+  },
+
+  reasonCardTitleActive: {
+    color: '#ffffff',
+  },
+
+  reasonCardDescription: {
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight: '700',
+    color: '#5f7f94',
+  },
+
+  reasonCardDescriptionActive: {
+    color: '#d8ebf7',
+  },
+
+  reasonDetailCard: {
+    backgroundColor: '#f4fbff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    borderRadius: 22,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  reasonDetailLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#173f5c',
+    marginBottom: 6,
+  },
+
+  reasonHelperText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: '#5f7f94',
+    marginBottom: 12,
+  },
+
+  reasonSelectButton: {
+    minHeight: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+  },
+
+  reasonSelectValue: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  reasonSelectValuePlaceholder: {
+    color: '#87a0b1',
+  },
+
+  reasonSelectChevron: {
+    marginLeft: 12,
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#5f7f94',
+    textTransform: 'uppercase',
+  },
+
+  reasonSelectButtonDisabled: {
+    backgroundColor: '#edf4f8',
+    borderColor: '#dbe8f0',
+  },
+
+  reasonTextInput: {
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 14,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#173f5c',
+    marginTop: 12,
+  },
+
+  reasonSummaryBox: {
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 12,
+  },
+
+  reasonSummaryLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  reasonSummaryValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  flowStepBadge: {
+    alignSelf: 'flex-start',
+    minWidth: 72,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#e7f5ff',
+    borderWidth: 1,
+    borderColor: '#cae7f7',
+    marginBottom: 16,
+  },
+
+  flowStepBadgeText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#173f5c',
+    textAlign: 'center',
+  },
+
+  flowSummaryCard: {
+    borderRadius: 20,
+    backgroundColor: '#eef8ff',
+    borderWidth: 1,
+    borderColor: '#d5ebf8',
+    padding: 16,
+    marginBottom: 14,
+  },
+
+  flowSummaryLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  flowSummaryValue: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '800',
+    color: '#173f5c',
+    marginBottom: 12,
+  },
+
+  flowSummaryButton: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    borderRadius: 14,
+    backgroundColor: '#173f5c',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+
+  flowSummaryButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
   petChip: {
     width: '48%',
     minHeight: 72,
@@ -450,6 +653,95 @@ export const styles = StyleSheet.create({
 
   petChipSubtitleActive: {
     color: '#d8ebf7',
+  },
+
+  addPetChip: {
+    width: '48%',
+    minHeight: 72,
+    borderRadius: 20,
+    backgroundColor: '#eef8ff',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#b7d9eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+
+  addPetChipPlus: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#173f5c',
+    marginBottom: 4,
+  },
+
+  addPetChipTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#173f5c',
+    marginBottom: 3,
+  },
+
+  addPetChipSubtitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#5f7f94',
+  },
+
+  visitDateFieldCard: {
+    backgroundColor: '#eff8ff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#cfe6f5',
+    padding: 14,
+    marginBottom: 8,
+  },
+
+  visitDateInfoText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#5f7f94',
+    marginBottom: 12,
+  },
+
+  visitCalendarTriggerButton: {
+    minHeight: 64,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  visitCalendarTriggerLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+
+  visitCalendarTriggerValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  visitCalendarTriggerValuePlaceholder: {
+    color: '#87a0b1',
+  },
+
+  visitCalendarTriggerIconImage: {
+    width: 26,
+    height: 26,
+    tintColor: '#173f5c',
   },
 
   optionChip: {
@@ -720,6 +1012,12 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
 
+  inlineButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+
   primaryActionButtonFull: {
     minHeight: 54,
     borderRadius: 18,
@@ -968,12 +1266,271 @@ export const styles = StyleSheet.create({
     }),
   },
 
+  reasonPickerModalCard: {
+    width: '100%',
+    maxHeight: '78%',
+    backgroundColor: '#f8fcff',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#dbeef8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f2d45',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.16,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+
+  scheduleCalendarModalCard: {
+    width: '100%',
+    backgroundColor: '#f8fcff',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#dbeef8',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f2d45',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.16,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+
   modalTitle: {
     fontSize: 20,
     fontWeight: '900',
     color: '#173f5c',
     marginBottom: 10,
     textAlign: 'center',
+  },
+
+  reasonPickerModalText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#5d7b91',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+
+  reasonPickerList: {
+    marginBottom: 16,
+  },
+
+  reasonPickerListContent: {
+    paddingBottom: 4,
+  },
+
+  reasonPickerOption: {
+    minHeight: 52,
+    borderRadius: 18,
+    backgroundColor: '#eef8ff',
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+
+  reasonPickerOptionActive: {
+    backgroundColor: '#173f5c',
+    borderColor: '#173f5c',
+  },
+
+  reasonPickerOptionText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  reasonPickerOptionTextActive: {
+    color: '#ffffff',
+  },
+
+  scheduleCalendarHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    marginBottom: 18,
+    paddingHorizontal: 2,
+  },
+
+  scheduleCalendarNavButton: {
+    minWidth: 82,
+    minHeight: 46,
+    borderRadius: 18,
+    backgroundColor: '#e8f2f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+
+  scheduleCalendarNavButtonDisabled: {
+    opacity: 0.45,
+  },
+
+  scheduleCalendarNavButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  scheduleCalendarTitleWrap: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 12,
+    justifyContent: 'center',
+  },
+
+  scheduleCalendarActiveMonth: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#173f5c',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  scheduleCalendarPickerWrapYear: {
+    width: '100%',
+    minHeight: 50,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+
+  scheduleCalendarPickerDropdown: {
+    minHeight: 46,
+  },
+
+  scheduleDropdownContainer: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#d7edf9',
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+
+  scheduleDropdownPlaceholder: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#87a0b1',
+  },
+
+  scheduleDropdownSelectedText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  scheduleDropdownItemText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#173f5c',
+  },
+
+  scheduleDropdownIcon: {
+    width: 18,
+    height: 18,
+  },
+
+  scheduleCalendarWeekHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  scheduleCalendarWeekLabel: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6a8aa0',
+    textTransform: 'uppercase',
+  },
+
+  scheduleCalendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+  },
+
+  scheduleCalendarDayCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  scheduleCalendarDayCellEmpty: {
+    backgroundColor: 'transparent',
+  },
+
+  scheduleCalendarDayCellDisabled: {
+    backgroundColor: '#eef3f7',
+  },
+
+  scheduleCalendarDayCellAvailable: {
+    backgroundColor: '#e9f8ef',
+    borderWidth: 1,
+    borderColor: '#bfe8cf',
+  },
+
+  scheduleCalendarDayCellSelected: {
+    backgroundColor: '#173f5c',
+  },
+
+  scheduleCalendarDayCellAvailableSelected: {
+    backgroundColor: '#2fa866',
+    borderWidth: 1,
+    borderColor: '#2fa866',
+  },
+
+  scheduleCalendarDayText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#173f5c',
+  },
+
+  scheduleCalendarDayTextEmpty: {
+    color: 'transparent',
+  },
+
+  scheduleCalendarDayTextDisabled: {
+    color: '#aabac6',
+  },
+
+  scheduleCalendarDayTextAvailable: {
+    color: '#2f8d59',
+  },
+
+  scheduleCalendarDayTextSelected: {
+    color: '#ffffff',
+  },
+
+  scheduleCalendarDayTextAvailableSelected: {
+    color: '#ffffff',
+  },
+
+  scheduleCalendarDonePlaceholder: {
+    width: '48%',
+    minHeight: 48,
   },
 
   modalMessage: {

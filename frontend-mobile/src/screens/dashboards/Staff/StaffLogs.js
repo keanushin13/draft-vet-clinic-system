@@ -1,7 +1,8 @@
 import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../styles/StaffLogsDesign';
 
-const StaffLogs = ({ navigation }) => {
+const StaffLogs = ({ navigation, route }) => {
+  const loggedInUser = route?.params?.user;
   const logs = [
     { id: '1', action: 'Updated Inventory: Bravecto', user: 'Staff: Aldwin', time: 'Feb 08, 2026 | 09:30 AM' },
     { id: '2', action: 'Approved Appointment: Buddy', user: 'Staff: Maria', time: 'Feb 08, 2026 | 08:45 AM' },
@@ -23,7 +24,7 @@ const StaffLogs = ({ navigation }) => {
       <View style={styles.titleBar}>
         <Text style={styles.titleText}>System Logs</Text>
         {/* Linked to StaffNotif */}
-        <TouchableOpacity onPress={() => navigation.navigate('StaffNotif')}>
+        <TouchableOpacity onPress={() => navigation.navigate('StaffNotif', { user: loggedInUser })}>
           <Image source={require('../../assets/Bell_Icon.png')} style={styles.bellIcon} resizeMode="contain" />
         </TouchableOpacity>
       </View>
@@ -52,7 +53,7 @@ const StaffLogs = ({ navigation }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity 
           style={styles.navItem} 
-          onPress={() => navigation.navigate('StaffDashboard')}
+          onPress={() => navigation.navigate('staff-screen', { user: loggedInUser })}
         >
           <Image source={require('../../assets/Dashboard_Icon.png')} style={[styles.navIcon, {tintColor: '#000'}]} resizeMode="contain" />
           <Text style={styles.navLabel}>Home</Text>
@@ -60,7 +61,7 @@ const StaffLogs = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.navItem}
-          onPress={() => navigation.navigate('StaffMessages')}
+          onPress={() => navigation.navigate('StaffMessages', { user: loggedInUser })}
         >
           <Image source={require('../../assets/Message_Icon.png')} style={[styles.navIcon, {tintColor: '#000'}]} resizeMode="contain" />
           <Text style={styles.navLabel}>Messages</Text>
@@ -68,9 +69,9 @@ const StaffLogs = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.navItem}
-          onPress={() => navigation.navigate('StaffProfile')}
+          onPress={() => navigation.navigate('StaffProfile', { user: loggedInUser })}
         >
-          <Image source={require('../../assets/User_Icon.png')} style={[styles.navIcon, {tintColor: '#000'}]} resizeMode="contain" />
+          <Image source={require('../../assets/Profile.png')} style={[styles.navIcon, {tintColor: '#000'}]} resizeMode="contain" />
           <Text style={styles.navLabel}>Account</Text>
         </TouchableOpacity>
       </View>

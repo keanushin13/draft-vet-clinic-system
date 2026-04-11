@@ -12,7 +12,7 @@ import messageIcon from "../../../assets/Message_Icon.png";
 import pawLogo from "../../../assets/paw.png";
 import payHistoryIcon from "../../../assets/payment_icon.png";
 import petsProfileIcon from "../../../assets/Pets_Icon.png";
-import userIcon from "../../../assets/User_Icon.png";
+import userIcon from "../../../assets/Profile.png";
 import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffPaymentHistory = () => {
@@ -21,10 +21,10 @@ const StaffPaymentHistory = () => {
 
   // Sample data for payments
   const [payments] = useState([
-    { id: "TXN-001", owner: "Juan Dela Cruz", pet: "Bella", service: "Checkup & Vaccination", amount: "₱1,200.00", date: "Feb 01, 2026", method: "GCash", status: "Paid" },
-    { id: "TXN-002", owner: "Maria Clara", pet: "Max", service: "Surgery", amount: "₱5,500.00", date: "Jan 30, 2026", method: "Cash", status: "Paid" },
-    { id: "TXN-003", owner: "Pedro Penduko", pet: "Luna", service: "Grooming", amount: "₱800.00", date: "Jan 28, 2026", method: "Bank Transfer", status: "Pending" },
-    { id: "TXN-004", owner: "Elena Gilbert", pet: "Cooper", service: "Medical Supplies", amount: "₱450.00", date: "Jan 25, 2026", method: "Cash", status: "Refunded" },
+    { id: "TXN-001", owner: "Juan Dela Cruz", pet: "Bella", service: "Checkup & Vaccination", amount: "â‚±1,200.00", date: "Feb 01, 2026", method: "GCash", status: "Paid" },
+    { id: "TXN-002", owner: "Maria Clara", pet: "Max", service: "Surgery", amount: "â‚±5,500.00", date: "Jan 30, 2026", method: "Cash", status: "Paid" },
+    { id: "TXN-003", owner: "Pedro Penduko", pet: "Luna", service: "Grooming", amount: "â‚±800.00", date: "Jan 28, 2026", method: "Bank Transfer", status: "Pending" },
+    { id: "TXN-004", owner: "Elena Gilbert", pet: "Cooper", service: "Medical Supplies", amount: "â‚±450.00", date: "Jan 25, 2026", method: "Cash", status: "Refunded" },
   ]);
 
   useEffect(() => {
@@ -65,11 +65,11 @@ const StaffPaymentHistory = () => {
           <div className="payment-summary-row">
             <div className="summary-card">
               <span>Total Revenue (Feb)</span>
-              <h3>₱12,450.00</h3>
+              <h3>â‚±12,450.00</h3>
             </div>
             <div className="summary-card">
               <span>Pending Payments</span>
-              <h3>₱1,800.00</h3>
+              <h3>â‚±1,800.00</h3>
             </div>
           </div>
 

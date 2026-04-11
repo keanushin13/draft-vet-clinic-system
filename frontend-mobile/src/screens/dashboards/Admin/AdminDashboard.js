@@ -70,7 +70,7 @@ const AdminDashboard = ({ navigation }) => {
         {/* Account - Force Black */}
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('AdminProfile')}>
           <Image 
-            source={require('../../assets/User_Icon.png')} 
+            source={require('../../assets/Profile.png')} 
             style={[styles.navIcon, {tintColor: '#000000'}]} 
             resizeMode="contain" 
           />

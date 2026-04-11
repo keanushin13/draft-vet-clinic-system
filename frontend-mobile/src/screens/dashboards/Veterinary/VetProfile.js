@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // ✅ make sure useState is imported
+import React, { useState } from 'react'; // âœ… make sure useState is imported
 import { Image, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../styles/VetProfileDesign';
 import CustomModal from '../../../components/CustomModal';
@@ -33,7 +33,7 @@ const VetProfile = ({ navigation }) => {
       <View style={styles.profileContent}>
         <View style={styles.avatarCircle}>
           <Image
-            source={require('../../assets/User_Icon.png')}
+            source={require('../../assets/Profile.png')}
             style={{ width: 60, height: 60, tintColor: '#2c4760' }}
           />
         </View>
@@ -63,7 +63,7 @@ const VetProfile = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem}>
-          <Image source={require('../../assets/User_Icon.png')} style={[styles.navIcon, { tintColor: '#5ba1a6' }]} />
+          <Image source={require('../../assets/Profile.png')} style={[styles.navIcon, { tintColor: '#5ba1a6' }]} />
           <Text style={[styles.navLabel, { color: '#5ba1a6' }]}>Account</Text>
         </TouchableOpacity>
       </View>

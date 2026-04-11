@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActionSheetIOS,
   Animated,
   Easing,
   Image,
   Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   Text,
@@ -17,30 +19,57 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../../styles/PetOwnerProfileDesign';
 import CustomModal from '../../../components/CustomModal';
 
-const buildProfileFromUser = (user) => ({
-  username:
-    user?.username ||
-    user?.name ||
-    user?.fullName ||
-    'Pet Owner',
-  fullName:
-    user?.fullName ||
-    user?.name ||
-    user?.username ||
-    'Pet Owner',
-  email: user?.email || '',
-  contact: user?.contact || user?.phone || '',
-  emergencyContact: user?.emergencyContact || '',
-  address: user?.address || '',
-  age: String(user?.age || ''),
-  profileImageUri: user?.profileImageUri || user?.avatar || '',
-});
+const DEFAULT_PROFILE_IMAGE = require('../../assets/Profile.png');
+
+const splitFullName = (value) => {
+  const trimmedValue = (value || '').trim();
+
+  if (!trimmedValue) {
+    return { firstName: '', lastName: '' };
+  }
+
+  const parts = trimmedValue.split(/\s+/);
+
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' '),
+  };
+};
+
+const buildProfileFromUser = (user) => {
+  const resolvedName = user?.fullName || user?.name || '';
+  const { firstName, lastName } = splitFullName(resolvedName);
+
+  return {
+    username:
+      user?.username ||
+      user?.name ||
+      user?.fullName ||
+      'Pet Owner',
+    firstName,
+    lastName,
+    fullName: resolvedName,
+    email:
+      user?.email ||
+      user?.gmail ||
+      user?.accountEmail ||
+      user?.userEmail ||
+      '',
+    contact: user?.contact || user?.phone || '',
+    emergencyContact: user?.emergencyContact || '',
+    address: user?.address || '',
+    age: String(user?.age || ''),
+    profileImageUri: user?.profileImageUri || user?.avatar || '',
+  };
+};
 
 const PetOwnerProfile = ({ navigation, route }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showProfileToast, setShowProfileToast] = useState(false);
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [showRequiredFieldsModal, setShowRequiredFieldsModal] = useState(false);
   const scrollViewRef = useRef(null);
 
   const loggedInUser = route?.params?.user;
@@ -108,22 +137,32 @@ const PetOwnerProfile = ({ navigation, route }) => {
   }, [showProfileToast]);
 
   const openEditMode = () => {
-    setDraftProfile(profileData);
+    setDraftProfile({
+      ...profileData,
+      firstName: '',
+    });
     setIsEditing(true);
   };
 
   const cancelEditMode = () => {
     setDraftProfile(profileData);
     setIsEditing(false);
+    setShowPhotoOptions(false);
   };
 
   const saveProfile = () => {
-    setProfileData(draftProfile);
+    const fullName = `${draftProfile.firstName || ''} ${draftProfile.lastName || ''}`.trim();
+    const nextProfile = {
+      ...draftProfile,
+      fullName,
+    };
+
+    setProfileData(nextProfile);
     setShowSaveConfirm(false);
     setIsEditing(false);
     setShowProfileToast(true);
     navigation.setParams({
-      user: { ...(loggedInUser || {}), ...draftProfile },
+      user: { ...(loggedInUser || {}), ...nextProfile },
     });
   };
 
@@ -131,38 +170,122 @@ const PetOwnerProfile = ({ navigation, route }) => {
     setDraftProfile((current) => ({ ...current, [field]: value }));
   };
 
+  const hasEmptyRequiredField = (profile) =>
+    !profile?.firstName?.trim() ||
+    !profile?.lastName?.trim() ||
+    !profile?.username?.trim() ||
+    !profile?.email?.trim() ||
+    !profile?.contact?.trim() ||
+    !profile?.emergencyContact?.trim() ||
+    !profile?.address?.trim();
+
+  const handleDonePress = () => {
+    if (hasEmptyRequiredField(draftProfile)) {
+      setShowRequiredFieldsModal(true);
+      return;
+    }
+
+    setShowSaveConfirm(true);
+  };
+
   const pickPhotoFromAlbum = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permission.granted) {
-      return;
+      if (!permission.granted) {
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      updateDraftField('profileImageUri', result.assets[0].uri);
+    } catch (error) {
+      console.warn('Failed to open album picker for profile photo:', error);
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.85,
-    });
-
-    if (result.canceled || !result.assets?.length) {
-      return;
-    }
-
-    updateDraftField('profileImageUri', result.assets[0].uri);
   };
 
   const pickPhotoFromFiles = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: 'image/*',
-      copyToCacheDirectory: true,
-      multiple: false,
-    });
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
 
-    if (result.canceled || !result.assets?.length) {
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      updateDraftField('profileImageUri', result.assets[0].uri);
+    } catch (error) {
+      console.warn('Failed to open file picker for profile photo:', error);
+    }
+  };
+
+  const takePhotoWithCamera = async () => {
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permission.granted) {
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      updateDraftField('profileImageUri', result.assets[0].uri);
+    } catch (error) {
+      console.warn('Failed to open camera for profile photo:', error);
+    }
+  };
+
+  const handlePhotoOptionPress = (action) => {
+    setShowPhotoOptions(false);
+    setTimeout(() => {
+      action();
+    }, Platform.OS === 'ios' ? 280 : 120);
+  };
+
+  const openPhotoOptions = () => {
+    if (!isEditing) {
       return;
     }
 
-    updateDraftField('profileImageUri', result.assets[0].uri);
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Choose from Album', 'Choose from Files', 'Use Camera'],
+          cancelButtonIndex: 0,
+          userInterfaceStyle: 'light',
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            pickPhotoFromAlbum();
+          } else if (buttonIndex === 2) {
+            pickPhotoFromFiles();
+          } else if (buttonIndex === 3) {
+            takePhotoWithCamera();
+          }
+        }
+      );
+      return;
+    }
+
+    setShowPhotoOptions(true);
   };
 
   const openHeaderMenu = () => {
@@ -315,7 +438,7 @@ const PetOwnerProfile = ({ navigation, route }) => {
                   />
                 ) : (
                   <Image
-                    source={require('../../assets/User_Icon.png')}
+                    source={DEFAULT_PROFILE_IMAGE}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -451,20 +574,6 @@ const PetOwnerProfile = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <LinearGradient
-            colors={['#7aa4c8', '#698fb0', '#567997']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <Text style={styles.heroEyebrow}>Account details</Text>
-            <Text style={styles.heroTitle}>Manage your pet owner profile</Text>
-            <Text style={styles.heroDescription}>
-              Review your account details, contact information, and profile
-              status in one clean dashboard-style view.
-            </Text>
-          </LinearGradient>
-
           <View style={styles.sectionHeaderWrap}>
             <Text style={styles.sectionTitle}>
               {isEditing ? 'Edit Profile' : 'Profile Overview'}
@@ -478,107 +587,130 @@ const PetOwnerProfile = ({ navigation, route }) => {
 
           <View style={styles.profileCard}>
             <View style={styles.profileTopRow}>
-              <View style={styles.avatarWrap}>
-                {((isEditing ? draftProfile.profileImageUri : profileData.profileImageUri)) ? (
-                  <Image
-                    source={{
-                      uri: isEditing
-                        ? draftProfile.profileImageUri
-                        : profileData.profileImageUri,
-                    }}
-                    style={styles.avatarCustom}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Image
-                    source={require('../../assets/paw1.png')}
-                    style={styles.avatar}
-                    resizeMode="contain"
-                  />
-                )}
+              <View style={styles.avatarSection}>
+                <TouchableOpacity
+                  style={styles.avatarWrap}
+                  onPress={openPhotoOptions}
+                  activeOpacity={isEditing ? 0.9 : 1}
+                  disabled={!isEditing}
+                >
+                  {((isEditing ? draftProfile.profileImageUri : profileData.profileImageUri)) ? (
+                    <Image
+                      source={{
+                        uri: isEditing
+                          ? draftProfile.profileImageUri
+                          : profileData.profileImageUri,
+                      }}
+                      style={styles.avatarCustom}
+                      resizeMode="cover"
+                    />
+                    ) : (
+                      <Image
+                        source={DEFAULT_PROFILE_IMAGE}
+                        style={styles.avatar}
+                        resizeMode="contain"
+                      />
+                    )}
+                </TouchableOpacity>
+
+                {isEditing ? (
+                  <TouchableOpacity
+                    style={styles.avatarPlusButton}
+                    onPress={openPhotoOptions}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={styles.avatarPlusText}>+</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <View style={styles.profileTopContent}>
                 <Text style={styles.profileName}>
-                  {isEditing ? draftProfile.fullName : profileData.fullName}
-                </Text>
-                <Text style={styles.profileMeta}>
-                  {isEditing ? draftProfile.age : profileData.age} years old
-                </Text>
-                <Text style={styles.profileMeta}>
-                  {isEditing ? draftProfile.address : profileData.address}
+                  {isEditing ? draftProfile.username : profileData.username}
                 </Text>
               </View>
             </View>
 
             {isEditing ? (
               <View style={styles.formCard}>
-                <Text style={styles.formLabel}>Profile Photo</Text>
-                <View style={styles.photoSourceRow}>
-                  <TouchableOpacity
-                    style={styles.photoSourceButton}
-                    onPress={pickPhotoFromAlbum}
-                    activeOpacity={0.9}
-                  >
-                    <Text style={styles.photoSourceText}>Choose from Album</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.photoSourceButton}
-                    onPress={pickPhotoFromFiles}
-                    activeOpacity={0.9}
-                  >
-                    <Text style={styles.photoSourceText}>Choose from Files</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.formLabel}>Full Name</Text>
+                <Text style={styles.formLabel}>
+                  First Name<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
-                  value={draftProfile.fullName}
-                  onChangeText={(value) => updateDraftField('fullName', value)}
+                  value={draftProfile.firstName}
+                  onChangeText={(value) => updateDraftField('firstName', value)}
                   style={styles.inputField}
-                  placeholder="Enter full name"
+                  placeholder="Enter first name"
                   placeholderTextColor="#87a0b1"
                 />
 
-                <Text style={styles.formLabel}>Username</Text>
+                <Text style={styles.formLabel}>
+                  Last Name<Text style={styles.requiredMark}> *</Text>
+                </Text>
+                <TextInput
+                  value={draftProfile.lastName}
+                  onChangeText={(value) => updateDraftField('lastName', value)}
+                  style={styles.inputField}
+                  placeholder="Enter last name"
+                  placeholderTextColor="#87a0b1"
+                />
+
+                <Text style={styles.formLabel}>
+                  Username<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
                   value={draftProfile.username}
-                  onChangeText={(value) => updateDraftField('username', value)}
-                  style={styles.inputField}
-                  placeholder="Enter username"
-                  placeholderTextColor="#87a0b1"
+                  editable={false}
+                  style={[styles.inputField, styles.disabledInputField]}
+                  placeholderTextColor="#9aaebd"
                 />
 
-                <Text style={styles.formLabel}>Email</Text>
+                <Text style={styles.formLabel}>
+                  Email<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
                   value={draftProfile.email}
-                  onChangeText={(value) => updateDraftField('email', value)}
-                  style={styles.inputField}
-                  placeholder="Enter email"
-                  placeholderTextColor="#87a0b1"
+                  editable={false}
+                  style={[styles.inputField, styles.disabledInputField]}
+                  placeholderTextColor="#9aaebd"
                 />
 
-                <Text style={styles.formLabel}>Contact</Text>
+                <Text style={styles.formLabel}>
+                  Contact<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
                   value={draftProfile.contact}
-                  onChangeText={(value) => updateDraftField('contact', value)}
+                  onChangeText={(value) =>
+                    updateDraftField('contact', value.replace(/[^0-9]/g, ''))
+                  }
                   style={styles.inputField}
                   placeholder="Enter contact number"
                   placeholderTextColor="#87a0b1"
+                  keyboardType="number-pad"
+                  maxLength={11}
                 />
 
-                <Text style={styles.formLabel}>Emergency Contact</Text>
+                <Text style={styles.formLabel}>
+                  Emergency Contact<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
                   value={draftProfile.emergencyContact}
                   onChangeText={(value) =>
-                    updateDraftField('emergencyContact', value)
+                    updateDraftField(
+                      'emergencyContact',
+                      value.replace(/[^0-9]/g, '')
+                    )
                   }
                   style={styles.inputField}
                   placeholder="Enter emergency contact"
                   placeholderTextColor="#87a0b1"
+                  keyboardType="number-pad"
+                  maxLength={11}
                 />
 
-                <Text style={styles.formLabel}>Address</Text>
+                <Text style={styles.formLabel}>
+                  Address<Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <TextInput
                   value={draftProfile.address}
                   onChangeText={(value) => updateDraftField('address', value)}
@@ -586,25 +718,12 @@ const PetOwnerProfile = ({ navigation, route }) => {
                   placeholder="Enter address"
                   placeholderTextColor="#87a0b1"
                 />
-
-                <Text style={styles.formLabel}>Age</Text>
-                <TextInput
-                  value={draftProfile.age}
-                  onChangeText={(value) =>
-                    updateDraftField('age', value.replace(/[^0-9]/g, ''))
-                  }
-                  style={styles.inputField}
-                  placeholder="Enter age"
-                  placeholderTextColor="#87a0b1"
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
               </View>
             ) : (
               <View style={styles.infoGrid}>
                 <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Username</Text>
-                  <Text style={styles.infoValue}>{profileData.username}</Text>
+                  <Text style={styles.infoLabel}>Full Name</Text>
+                  <Text style={styles.infoValue}>{profileData.fullName}</Text>
                 </View>
                 <View style={styles.infoItem}>
                   <Text style={styles.infoLabel}>Email</Text>
@@ -634,7 +753,7 @@ const PetOwnerProfile = ({ navigation, route }) => {
               <>
                 <TouchableOpacity
                   style={styles.editButton}
-                  onPress={() => setShowSaveConfirm(true)}
+                  onPress={handleDonePress}
                   activeOpacity={0.9}
                 >
                   <Text style={styles.editButtonText}>Done</Text>
@@ -673,7 +792,7 @@ const PetOwnerProfile = ({ navigation, route }) => {
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, styles.activeNavItem]}
-            onPress={() => navigation.navigate('PetOwnerMessages', { user: currentUser })}
+            onPress={() => navigation.navigate('PetOwnerQuickAssist', { user: currentUser })}
             activeOpacity={0.9}
           >
             <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>
@@ -685,6 +804,77 @@ const PetOwnerProfile = ({ navigation, route }) => {
             </View>
           </TouchableOpacity>
         </View>
+
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showRequiredFieldsModal}
+          onRequestClose={() => setShowRequiredFieldsModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Required Fields</Text>
+              <Text style={styles.modalMessage}>
+                Please complete all required fields before saving your profile.
+              </Text>
+              <TouchableOpacity
+                style={styles.modalPrimaryButtonFull}
+                onPress={() => setShowRequiredFieldsModal(false)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.modalPrimaryText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showPhotoOptions}
+          onRequestClose={() => setShowPhotoOptions(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.photoModalCard}>
+              <Text style={styles.modalTitle}>Update Profile Photo</Text>
+              <Text style={styles.modalMessage}>
+                Choose how you want to add your profile picture.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.photoOptionButton}
+                onPress={() => handlePhotoOptionPress(pickPhotoFromAlbum)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.photoOptionText}>Choose from Album</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.photoOptionButton}
+                onPress={() => handlePhotoOptionPress(pickPhotoFromFiles)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.photoOptionText}>Choose from Files</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.photoOptionButton}
+                onPress={() => handlePhotoOptionPress(takePhotoWithCamera)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.photoOptionText}>Use Camera</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.photoOptionCancelButton}
+                onPress={() => setShowPhotoOptions(false)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.photoOptionCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           transparent

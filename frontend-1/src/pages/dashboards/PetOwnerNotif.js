@@ -11,7 +11,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import paymentIcon from "../../assets/payment_icon.png";
 import petsIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 
 const PetOwnerNotif = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const PetOwnerNotif = () => {
       id: 3,
       type: "payment",
       title: "Payment Successful",
-      desc: "Transaction #PC-9982 for ₱1,200.00 has been processed successfully.",
+      desc: "Transaction #PC-9982 for â‚±1,200.00 has been processed successfully.",
       time: "Yesterday",
       isRead: true,
       icon: paymentIcon

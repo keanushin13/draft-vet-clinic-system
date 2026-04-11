@@ -7,6 +7,10 @@ const sendEmail = require("../utils/sendEmail");
 // ===================== CONFIG =====================
 const MAX_ATTEMPTS = 5;
 const TIME_EXPIRATION = 5 * 60 * 1000; // 5 minutes
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+const PUBLIC_SERVER_URL =
+    process.env.PUBLIC_SERVER_URL ||
+    `http://localhost:${process.env.PORT || 5000}`;
 
 // ===================== REGISTER USER =====================
 // POST /api/users/register
@@ -49,10 +53,7 @@ exports.registerUser = async (req, res) => {
            - number
            - special char
         ========================== */
-        const passwordRegex =
-            /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
-
-        if (!passwordRegex.test(password)) {
+        if (!PASSWORD_REGEX.test(password)) {
             return res.status(400).json({
                 message:
                     "Password must be at least 8 characters and include a letter, number, and special character",
@@ -105,7 +106,7 @@ exports.registerUser = async (req, res) => {
         /* =========================
            SEND VERIFICATION EMAIL
         ========================== */
-        const verifyLink = `${process.env.CLIENT_URL}/verify-email/${emailToken}`;
+        const verifyLink = `${PUBLIC_SERVER_URL}/api/users/verify-email/${emailToken}`;
 
         await sendEmail(
             email,
@@ -142,9 +143,19 @@ exports.verifyEmail = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({
-                message: "Invalid or expired verification link"
-            });
+            const message = "Invalid or expired verification link";
+
+            if (req.method === "GET") {
+                return res.status(400).send(
+                    renderStatusPage({
+                        title: "Verification Failed",
+                        message,
+                        tone: "error",
+                    })
+                );
+            }
+
+            return res.status(400).json({ message });
         }
 
         // ✅ Mark email as verified
@@ -154,9 +165,19 @@ exports.verifyEmail = async (req, res) => {
 
         await user.save();
 
-        res.status(200).json({
-            message: "Email verified successfully. You may now log in."
-        });
+        const message = "Email verified successfully. Return to the app and log in.";
+
+        if (req.method === "GET") {
+            return res.status(200).send(
+                renderStatusPage({
+                    title: "Email Verified",
+                    message,
+                    tone: "success",
+                })
+            );
+        }
+
+        res.status(200).json({ message });
 
     } catch (error) {
         console.error("Verify Email Error:", error);
@@ -264,7 +285,7 @@ exports.forgotPassword = async (req, res) => {
         user.passwordResetUsed = false; // 👈 allow new reset
         await user.save();
 
-        const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+        const resetLink = `${PUBLIC_SERVER_URL}/api/users/reset-password/${resetToken}`;
 
         await sendEmail(
             user.email,
@@ -292,10 +313,44 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
-        const { newPassword } = req.body;
+        const { newPassword, confirmPassword } = req.body;
+        const isBrowserForm = req.is("application/x-www-form-urlencoded");
 
         if (!newPassword) {
+            if (isBrowserForm) {
+                return res.status(400).send(
+                    renderResetPasswordPage(token, {
+                        error: "New password is required.",
+                    })
+                );
+            }
+
             return res.status(400).json({ message: "New password is required" });
+        }
+
+        if (confirmPassword && newPassword !== confirmPassword) {
+            if (isBrowserForm) {
+                return res.status(400).send(
+                    renderResetPasswordPage(token, {
+                        error: "Passwords do not match.",
+                    })
+                );
+            }
+
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        if (!PASSWORD_REGEX.test(newPassword)) {
+            const message =
+                "Password must be at least 8 characters and include a letter, number, and special character";
+
+            if (isBrowserForm) {
+                return res.status(400).send(
+                    renderResetPasswordPage(token, { error: message })
+                );
+            }
+
+            return res.status(400).json({ message });
         }
 
         const user = await User.findOne({
@@ -305,9 +360,19 @@ exports.resetPassword = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({
-                message: "This reset link has already been used or expired"
-            });
+            const message = "This reset link has already been used or expired";
+
+            if (isBrowserForm) {
+                return res.status(400).send(
+                    renderStatusPage({
+                        title: "Reset Link Invalid",
+                        message,
+                        tone: "error",
+                    })
+                );
+            }
+
+            return res.status(400).json({ message });
         }
 
         user.password = await bcrypt.hash(newPassword, 10);
@@ -316,13 +381,69 @@ exports.resetPassword = async (req, res) => {
         user.passwordResetUsed = true;
         await user.save();
 
-        res.status(200).json({
-            message: "Password reset successful. You may now log in."
-        });
+        const message = "Password reset successful. Return to the app and log in.";
+
+        if (isBrowserForm) {
+            return res.status(200).send(
+                renderStatusPage({
+                    title: "Password Updated",
+                    message,
+                    tone: "success",
+                })
+            );
+        }
+
+        res.status(200).json({ message });
 
     } catch (error) {
         console.error("Reset Password Error:", error);
+
+        if (req.is("application/x-www-form-urlencoded")) {
+            return res.status(500).send(
+                renderStatusPage({
+                    title: "Reset Failed",
+                    message: "Server error",
+                    tone: "error",
+                })
+            );
+        }
+
         res.status(500).json({ message: "Server error" });
+    }
+};
+
+// ===================== RESET PASSWORD PAGE =====================
+// GET /api/users/reset-password/:token
+exports.getResetPasswordPage = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+            passwordResetUsed: false,
+        });
+
+        if (!user) {
+            return res.status(400).send(
+                renderStatusPage({
+                    title: "Reset Link Invalid",
+                    message: "This reset link has already been used or expired.",
+                    tone: "error",
+                })
+            );
+        }
+
+        return res.status(200).send(renderResetPasswordPage(token));
+    } catch (error) {
+        console.error("Reset Password Page Error:", error);
+        return res.status(500).send(
+            renderStatusPage({
+                title: "Reset Failed",
+                message: "Server error",
+                tone: "error",
+            })
+        );
     }
 };
 
@@ -352,6 +473,7 @@ exports.verifyLoginOtp = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
+                email: user.email,
                 role: user.role
             }
         });
@@ -400,24 +522,64 @@ exports.resendLoginOtp = async (req, res) => {
 
 // ===================== UNLOCK ACCOUNT =====================
 exports.unlockAccount = async (req, res) => {
-    const { token } = req.params;
+    try {
+        const { token } = req.params;
 
-    const user = await User.findOne({
-        unlockToken: token,
-        unlockTokenExpires: { $gt: Date.now() }
-    });
+        const user = await User.findOne({
+            unlockToken: token,
+            unlockTokenExpires: { $gt: Date.now() }
+        });
 
-    if (!user) {
-        return res.status(400).json({ message: "Invalid or expired link" });
+        if (!user) {
+            const message = "Invalid or expired link";
+
+            if (req.method === "GET") {
+                return res.status(400).send(
+                    renderStatusPage({
+                        title: "Unlock Failed",
+                        message,
+                        tone: "error",
+                    })
+                );
+            }
+
+            return res.status(400).json({ message });
+        }
+
+        user.lockUntil = null;
+        user.loginAttempts = 0;
+        user.unlockToken = undefined;
+        user.unlockTokenExpires = undefined;
+        await user.save();
+
+        const message = "Account unlocked successfully. Return to the app and log in.";
+
+        if (req.method === "GET") {
+            return res.status(200).send(
+                renderStatusPage({
+                    title: "Account Unlocked",
+                    message,
+                    tone: "success",
+                })
+            );
+        }
+
+        return res.status(200).json({ message });
+    } catch (error) {
+        console.error("Unlock Account Error:", error);
+
+        if (req.method === "GET") {
+            return res.status(500).send(
+                renderStatusPage({
+                    title: "Unlock Failed",
+                    message: "Server error",
+                    tone: "error",
+                })
+            );
+        }
+
+        return res.status(500).json({ message: "Server error" });
     }
-
-    user.lockUntil = null;
-    user.loginAttempts = 0;
-    user.unlockToken = undefined;
-    user.unlockTokenExpires = undefined;
-    await user.save();
-
-    res.status(200).json({ message: "Account unlocked successfully" });
 };
 
 // ===================== SEND UNLOCK EMAIL =====================
@@ -446,7 +608,7 @@ exports.sendUnlockEmail = async (req, res) => {
         user.unlockTokenExpires = Date.now() + TIME_EXPIRATION;
         await user.save();
 
-        const unlockLink = `${process.env.CLIENT_URL}/unlock-account/${unlockToken}`;
+        const unlockLink = `${PUBLIC_SERVER_URL}/api/users/unlock/${unlockToken}`;
 
         await sendEmail(
             user.email,
@@ -529,6 +691,85 @@ exports.updatePassword = async (req, res) => {
 // ===================== HELPERS =====================
 const generateOtp = () =>
     Math.floor(100000 + Math.random() * 900000).toString();
+
+const escapeHtml = (value = "") =>
+    String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+const renderStatusPage = ({ title, message, tone }) => {
+    const palette =
+        tone === "success"
+            ? { accent: "#0f766e", chip: "#ccfbf1", card: "#f0fdfa" }
+            : { accent: "#b91c1c", chip: "#fee2e2", card: "#fef2f2" };
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: linear-gradient(135deg, #e0f2fe, #f8fafc); color: #0f172a; }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { width: 100%; max-width: 460px; background: ${palette.card}; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 20px; padding: 28px; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12); }
+    .chip { display: inline-block; padding: 6px 12px; border-radius: 999px; background: ${palette.chip}; color: ${palette.accent}; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    h1 { margin: 14px 0 10px; font-size: 28px; }
+    p { margin: 0; font-size: 16px; line-height: 1.6; color: #334155; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="chip">PawCruz</div>
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
+const renderResetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: linear-gradient(135deg, #dbeafe, #f8fafc); color: #0f172a; }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { width: 100%; max-width: 460px; background: #ffffff; border-radius: 20px; padding: 28px; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12); }
+    h1 { margin: 0 0 10px; font-size: 28px; }
+    p { margin: 0 0 18px; color: #475569; line-height: 1.6; }
+    label { display: block; margin: 12px 0 6px; font-size: 14px; font-weight: 700; }
+    input { width: 100%; box-sizing: border-box; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 15px; }
+    button { width: 100%; margin-top: 18px; padding: 14px 16px; border: 0; border-radius: 12px; background: #0f766e; color: #ffffff; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .help { margin-top: 14px; font-size: 13px; color: #64748b; }
+    .error { margin: 12px 0 0; color: #b91c1c; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Reset Password</h1>
+      <p>Enter a new password for your account. Use at least 8 characters with a letter, a number, and a special character.</p>
+      <form method="POST" action="/api/users/reset-password/${escapeHtml(token)}">
+        <label for="newPassword">New Password</label>
+        <input id="newPassword" name="newPassword" type="password" minlength="8" required />
+        <label for="confirmPassword">Confirm Password</label>
+        <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required />
+        ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+        <button type="submit">Update Password</button>
+      </form>
+      <p class="help">After updating your password, return to the mobile app and sign in again.</p>
+    </div>
+  </div>
+</body>
+</html>`;
 
 const sendOtpEmail = async (email, otp, subject) => {
     await sendEmail(

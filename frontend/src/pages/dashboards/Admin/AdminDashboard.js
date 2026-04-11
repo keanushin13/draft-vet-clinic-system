@@ -7,7 +7,7 @@ import bellIcon from "../../../assets/Bell_Icon.png";
 import dashboardIcon from "../../../assets/Dashboard_Icon.png";
 import messageIcon from "../../../assets/Message_Icon.png";
 import pawLogo from "../../../assets/paw.png";
-import userIcon from "../../../assets/User_Icon.png";
+import userIcon from "../../../assets/Profile.png";
 import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const AdminDashboard = () => {
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
             <div className="stat-card green">
               <div className="stat-info">
                 <span>Monthly Revenue</span>
-                <h4>₱45,200</h4>
+                <h4>â‚±45,200</h4>
               </div>
             </div>
             <div className="stat-card yellow">
@@ -98,7 +98,7 @@ const AdminDashboard = () => {
           <div className="admin-recent-flex">
              <div className="recent-box">
                 <h4>System Health</h4>
-                <p style={{color: '#63c58d', fontWeight: 'bold'}}>● All systems operational</p>
+                <p style={{color: '#63c58d', fontWeight: 'bold'}}>â— All systems operational</p>
              </div>
              <div className="recent-box">
                 <h4>Quick Actions</h4>

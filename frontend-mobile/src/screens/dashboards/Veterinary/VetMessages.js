@@ -105,7 +105,7 @@ const VetMessages = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('VetProfile')}>
-          <Image source={require('../../assets/User_Icon.png')} style={[styles.navIcon, {tintColor: '#000'}]} />
+          <Image source={require('../../assets/Profile.png')} style={[styles.navIcon, {tintColor: '#000'}]} />
           <Text style={[styles.navLabel, {color: '#000'}]}>Account</Text>
         </TouchableOpacity>
       </View>

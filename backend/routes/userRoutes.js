@@ -12,6 +12,7 @@ const {
   verifyLoginOtp,
   resendLoginOtp,
   forgotPassword,
+  getResetPasswordPage,
   resetPassword,
   unlockAccount,
   sendUnlockEmail,
@@ -44,6 +45,7 @@ router.post("/resend-login-otp", resendLoginOtp);
    Email-based flow
 ===================== */
 router.post("/forgot-password", forgotPassword);
+router.get("/reset-password/:token", getResetPasswordPage);
 router.post("/reset-password/:token", resetPassword);
 
 /* =====================

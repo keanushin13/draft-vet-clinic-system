@@ -11,7 +11,7 @@ import messageIcon from "../../../assets/Message_Icon.png";
 import pawLogo from "../../../assets/paw.png";
 import inventoryIcon from "../../../assets/payment_icon.png";
 import patientsIcon from "../../../assets/Pets_Icon.png";
-import userIcon from "../../../assets/User_Icon.png";
+import userIcon from "../../../assets/Profile.png";
 
 const VetNotif = () => {
   const navigate = useNavigate();

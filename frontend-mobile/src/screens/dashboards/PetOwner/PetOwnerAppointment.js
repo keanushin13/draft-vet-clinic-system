@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -7,98 +7,26 @@ import {
   SafeAreaView,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../../styles/PetOwnerAppointmentDesign';
+import {
+  OTHER_OPTION_VALUE,
+  VISIT_REASONS,
+  buildReasonSummary,
+  getBookedAppointment as getStoredBookedAppointment,
+  getReasonDetailLabel,
+  getReasonDetailOptions,
+  getReasonHelperText,
+  getReasonLabel,
+  setBookedAppointment as setStoredBookedAppointment,
+} from './PetOwnerAppointmentData';
 
-const REASONS = ['Consultation', 'Vaccination', 'Deworming', 'Minor Surgery'];
-
-const PETS = [
-  { id: 'pet-1', name: 'Max', breed: 'Labrador Retriever' },
-  { id: 'pet-2', name: 'Bella', breed: 'Shih Tzu' },
-  { id: 'pet-3', name: 'Milo', breed: 'Persian Cat' },
-];
-
-const CURRENT_YEAR = 2026;
-const CURRENT_MONTH_INDEX = 2;
-
-const YEARS = [2026, 2027];
-const MONTHS = [
-  { label: 'Jan', value: 'January', index: 0 },
-  { label: 'Feb', value: 'February', index: 1 },
-  { label: 'Mar', value: 'March', index: 2 },
-  { label: 'Apr', value: 'April', index: 3 },
-  { label: 'May', value: 'May', index: 4 },
-  { label: 'Jun', value: 'June', index: 5 },
-  { label: 'Jul', value: 'July', index: 6 },
-  { label: 'Aug', value: 'August', index: 7 },
-  { label: 'Sep', value: 'September', index: 8 },
-  { label: 'Oct', value: 'October', index: 9 },
-  { label: 'Nov', value: 'November', index: 10 },
-  { label: 'Dec', value: 'December', index: 11 },
-];
-
-const CALENDAR_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const TIMES = ['08:00 AM', '10:30 AM', '01:00 PM', '03:30 PM'];
-
-const AI_RECOMMENDATIONS = [
-  {
-    title: 'Best Slot',
-    value: 'Apr 13, 10:30 AM',
-    note: 'Lower queue and ideal for routine wellness visits.',
-  },
-  {
-    title: 'Alternative',
-    value: 'Apr 14, 01:00 PM',
-    note: 'Balanced availability with faster confirmation chances.',
-  },
-  {
-    title: 'Reminder',
-    value: 'Morning Visit',
-    note: 'Recommended if your pet is calmer earlier in the day.',
-  },
-];
-
-const buildCalendarDates = (year, monthIndex) => {
-  const firstDayOfMonth = new Date(year, monthIndex, 1).getDay();
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const previousMonthDays = new Date(year, monthIndex, 0).getDate();
-  const dates = [];
-
-  for (let i = firstDayOfMonth - 1; i >= 0; i -= 1) {
-    dates.push({
-      key: `prev-${i}`,
-      day: String(previousMonthDays - i),
-      muted: true,
-    });
-  }
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    const isPastCurrentMonth =
-      year === CURRENT_YEAR &&
-      monthIndex === CURRENT_MONTH_INDEX &&
-      day < 24;
-
-    dates.push({
-      key: `current-${day}`,
-      day: String(day),
-      muted: isPastCurrentMonth,
-    });
-  }
-
-  while (dates.length % 7 !== 0) {
-    dates.push({
-      key: `next-${dates.length}`,
-      day: String(dates.length % 7 === 0 ? 1 : (dates.length % 7) + 1),
-      muted: true,
-    });
-  }
-
-  return dates;
-};
+const DEFAULT_PROFILE_IMAGE = require('../../assets/Profile.png');
 
 const PetOwnerAppointment = ({ navigation, route }) => {
   const loggedInUser = route?.params?.user;
@@ -115,33 +43,15 @@ const PetOwnerAppointment = ({ navigation, route }) => {
   const isHeaderMenuAnimating = useRef(false);
   const isLowerHeaderVisible = useRef(true);
   const lastScrollY = useRef(0);
-  const [dateSectionY, setDateSectionY] = useState(0);
-  const [isHeaderMenuVisible, setIsHeaderMenuVisible] = useState(false);
-  const [selectedPet, setSelectedPet] = useState(null);
-  const [selectedReason, setSelectedReason] = useState(REASONS[0]);
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState(3);
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedDate, setSelectedDate] = useState('13');
-  const [selectedTime, setSelectedTime] = useState(TIMES[1]);
-  const [bookedAppointment, setBookedAppointment] = useState(null);
-  const [showBookConfirm, setShowBookConfirm] = useState(false);
-  const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showRescheduleBanner, setShowRescheduleBanner] = useState(false);
-  const [showNotificationToast, setShowNotificationToast] = useState(false);
 
-  const appointmentActions = [
-    {
-      key: 'reschedule',
-      label: 'Reschedule',
-      variant: 'secondary',
-    },
-    {
-      key: 'cancel',
-      label: 'Cancel',
-      variant: 'danger',
-    },
-  ];
+  const [isHeaderMenuVisible, setIsHeaderMenuVisible] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [selectedReasonDetail, setSelectedReasonDetail] = useState('');
+  const [customReasonText, setCustomReasonText] = useState('');
+  const [showReasonDetailPicker, setShowReasonDetailPicker] = useState(false);
+  const [bookedAppointment, setBookedAppointment] = useState(() => getStoredBookedAppointment());
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const shouldResetBookingFlow = Boolean(route?.params?.resetBookingFlow);
 
   const headerMenuItems = [
     {
@@ -176,86 +86,51 @@ const PetOwnerAppointment = ({ navigation, route }) => {
     },
   ];
 
-  const selectedPetLabel = selectedPet
-    ? `${selectedPet.name} - ${selectedPet.breed}`
-    : 'Choose a pet first';
+  const reasonOptions = getReasonDetailOptions(selectedReason);
+  const reasonDetailLabel = getReasonDetailLabel(selectedReason);
+  const reasonHelperText = getReasonHelperText(selectedReason);
+  const selectedReasonDetailLabel =
+    reasonOptions.find((item) => item.value === selectedReasonDetail)?.label || '';
+  const isCustomReason =
+    selectedReason === 'consultation' && selectedReasonDetail === OTHER_OPTION_VALUE;
+  const reasonDetailValue = isCustomReason ? customReasonText.trim() : selectedReasonDetail;
+  const selectedReasonSummary = selectedReason
+    ? buildReasonSummary(selectedReason, reasonDetailValue)
+    : 'Choose a visit reason first';
+  const canContinue = Boolean(selectedReason) && Boolean(reasonDetailValue);
 
-  const selectedMonth = MONTHS.find((month) => month.index === selectedMonthIndex);
-  const availableMonths = MONTHS.filter(
-    (month) => selectedYear > CURRENT_YEAR || month.index >= CURRENT_MONTH_INDEX,
+  const resetBookingFlow = useCallback(() => {
+    setSelectedReason('');
+    setSelectedReasonDetail('');
+    setCustomReasonText('');
+    setShowReasonDetailPicker(false);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setBookedAppointment(getStoredBookedAppointment());
+
+      if (shouldResetBookingFlow) {
+        resetBookingFlow();
+        setShowCancelConfirm(false);
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+        navigation.setParams({ resetBookingFlow: undefined });
+      }
+    }, [navigation, resetBookingFlow, shouldResetBookingFlow]),
   );
 
-  const canBook = Boolean(selectedPet);
-  const calendarDates = buildCalendarDates(selectedYear, selectedMonthIndex);
-
   useEffect(() => {
-    if (!showNotificationToast) {
-      return undefined;
-    }
-
-    const timer = setTimeout(() => {
-      setShowNotificationToast(false);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [showNotificationToast]);
-
-  useEffect(() => {
-    const daysInSelectedMonth = new Date(
-      selectedYear,
-      selectedMonthIndex + 1,
-      0,
-    ).getDate();
-
-    if (Number(selectedDate) > daysInSelectedMonth) {
-      setSelectedDate(String(daysInSelectedMonth));
+    if (!selectedReason) {
+      setSelectedReasonDetail('');
+      setCustomReasonText('');
+      setShowReasonDetailPicker(false);
       return;
     }
 
-    if (
-      selectedYear === CURRENT_YEAR &&
-      selectedMonthIndex === CURRENT_MONTH_INDEX &&
-      Number(selectedDate) < 24
-    ) {
-      setSelectedDate('24');
-    }
-  }, [selectedDate, selectedMonthIndex, selectedYear]);
-
-  const handleBookConfirm = () => {
-    const newAppointment = {
-      pet: selectedPet,
-      reason: selectedReason,
-      day: selectedDate,
-      month: selectedMonth?.value || 'April',
-      year: selectedYear,
-      time: selectedTime,
-    };
-
-    setBookedAppointment(newAppointment);
-    setShowBookConfirm(false);
-    setShowNotificationToast(true);
-    setShowRescheduleBanner(false);
-  };
-
-  const handleBellPress = () => {
-    setShowNotificationToast(false);
-    navigation.navigate('PetOwnerNotif', { user: loggedInUser });
-  };
-
-  const handleManagementAction = (actionKey) => {
-    if (!bookedAppointment) {
-      return;
-    }
-
-    if (actionKey === 'reschedule') {
-      setShowRescheduleConfirm(true);
-      return;
-    }
-
-    if (actionKey === 'cancel') {
-      setShowCancelConfirm(true);
-    }
-  };
+    setSelectedReasonDetail('');
+    setCustomReasonText('');
+    setShowReasonDetailPicker(false);
+  }, [selectedReason]);
 
   const openHeaderMenu = () => {
     if (isHeaderMenuVisible || isHeaderMenuAnimating.current) {
@@ -309,9 +184,9 @@ const PetOwnerAppointment = ({ navigation, route }) => {
     openHeaderMenu();
   };
 
-  const handleHeaderMenuPress = (route) => {
+  const handleHeaderMenuPress = (screenRoute) => {
     closeHeaderMenu();
-    navigation.navigate(route, { user: loggedInUser });
+    navigation.navigate(screenRoute, { user: loggedInUser });
   };
 
   const animateLowerHeader = (toValue) => {
@@ -348,6 +223,43 @@ const PetOwnerAppointment = ({ navigation, route }) => {
     lastScrollY.current = currentScrollY;
   };
 
+  const handleNext = () => {
+    if (!canContinue) {
+      return;
+    }
+
+    navigation.navigate('PetOwnerAppointmentSchedule', {
+      user: loggedInUser,
+      appointmentDraft: {
+        reason: selectedReason,
+        reasonLabel: getReasonLabel(selectedReason),
+        reasonDetail: selectedReasonDetail,
+        reasonDetailValue,
+        reasonSummary: buildReasonSummary(selectedReason, reasonDetailValue),
+      },
+    });
+  };
+
+  const handleRescheduleAppointment = () => {
+    if (!bookedAppointment) {
+      return;
+    }
+
+    navigation.navigate('PetOwnerAppointmentSchedule', {
+      user: loggedInUser,
+      appointmentDraft: {
+        reasonSummary: bookedAppointment.reason,
+      },
+      existingAppointment: bookedAppointment,
+    });
+  };
+
+  const handleCancelAppointment = () => {
+    setStoredBookedAppointment(null);
+    setBookedAppointment(null);
+    setShowCancelConfirm(false);
+  };
+
   return (
     <LinearGradient
       colors={['#022c42', '#0c212b', '#15394e']}
@@ -376,14 +288,14 @@ const PetOwnerAppointment = ({ navigation, route }) => {
 
               <View style={styles.brandBlock}>
                 <Text style={styles.headerTitle}>PawCruz</Text>
-                <Text style={styles.headerSubtitle}>Appointment Management</Text>
+                <Text style={styles.headerSubtitle}>Appointment</Text>
               </View>
             </TouchableOpacity>
 
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={styles.notifButton}
-                onPress={handleBellPress}
+                onPress={() => navigation.navigate('PetOwnerNotif', { user: loggedInUser })}
                 activeOpacity={0.85}
               >
                 <View style={styles.notifBadge} />
@@ -407,7 +319,7 @@ const PetOwnerAppointment = ({ navigation, route }) => {
                   />
                 ) : (
                   <Image
-                    source={require('../../assets/User_Icon.png')}
+                    source={DEFAULT_PROFILE_IMAGE}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -415,16 +327,6 @@ const PetOwnerAppointment = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
           </View>
-
-          {showNotificationToast && (
-            <View style={styles.notificationToast}>
-              <View style={styles.notificationPointer} />
-              <Text style={styles.notificationToastTitle}>Booking Sent</Text>
-              <Text style={styles.notificationToastText}>
-                You have just made a booking appointment.
-              </Text>
-            </View>
-          )}
 
           <Animated.View
             style={[
@@ -447,22 +349,22 @@ const PetOwnerAppointment = ({ navigation, route }) => {
             ]}
           >
             <View style={styles.headerBottomRow}>
-            <TouchableOpacity
-              style={styles.menuTriggerButton}
-              onPress={toggleHeaderMenu}
-              activeOpacity={0.85}
-            >
-              <Image
-                source={require('../../assets/List.png')}
-                style={styles.menuTriggerIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuTriggerButton}
+                onPress={toggleHeaderMenu}
+                activeOpacity={0.85}
+              >
+                <Image
+                  source={require('../../assets/List.png')}
+                  style={styles.menuTriggerIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
 
-            <View style={styles.ownerSummary}>
-              <Text style={styles.headerCaption}>Veterinary Check-Up</Text>
-              <Text style={styles.ownerName}>{headerDisplayName}</Text>
-            </View>
+              <View style={styles.ownerSummary}>
+                <Text style={styles.headerCaption}>Step 1 of 2</Text>
+                <Text style={styles.ownerName}>{headerDisplayName}</Text>
+              </View>
             </View>
           </Animated.View>
 
@@ -543,288 +445,101 @@ const PetOwnerAppointment = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <LinearGradient
-            colors={['#7aa4c8', '#698fb0', '#567997']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <Text style={styles.heroEyebrow}>Book with confidence</Text>
-            <Text style={styles.heroTitle}>Veterinary Check-Up Appointment</Text>
-            <Text style={styles.heroDescription}>
-              Book, confirm, reschedule, or cancel your visit while reviewing AI
-              schedule recommendations for the best time slot.
-            </Text>
-          </LinearGradient>
-
           <View style={styles.sectionHeaderWrap}>
-            <Text style={styles.sectionTitle}>Visit Details</Text>
+            <Text style={styles.sectionTitle}>Reason for Visit</Text>
             <Text style={styles.sectionSubtitle}>
-              Choose your pet, reason, date, and time for the visit
+              Start by choosing the service before moving to pet and schedule.
             </Text>
           </View>
 
           <View style={styles.bookingCard}>
-            <Text style={styles.fieldLabel}>Choose pet for check-up</Text>
+            <View style={styles.flowStepBadge}>
+              <Text style={styles.flowStepBadgeText}>Step 1</Text>
+            </View>
+
+            <Text style={styles.fieldLabel}>Choose visit reason</Text>
             <View style={styles.optionGrid}>
-              {PETS.map((pet) => {
-                const isActive = selectedPet?.id === pet.id;
+              {VISIT_REASONS.map((reason) => {
+                const isActive = reason.value === selectedReason;
 
                 return (
                   <TouchableOpacity
-                    key={pet.id}
-                    style={[styles.petChip, isActive && styles.petChipActive]}
-                    onPress={() => setSelectedPet(pet)}
+                    key={reason.value}
+                    style={[styles.reasonCard, isActive && styles.reasonCardActive]}
+                    onPress={() => setSelectedReason(reason.value)}
                     activeOpacity={0.9}
                   >
                     <Text
-                      style={[styles.petChipTitle, isActive && styles.petChipTitleActive]}
-                    >
-                      {pet.name}
-                    </Text>
-                    <Text
                       style={[
-                        styles.petChipSubtitle,
-                        isActive && styles.petChipSubtitleActive,
+                        styles.reasonCardTitle,
+                        isActive && styles.reasonCardTitleActive,
                       ]}
                     >
-                      {pet.breed}
+                      {reason.label}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <Text style={styles.fieldLabel}>Reason for visit</Text>
-            <View style={styles.optionGrid}>
-              {REASONS.map((reason) => {
-                const isActive = reason === selectedReason;
-
-                return (
+            {selectedReason ? (
+              <>
+                <View style={styles.reasonDetailCard}>
+                  <Text style={styles.reasonDetailLabel}>{reasonDetailLabel}</Text>
+                  <Text style={styles.reasonHelperText}>{reasonHelperText}</Text>
                   <TouchableOpacity
-                    key={reason}
-                    style={[styles.optionChip, isActive && styles.optionChipActive]}
-                    onPress={() => setSelectedReason(reason)}
-                    activeOpacity={0.9}
+                    style={styles.reasonSelectButton}
+                    onPress={() => setShowReasonDetailPicker(true)}
+                    activeOpacity={0.88}
                   >
                     <Text
                       style={[
-                        styles.optionChipText,
-                        isActive && styles.optionChipTextActive,
+                        styles.reasonSelectValue,
+                        !selectedReasonDetailLabel && styles.reasonSelectValuePlaceholder,
                       ]}
                     >
-                      {reason}
+                      {selectedReasonDetailLabel || `Select ${reasonDetailLabel.toLowerCase()}`}
                     </Text>
+                    <Text style={styles.reasonSelectChevron}>v</Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
 
-            <View
-              onLayout={(event) => setDateSectionY(event.nativeEvent.layout.y)}
-            >
-              <Text style={styles.fieldLabel}>Choose date</Text>
-              {showRescheduleBanner && (
-                <View style={styles.rescheduleBanner}>
-                  <Text style={styles.rescheduleBannerTitle}>Reschedule Mode Active</Text>
-                  <Text style={styles.rescheduleBannerText}>
-                    Pick a new month, year, date, and time below.
-                  </Text>
-                </View>
-              )}
-              <View style={styles.calendarSelectorsRow}>
-                <View style={styles.selectorGroup}>
-                  <Text style={styles.selectorLabel}>Month</Text>
-                  <View style={styles.selectorRow}>
-                    {availableMonths.map((month) => {
-                      const isActive = month.index === selectedMonthIndex;
+                  {isCustomReason ? (
+                    <TextInput
+                      value={customReasonText}
+                      onChangeText={setCustomReasonText}
+                      style={styles.reasonTextInput}
+                      placeholder="Type your consultation concern"
+                      placeholderTextColor="#87a0b1"
+                    />
+                  ) : null}
 
-                      return (
-                        <TouchableOpacity
-                          key={month.label}
-                          style={[
-                            styles.selectorChip,
-                            isActive && styles.selectorChipActive,
-                          ]}
-                          onPress={() => setSelectedMonthIndex(month.index)}
-                          activeOpacity={0.9}
-                        >
-                          <Text
-                            style={[
-                              styles.selectorChipText,
-                              isActive && styles.selectorChipTextActive,
-                            ]}
-                          >
-                            {month.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                  <View style={styles.reasonSummaryBox}>
+                    <Text style={styles.reasonSummaryLabel}>Selected Visit Reason</Text>
+                    <Text style={styles.reasonSummaryValue}>{selectedReasonSummary}</Text>
                   </View>
                 </View>
 
-                <View style={styles.selectorGroup}>
-                  <Text style={styles.selectorLabel}>Year</Text>
-                  <View style={styles.selectorRow}>
-                    {YEARS.map((year) => {
-                      const isActive = year === selectedYear;
-
-                      return (
-                        <TouchableOpacity
-                          key={year}
-                          style={[
-                            styles.selectorChip,
-                            isActive && styles.selectorChipActive,
-                          ]}
-                          onPress={() => {
-                            setSelectedYear(year);
-                            if (year === CURRENT_YEAR && selectedMonthIndex < CURRENT_MONTH_INDEX) {
-                              setSelectedMonthIndex(CURRENT_MONTH_INDEX);
-                            }
-                          }}
-                          activeOpacity={0.9}
-                        >
-                          <Text
-                            style={[
-                              styles.selectorChipText,
-                              isActive && styles.selectorChipTextActive,
-                            ]}
-                          >
-                            {year}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                <View style={styles.inlineButtonRow}>
+                  <TouchableOpacity
+                    style={styles.modalSecondaryButton}
+                    onPress={() => navigation.navigate('petowner-screen', { user: loggedInUser })}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={styles.modalSecondaryText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalPrimaryButton,
+                      !canContinue && styles.primaryActionButtonDisabled,
+                    ]}
+                    onPress={handleNext}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={styles.modalPrimaryText}>Next</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-
-              <View style={styles.calendarCard}>
-                <View style={styles.calendarHeader}>
-                  <Text style={styles.calendarMonth}>
-                    {selectedMonth?.value} {selectedYear}
-                  </Text>
-                  <Text style={styles.calendarMeta}>Choose your visit day</Text>
-                </View>
-
-                <View style={styles.calendarWeekRow}>
-                  {CALENDAR_DAYS.map((day) => (
-                    <Text key={day} style={styles.calendarWeekDay}>
-                      {day}
-                    </Text>
-                  ))}
-                </View>
-
-                <View style={styles.calendarGrid}>
-                  {calendarDates.map((date) => {
-                    const isActive = date.day === selectedDate;
-
-                    return (
-                      <TouchableOpacity
-                        key={date.key}
-                        style={[
-                          styles.calendarDayCell,
-                          isActive && styles.calendarDayCellActive,
-                          date.muted && styles.calendarDayCellMuted,
-                        ]}
-                        onPress={() => !date.muted && setSelectedDate(date.day)}
-                        activeOpacity={0.9}
-                      >
-                        <Text
-                          style={[
-                            styles.calendarDayText,
-                            isActive && styles.calendarDayTextActive,
-                            date.muted && styles.calendarDayTextMuted,
-                          ]}
-                        >
-                          {date.day}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-
-            <Text style={styles.fieldLabel}>Choose time</Text>
-            <View style={styles.timeCalendarCard}>
-              <View style={styles.timeCalendarHeader}>
-                <Text style={styles.timeCalendarTitle}>Available Schedule</Text>
-                <Text style={styles.timeCalendarMeta}>Tap a slot to reserve it</Text>
-              </View>
-
-              <View style={styles.optionGrid}>
-                {TIMES.map((time) => {
-                  const isActive = time === selectedTime;
-
-                  return (
-                    <TouchableOpacity
-                      key={time}
-                      style={[styles.slotChip, isActive && styles.slotChipActive]}
-                      onPress={() => setSelectedTime(time)}
-                      activeOpacity={0.9}
-                    >
-                      <Text
-                        style={[
-                          styles.slotChipText,
-                          isActive && styles.slotChipTextActive,
-                        ]}
-                      >
-                        {time}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Appointment Summary</Text>
-              <Text style={styles.summaryText}>Pet: {selectedPetLabel}</Text>
-              <Text style={styles.summaryText}>Reason: {selectedReason}</Text>
-              <Text style={styles.summaryText}>
-                Date: {selectedMonth?.value} {selectedDate}, {selectedYear}
-              </Text>
-              <Text style={styles.summaryText}>Time: {selectedTime}</Text>
-              <Text style={styles.summaryNote}>
-                Confirmed schedules will appear in your upcoming appointment list.
-              </Text>
-            </View>
-
-            <View style={styles.primaryButtonRow}>
-              <TouchableOpacity
-                style={[
-                  styles.primaryActionButtonFull,
-                  !canBook && styles.primaryActionButtonDisabled,
-                ]}
-                activeOpacity={0.9}
-                onPress={() => canBook && setShowBookConfirm(true)}
-              >
-                <Text style={styles.primaryActionText}>Book & Confirm</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.sectionHeaderWrap}>
-            <Text style={styles.sectionTitle}>AI Schedule Recommendations</Text>
-            <Text style={styles.sectionSubtitle}>
-              Smart suggestions for better visit timing
-            </Text>
-          </View>
-
-          <View style={styles.recommendationCard}>
-            {AI_RECOMMENDATIONS.map((item) => (
-              <View key={item.title} style={styles.recommendationItem}>
-                <View style={styles.recommendationBadge}>
-                  <Text style={styles.recommendationBadgeText}>AI</Text>
-                </View>
-                <View style={styles.recommendationContent}>
-                  <Text style={styles.recommendationTitle}>{item.title}</Text>
-                  <Text style={styles.recommendationValue}>{item.value}</Text>
-                  <Text style={styles.recommendationNote}>{item.note}</Text>
-                </View>
-              </View>
-            ))}
+              </>
+            ) : null}
           </View>
 
           <View style={styles.sectionHeaderWrap}>
@@ -841,35 +556,29 @@ const PetOwnerAppointment = ({ navigation, route }) => {
               <View style={styles.emptyStateCard}>
                 <Text style={styles.emptyStateTitle}>No booked appointment yet</Text>
                 <Text style={styles.emptyStateText}>
-                  Confirm a booking first and your upcoming check-up details will
-                  appear here.
+                  Confirm a booking first and your upcoming check-up details will appear here.
                 </Text>
               </View>
             ) : (
               <>
                 <Text style={styles.managementMeta}>
-                  {bookedAppointment.pet.name} - {bookedAppointment.pet.breed}
+                  {bookedAppointment.pet?.name} - {bookedAppointment.pet?.breed}
                 </Text>
 
                 <View style={styles.managementInfoGrid}>
                   <View style={styles.managementInfoItem}>
                     <Text style={styles.managementInfoLabel}>Reason</Text>
-                    <Text style={styles.managementInfoValue}>
-                      {bookedAppointment.reason}
-                    </Text>
+                    <Text style={styles.managementInfoValue}>{bookedAppointment.reason}</Text>
                   </View>
                   <View style={styles.managementInfoItem}>
                     <Text style={styles.managementInfoLabel}>Date</Text>
                     <Text style={styles.managementInfoValue}>
-                      {bookedAppointment.month} {bookedAppointment.day},{' '}
-                      {bookedAppointment.year}
+                      {bookedAppointment.month} {bookedAppointment.day}, {bookedAppointment.year}
                     </Text>
                   </View>
                   <View style={styles.managementInfoItem}>
                     <Text style={styles.managementInfoLabel}>Time</Text>
-                    <Text style={styles.managementInfoValue}>
-                      {bookedAppointment.time}
-                    </Text>
+                    <Text style={styles.managementInfoValue}>{bookedAppointment.time}</Text>
                   </View>
                   <View style={styles.managementInfoItem}>
                     <Text style={styles.managementInfoLabel}>Doctor</Text>
@@ -878,43 +587,50 @@ const PetOwnerAppointment = ({ navigation, route }) => {
                 </View>
 
                 <View style={styles.managementActionRow}>
-                  {appointmentActions.map((action) => (
-                    <TouchableOpacity
-                      key={action.key}
+                  <TouchableOpacity
+                    style={[
+                      styles.managementActionButton,
+                      styles.managementActionButtonBlue,
+                    ]}
+                    onPress={handleRescheduleAppointment}
+                    activeOpacity={0.9}
+                  >
+                    <Text
                       style={[
-                        styles.managementActionButton,
-                        action.variant === 'secondary' &&
-                          styles.managementActionButtonBlue,
-                        action.variant === 'danger' &&
-                          styles.managementActionButtonDanger,
+                        styles.managementActionText,
+                        styles.managementActionTextLight,
                       ]}
-                      onPress={() => handleManagementAction(action.key)}
-                      activeOpacity={0.9}
                     >
-                      <Text
-                        style={[
-                          styles.managementActionText,
-                          action.variant === 'secondary' &&
-                            styles.managementActionTextLight,
-                          action.variant === 'danger' &&
-                            styles.managementActionTextDanger,
-                        ]}
-                      >
-                        {action.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                      Reschedule
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.managementActionButton,
+                      styles.managementActionButtonDanger,
+                    ]}
+                    onPress={() => setShowCancelConfirm(true)}
+                    activeOpacity={0.9}
+                  >
+                    <Text
+                      style={[
+                        styles.managementActionText,
+                        styles.managementActionTextDanger,
+                      ]}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
           </View>
-
         </ScrollView>
 
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, styles.activeNavItem]}
-            onPress={() => navigation.navigate('PetOwnerMessages', { user: loggedInUser })}
+            onPress={() => navigation.navigate('PetOwnerQuickAssist', { user: loggedInUser })}
             activeOpacity={0.9}
           >
             <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>
@@ -926,79 +642,6 @@ const PetOwnerAppointment = ({ navigation, route }) => {
             </View>
           </TouchableOpacity>
         </View>
-
-        <Modal
-          transparent
-          animationType="fade"
-          visible={showBookConfirm}
-          onRequestClose={() => setShowBookConfirm(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Confirm Booking</Text>
-              <Text style={styles.modalMessage}>
-                Are you sure you want to book this appointment for {selectedPetLabel}?
-              </Text>
-              <View style={styles.modalButtonRow}>
-                <TouchableOpacity
-                  style={styles.modalSecondaryButton}
-                  onPress={() => setShowBookConfirm(false)}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.modalSecondaryText}>No</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.modalPrimaryButton}
-                  onPress={handleBookConfirm}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.modalPrimaryText}>Yes</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-          transparent
-          animationType="fade"
-          visible={showRescheduleConfirm}
-          onRequestClose={() => setShowRescheduleConfirm(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Reschedule Appointment</Text>
-              <Text style={styles.modalMessage}>
-                Do you want to reschedule this appointment?
-              </Text>
-              <View style={styles.modalButtonRow}>
-                <TouchableOpacity
-                  style={styles.modalSecondaryButton}
-                  onPress={() => setShowRescheduleConfirm(false)}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.modalSecondaryText}>No</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.modalPrimaryButton}
-                  onPress={() => {
-                    setShowRescheduleConfirm(false);
-                    setShowRescheduleBanner(true);
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({
-                        y: Math.max(dateSectionY - 18, 0),
-                        animated: true,
-                      });
-                    }, 120);
-                  }}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.modalPrimaryText}>Yes</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
 
         <Modal
           transparent
@@ -1022,16 +665,68 @@ const PetOwnerAppointment = ({ navigation, route }) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.modalDangerButton}
-                  onPress={() => {
-                    setShowCancelConfirm(false);
-                    setBookedAppointment(null);
-                    setShowRescheduleBanner(false);
-                  }}
+                  onPress={handleCancelAppointment}
                   activeOpacity={0.9}
                 >
                   <Text style={styles.modalDangerText}>Yes</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showReasonDetailPicker}
+          onRequestClose={() => setShowReasonDetailPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.reasonPickerModalCard}>
+              <Text style={styles.modalTitle}>{reasonDetailLabel}</Text>
+              <Text style={styles.reasonPickerModalText}>
+                Choose the best option for this visit reason.
+              </Text>
+              <ScrollView
+                style={styles.reasonPickerList}
+                contentContainerStyle={styles.reasonPickerListContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {reasonOptions.map((item) => {
+                  const isActive = item.value === selectedReasonDetail;
+
+                  return (
+                    <TouchableOpacity
+                      key={item.value}
+                      style={[
+                        styles.reasonPickerOption,
+                        isActive && styles.reasonPickerOptionActive,
+                      ]}
+                      onPress={() => {
+                        setSelectedReasonDetail(item.value);
+                        setShowReasonDetailPicker(false);
+                      }}
+                      activeOpacity={0.88}
+                    >
+                      <Text
+                        style={[
+                          styles.reasonPickerOptionText,
+                          isActive && styles.reasonPickerOptionTextActive,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.modalSecondaryButton}
+                onPress={() => setShowReasonDetailPicker(false)}
+                activeOpacity={0.9}
+              >
+                <Text style={styles.modalSecondaryText}>Close</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>

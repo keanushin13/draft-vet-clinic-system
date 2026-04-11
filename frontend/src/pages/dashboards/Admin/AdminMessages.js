@@ -7,7 +7,7 @@ import bellIcon from "../../../assets/Bell_Icon.png";
 import dashboardIcon from "../../../assets/Dashboard_Icon.png";
 import messageIcon from "../../../assets/Message_Icon.png";
 import pawLogo from "../../../assets/paw.png";
-import userIcon from "../../../assets/User_Icon.png";
+import userIcon from "../../../assets/Profile.png";
 import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const AdminMessages = () => {

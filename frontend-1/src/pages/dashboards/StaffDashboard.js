@@ -12,7 +12,7 @@ import messageIcon from "../../assets/Message_Icon.png";
 import pawLogo from "../../assets/paw.png";
 import payHistoryIcon from "../../assets/payment_icon.png";
 import petsProfileIcon from "../../assets/Pets_Icon.png";
-import userIcon from "../../assets/User_Icon.png";
+import userIcon from "../../assets/Profile.png";
 import userManagementIcon from "../../assets/UserManagement_Icon.png";
 
 const StaffDashboard = () => {
@@ -140,7 +140,7 @@ const StaffDashboard = () => {
           <div className="bottom-section-card">
             <div className="section-header">
               <h4>Today's Appointments</h4>
-              <span className="blue-link" onClick={() => navigate("/staff-appointments")}>View All ›</span>
+              <span className="blue-link" onClick={() => navigate("/staff-appointments")}>View All â€º</span>
             </div>
             
             <div className="appointment-flex">

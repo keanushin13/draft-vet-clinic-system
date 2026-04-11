@@ -110,7 +110,7 @@ const VetDashboard = ({ navigation }) => {
           onPress={() => navigation.navigate('VetProfile')}
         >
           <Image 
-            source={require('../../assets/User_Icon.png')} 
+            source={require('../../assets/Profile.png')} 
             style={[styles.navIcon, {tintColor: '#000'}]} 
             resizeMode="contain" 
           />

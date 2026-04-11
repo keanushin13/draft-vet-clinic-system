@@ -13,6 +13,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from '../../styles/PetOwnerNotifDesign';
 
+const DEFAULT_PROFILE_IMAGE = require('../../assets/Profile.png');
+
 const DEFAULT_NOTIFICATIONS = [
   {
     id: 'notif-1',
@@ -393,7 +395,7 @@ const PetOwnerNotif = ({ navigation, route }) => {
                   />
                 ) : (
                   <Image
-                    source={require('../../assets/User_Icon.png')}
+                    source={DEFAULT_PROFILE_IMAGE}
                     style={styles.profileIcon}
                     resizeMode="contain"
                   />
@@ -519,20 +521,6 @@ const PetOwnerNotif = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <LinearGradient
-            colors={['#7aa4c8', '#698fb0', '#567997']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <Text style={styles.heroEyebrow}>Notification feed</Text>
-            <Text style={styles.heroTitle}>Track reminders and urgent updates</Text>
-            <Text style={styles.heroDescription}>
-              Receive appointment reminders, vaccination notices, clinic announcements,
-              and AI-prioritized alerts in one place. Swipe left on any card to delete it.
-            </Text>
-          </LinearGradient>
-
           <View style={styles.sectionHeaderWrap}>
             <Text style={styles.sectionTitle}>Latest Notifications</Text>
             <Text style={styles.sectionSubtitle}>
@@ -561,7 +549,7 @@ const PetOwnerNotif = ({ navigation, route }) => {
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, styles.activeNavItem]}
-            onPress={() => navigation.navigate('PetOwnerMessages', { user: loggedInUser })}
+            onPress={() => navigation.navigate('PetOwnerQuickAssist', { user: loggedInUser })}
             activeOpacity={0.9}
           >
             <View style={[styles.navIconWrap, styles.activeNavIconWrap]}>

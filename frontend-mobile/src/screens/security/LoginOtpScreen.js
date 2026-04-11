@@ -73,9 +73,21 @@ const LoginOtpScreen = () => {
       const role = res.data.user.role;
       if (role === "admin") navigation.replace("admin-screen");
       else if (role === "veterinarian") navigation.replace("vet-screen");
-      else if (role === "staff") navigation.replace("staff-screen");
+      else if (role === "staff") {
+        navigation.replace("staff-screen", {
+          user: {
+            ...res.data.user,
+            email: res.data.user?.email || email,
+          },
+        });
+      }
       else if (role === "pet_owner") {
-        navigation.replace("petowner-screen", { user: res.data.user });
+        navigation.replace("petowner-screen", {
+          user: {
+            ...res.data.user,
+            email: res.data.user?.email || email,
+          },
+        });
       }
       else navigation.replace("login");
     } catch (err) {
