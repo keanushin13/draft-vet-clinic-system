@@ -16,6 +16,8 @@ import AdminDashboard from './src/screens/dashboards/Admin/AdminDashboard';
 import AdminMessages from './src/screens/dashboards/Admin/AdminMessages';
 import AdminNotif from './src/screens/dashboards/Admin/AdminNotif';
 import AdminProfile from './src/screens/dashboards/Admin/AdminProfile';
+import AdminQuickAssist from './src/screens/dashboards/Admin/AdminQuickAssist';
+import AdminCreateAccount from './src/screens/dashboards/Admin/AdminCreateAccount';
 import AdminUserManagement from './src/screens/dashboards/Admin/AdminUserManagement';
 
 // Staff Screens
@@ -23,7 +25,7 @@ import StaffAppointment from './src/screens/dashboards/Staff/StaffAppointment';
 import StaffAppointmentList from './src/screens/dashboards/Staff/StaffAppointmentList';
 import StaffDashboard from './src/screens/dashboards/Staff/StaffDashboard';
 import StaffInventory from './src/screens/dashboards/Staff/StaffInventory';
-import StaffLogs from './src/screens/dashboards/Staff/StaffLogs';
+import StaffActivityLogs from './src/screens/dashboards/Staff/StaffActivityLogs';
 import StaffMessages from './src/screens/dashboards/Staff/StaffMessages';
 import StaffPetsProfile from './src/screens/dashboards/Staff/StaffPetsProfile';
 import StaffPetsProfileEdit from './src/screens/dashboards/Staff/StaffPetsProfileEdit';
@@ -39,10 +41,12 @@ import StaffUserManagement from './src/screens/dashboards/Staff/StaffUserManagem
 import VetAppointment from './src/screens/dashboards/Veterinary/VetAppointment';
 import VetDashboard from './src/screens/dashboards/Veterinary/VetDashboard';
 import VetMedRec from './src/screens/dashboards/Veterinary/VetMedRec';
+import VetMedRecDetail from './src/screens/dashboards/Veterinary/VetMedRecDetail';
 import VetMessages from './src/screens/dashboards/Veterinary/VetMessages';
 import VetNotif from './src/screens/dashboards/Veterinary/VetNotif';
-import VetPatients from './src/screens/dashboards/Veterinary/VetPatients';
 import VetProfile from './src/screens/dashboards/Veterinary/VetProfile';
+import VetInventory from './src/screens/dashboards/Veterinary/VetInventory';
+import VetQuickAssist from './src/screens/dashboards/Veterinary/VetQuickAssist';
 
 // Pet Owner Screens
 import PetOwnerAppointment from './src/screens/dashboards/PetOwner/PetOwnerAppointment';
@@ -103,9 +107,11 @@ export default function App() {
         {/* Admin Flow */}
         <Stack.Screen name="admin-screen" component={AdminDashboard} />
         <Stack.Screen name="AdminUserManagement" component={AdminUserManagement} />
+        <Stack.Screen name="AdminCreateAccount" component={AdminCreateAccount} />
         <Stack.Screen name="AdminMessages" component={AdminMessages} />
         <Stack.Screen name="AdminProfile" component={AdminProfile} />
         <Stack.Screen name="AdminNotif" component={AdminNotif} />
+        <Stack.Screen name="AdminQuickAssist" component={AdminQuickAssist} />
 
         {/* Staff Flow */}
         <Stack.Screen name="staff-screen" component={StaffDashboard} />
@@ -116,7 +122,7 @@ export default function App() {
         <Stack.Screen name="StaffMyPets" component={StaffPetsProfile} />
         <Stack.Screen name="StaffInventory" component={StaffInventory} />
         <Stack.Screen name="StaffPayHis" component={StaffPayHis} />
-        <Stack.Screen name="StaffLogs" component={StaffLogs} />
+        <Stack.Screen name="StaffActivityLogs" component={StaffActivityLogs} />
         <Stack.Screen name="StaffMessages" component={StaffMessages} />
         <Stack.Screen name="StaffProfile" component={StaffProfile} />
         <Stack.Screen name="StaffQuickAssist" component={StaffQuickAssist} />
@@ -128,11 +134,13 @@ export default function App() {
         {/* Vet Flow */}
         <Stack.Screen name="vet-screen" component={VetDashboard} />
         <Stack.Screen name="VetAppointment" component={VetAppointment} />
-        <Stack.Screen name="VetPatients" component={VetPatients} />
         <Stack.Screen name="VetMedRec" component={VetMedRec} />
+        <Stack.Screen name="VetMedRecDetail" component={VetMedRecDetail} />
         <Stack.Screen name="VetMessages" component={VetMessages} />
         <Stack.Screen name="VetNotif" component={VetNotif} />
         <Stack.Screen name="VetProfile" component={VetProfile} />
+        <Stack.Screen name="VetInventory" component={VetInventory} />
+        <Stack.Screen name="VetQuickAssist" component={VetQuickAssist} />
 
         {/* Pet Owner Flow */}
         <Stack.Screen name="petowner-screen" component={PetOwnerDashboard} />
@@ -152,3 +160,4 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
