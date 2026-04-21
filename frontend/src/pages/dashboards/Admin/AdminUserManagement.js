@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/AdminUserManagement.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getUsers, deleteUser } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -13,43 +14,33 @@ const AdminUserManagement = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const { isOpen, toggle, close } = useSidebar();
 
-  // Sample data for user management
-  const [users] = useState([
-    {
-      id: 1,
-      name: "Dr. Elena Rodriguez",
-      email: "elena@pawcruz.com",
-      role: "Veterinarian",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Mark Santos",
-      email: "mark@pawcruz.com",
-      role: "Staff",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Juan Dela Cruz",
-      email: "juan@example.com",
-      role: "Pet Owner",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Bianca Gonzales",
-      email: "bianca@pawcruz.com",
-      role: "Staff",
-      status: "Inactive",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  const loadUsers = () =>
+    getUsers()
+      .then((r) => setUsers(r.data))
+      .catch(() => {});
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
       navigate("/login");
+      return;
     }
+    loadUsers();
   }, [navigate, user]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Remove this user?")) return;
+    await deleteUser(id);
+    loadUsers();
+  };
+
+  const filtered = users.filter((u) =>
+    (u.firstName + " " + u.lastName + " " + u.username + " " + u.email)
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
 
   return (
     <div className="dashboard-container">
@@ -91,6 +82,8 @@ const AdminUserManagement = () => {
                 <input
                   type="text"
                   placeholder="Search users by name or email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <button className="add-user-btn">+ Add New User</button>
@@ -108,33 +101,38 @@ const AdminUserManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
+                  {filtered.map((u) => (
                     <tr key={u.id}>
                       <td className="user-name-cell">
                         <div className="user-avatar-small">
-                          {u.name.charAt(0)}
+                          {(u.firstName || u.username || "?").charAt(0)}
                         </div>
-                        <span>{u.name}</span>
+                        <span>
+                          {u.firstName
+                            ? `${u.firstName} ${u.lastName || ""}`.trim()
+                            : u.username}
+                        </span>
                       </td>
                       <td>{u.email}</td>
                       <td>
-                        <span
-                          className={`role-badge ${u.role.toLowerCase().replace(" ", "-")}`}
-                        >
-                          {u.role}
-                        </span>
+                        <span className={`role-badge ${u.role}`}>{u.role}</span>
                       </td>
                       <td>
                         <span
-                          className={`status-pill ${u.status.toLowerCase()}`}
+                          className={`status-pill ${u.isVerified ? "active" : "inactive"}`}
                         >
-                          {u.status}
+                          {u.isVerified ? "Active" : "Unverified"}
                         </span>
                       </td>
                       <td>
                         <div className="action-btns">
                           <button className="edit-btn">Edit</button>
-                          <button className="delete-btn">Remove</button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(u.id)}
+                          >
+                            Remove
+                          </button>
                         </div>
                       </td>
                     </tr>

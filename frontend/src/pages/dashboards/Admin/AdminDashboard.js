@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/AdminDashboard.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getAdminStats } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -12,11 +13,21 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const { isOpen, toggle, close } = useSidebar();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    monthlyRevenue: 0,
+    activeAppointments: 0,
+    lowStockCount: 0,
+  });
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
       navigate("/login");
+      return;
     }
+    getAdminStats()
+      .then((r) => setStats(r.data))
+      .catch(() => {});
   }, [navigate, user]);
 
   return (
@@ -63,25 +74,25 @@ const AdminDashboard = () => {
             <div className="stat-card blue">
               <div className="stat-info">
                 <span>Total Users</span>
-                <h4>1,284</h4>
+                <h4>{stats.totalUsers.toLocaleString()}</h4>
               </div>
             </div>
             <div className="stat-card green">
               <div className="stat-info">
                 <span>Monthly Revenue</span>
-                <h4>â‚±45,200</h4>
+                <h4>₱{Number(stats.monthlyRevenue).toLocaleString()}</h4>
               </div>
             </div>
             <div className="stat-card yellow">
               <div className="stat-info">
                 <span>Active Appointments</span>
-                <h4>32</h4>
+                <h4>{stats.activeAppointments}</h4>
               </div>
             </div>
             <div className="stat-card red">
               <div className="stat-info">
                 <span>Low Stock Items</span>
-                <h4>5</h4>
+                <h4>{stats.lowStockCount}</h4>
               </div>
             </div>
           </div>

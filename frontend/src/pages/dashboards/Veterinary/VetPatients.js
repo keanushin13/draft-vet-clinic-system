@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/VetPatients.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getPets } from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -20,19 +21,17 @@ const VetPatients = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
 
-  // Dummy data for the patient list
-  const [patients] = useState([
-    { id: 1, name: "Max", species: "Dog", breed: "Golden Retriever", owner: "Juan Dela Cruz", lastVisit: "2026-02-01" },
-    { id: 2, name: "Luna", species: "Cat", breed: "Siamese", owner: "Maria Santos", lastVisit: "2026-01-28" },
-    { id: 3, name: "Cooper", species: "Dog", breed: "Beagle", owner: "Ricardo Ramos", lastVisit: "2026-02-03" },
-    { id: 4, name: "Bella", species: "Dog", breed: "Poodle", owner: "Elena Gomez", lastVisit: "2026-01-15" },
-  ]);
+  const [patients, setPatients] = useState([]);
 
   // FUNCTION: Guard Clause (Matches your PetOwner format)
   useEffect(() => {
     if (!user || user.role !== "veterinarian") {
       navigate("/login");
+      return;
     }
+    getPets()
+      .then((r) => setPatients(r.data))
+      .catch(() => {});
   }, [navigate, user]);
 
   return (
@@ -42,44 +41,68 @@ const VetPatients = () => {
       {/* MAIN CONTENT */}
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>Patient Management</h2>
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/vet-notifications")}>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/vet-notifications")}
+            >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div className="user-profile" onClick={() => navigate("/vet-profile")}>
+            <div
+              className="user-profile"
+              onClick={() => navigate("/vet-profile")}
+            >
               <img src={userIcon} alt="User" />
             </div>
           </div>
         </header>
 
         <section className="content-body">
-          
-            <div className="patients-list-card">
-              <table className="patients-table">
-                <thead>
-                  <tr>
-                    <th>Pet Name</th>
-                    <th>Species</th>
-                    <th>Breed</th>
-                    <th>Owner</th>
-                    <th>Last Visit</th>
+          <div className="patients-list-card">
+            <table className="patients-table">
+              <thead>
+                <tr>
+                  <th>Pet Name</th>
+                  <th>Species</th>
+                  <th>Breed</th>
+                  <th>Owner</th>
+                  <th>Last Visit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {patients.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ fontWeight: "600", color: "#255065" }}>
+                      {p.name}
+                    </td>
+                    <td>{p.species}</td>
+                    <td>{p.breed}</td>
+                    <td>
+                      {p.owner
+                        ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                          p.owner.username
+                        : "—"}
+                    </td>
+                    <td>
+                      {p.updatedAt
+                        ? new Date(p.updatedAt).toLocaleDateString()
+                        : "—"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {patients.map((p) => (
-                    <tr key={p.id}>
-                      <td style={{fontWeight: '600', color: '#255065'}}>{p.name}</td>
-                      <td>{p.species}</td>
-                      <td>{p.breed}</td>
-                      <td>{p.owner}</td>
-                      <td>{p.lastVisit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>

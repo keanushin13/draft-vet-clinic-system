@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffMessages.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import {
+  getMessageThreads,
+  getMessageThread,
+  sendMessage,
+} from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -22,33 +27,68 @@ const StaffMessages = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
 
-  const [activeChat, setActiveChat] = useState(1);
-  const [contacts] = useState([
-    { id: 1, name: "Juan Dela Cruz", lastMsg: "Is the vaccine available?", time: "10:30 AM", unread: true },
-    { id: 2, name: "Maria Clara", lastMsg: "Thank you for the update.", time: "Yesterday", unread: false },
-    { id: 3, name: "Pedro Penduko", lastMsg: "Can I move my appointment?", time: "Jan 22", unread: false },
-  ]);
+  const [activeChat, setActiveChat] = useState(null);
+  const [threads, setThreads] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [newMsg, setNewMsg] = useState("");
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
+      return;
     }
+    getMessageThreads()
+      .then((r) => {
+        setThreads(r.data);
+        if (r.data.length) openThread(r.data[0]);
+      })
+      .catch(() => {});
   }, [navigate, user]);
+
+  const openThread = (thread) => {
+    setActiveChat(thread);
+    getMessageThread(thread.partnerId)
+      .then((r) => setMessages(r.data))
+      .catch(() => {});
+  };
+
+  const handleSend = async () => {
+    if (!newMsg.trim() || !activeChat) return;
+    await sendMessage({ receiverId: activeChat.partnerId, body: newMsg });
+    setNewMsg("");
+    getMessageThread(activeChat.partnerId)
+      .then((r) => setMessages(r.data))
+      .catch(() => {});
+  };
 
   return (
     <div className="dashboard-container">
-            <StaffSidebar isOpen={isOpen} onClose={close} />
+      <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>Messages</h2>
           <div className="top-bar-right">
             {/* Added the missing navigation handler here */}
-            <button className="notif-btn" onClick={() => navigate("/staff-notifications")}>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/staff-notifications")}
+            >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <div className="user-profile" onClick={() => navigate("/staff-profile")}>
+            <div
+              className="user-profile"
+              onClick={() => navigate("/staff-profile")}
+            >
               <img src={userIcon} alt="Profile" />
             </div>
           </div>
@@ -62,19 +102,35 @@ const StaffMessages = () => {
                 <input type="text" placeholder="Search contacts..." />
               </div>
               <div className="contact-list">
-                {contacts.map((contact) => (
-                  <div 
-                    key={contact.id} 
-                    className={`contact-item ${activeChat === contact.id ? "active" : ""} ${contact.unread ? "unread" : ""}`}
-                    onClick={() => setActiveChat(contact.id)}
+                {threads.map((thread) => (
+                  <div
+                    key={thread.partnerId}
+                    className={`contact-item ${activeChat?.partnerId === thread.partnerId ? "active" : ""} ${thread.unreadCount > 0 ? "unread" : ""}`}
+                    onClick={() => openThread(thread)}
                   >
-                    <div className="contact-avatar">{contact.name.charAt(0)}</div>
+                    <div className="contact-avatar">
+                      {(
+                        thread.partner?.firstName ||
+                        thread.partner?.username ||
+                        "?"
+                      ).charAt(0)}
+                    </div>
                     <div className="contact-info">
                       <div className="contact-name-row">
-                        <h4>{contact.name}</h4>
-                        <span>{contact.time}</span>
+                        <h4>
+                          {thread.partner?.firstName
+                            ? `${thread.partner.firstName} ${thread.partner.lastName}`
+                            : thread.partner?.username}
+                        </h4>
+                        <span>
+                          {thread.lastMessage
+                            ? new Date(
+                                thread.lastMessage.createdAt,
+                              ).toLocaleDateString()
+                            : ""}
+                        </span>
                       </div>
-                      <p>{contact.lastMsg}</p>
+                      <p>{thread.lastMessage?.body}</p>
                     </div>
                   </div>
                 ))}
@@ -84,16 +140,33 @@ const StaffMessages = () => {
             {/* CHAT WINDOW */}
             <div className="chat-window">
               <div className="chat-header">
-                <h3>{contacts.find(c => c.id === activeChat)?.name}</h3>
-                <small>Online</small>
+                <h3>
+                  {activeChat?.partner?.firstName
+                    ? `${activeChat.partner.firstName} ${activeChat.partner.lastName}`
+                    : activeChat?.partner?.username}
+                </h3>
               </div>
               <div className="chat-messages">
-                <div className="msg-bubble received">Hello! I would like to ask if the Rabies Vaccine is available today?</div>
-                <div className="msg-bubble sent">Hi! Yes, we have stock available. Would you like to book an appointment?</div>
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`msg-bubble ${m.senderId === user?.id ? "sent" : "received"}`}
+                  >
+                    {m.body}
+                  </div>
+                ))}
               </div>
               <div className="chat-input-area">
-                <input type="text" placeholder="Type your message here..." />
-                <button className="send-btn">Send</button>
+                <input
+                  type="text"
+                  placeholder="Type your message here..."
+                  value={newMsg}
+                  onChange={(e) => setNewMsg(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                />
+                <button className="send-btn" onClick={handleSend}>
+                  Send
+                </button>
               </div>
             </div>
           </div>

@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/AdminProfile.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getMe } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -10,17 +11,23 @@ import userIcon from "../../../assets/Profile.png";
 
 const AdminProfile = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const localUser = JSON.parse(localStorage.getItem("user") || "{}");
   const { isOpen, toggle, close } = useSidebar();
+  const [profile, setProfile] = useState(localUser);
 
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    if (!localUser || localUser.role !== "admin") {
       navigate("/login");
+      return;
     }
-  }, [navigate, user]);
+    getMe()
+      .then((r) => setProfile(r.data))
+      .catch(() => {});
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -64,18 +71,20 @@ const AdminProfile = () => {
               </div>
 
               <h2 className="profile-name">
-                {user.username || "System Administrator"}
+                {profile?.firstName
+                  ? `${profile.firstName} ${profile.lastName}`
+                  : profile?.username || "System Administrator"}
               </h2>
               <span className="profile-role-badge">Administrator</span>
 
               <div className="profile-details-grid">
                 <div className="detail-item">
                   <label>Username</label>
-                  <p>{user.username || "N/A"}</p>
+                  <p>{profile?.username || "N/A"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Email Address</label>
-                  <p>{user.email || "admin@pawcruz.com"}</p>
+                  <p>{profile?.email || "admin@pawcruz.com"}</p>
                 </div>
                 <div className="detail-item">
                   <label>Account Status</label>

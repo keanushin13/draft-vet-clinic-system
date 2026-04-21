@@ -1,15 +1,22 @@
 import axios from "axios";
 
 const API_BASE_URL =
-    process.env.REACT_APP_API_URL ||
-    `http://${window.location.hostname}:5000/api`;
+  process.env.REACT_APP_API_URL ||
+  `http://${window.location.hostname}:5000/api`;
 
 /* =========================
    AXIOS INSTANCE
 ========================= */
 const API = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true, // REQUIRED for CSRF cookies
+  baseURL: API_BASE_URL,
+  withCredentials: true, // REQUIRED for CSRF cookies
+});
+
+// Attach JWT token to every request
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 /* =========================
@@ -17,12 +24,12 @@ const API = axios.create({
    Call ONCE on app load
 ========================= */
 export const initCSRF = async () => {
-    try {
-        const res = await API.get("/users/csrf-token");
-        API.defaults.headers.common["X-CSRF-Token"] = res.data.csrfToken;
-    } catch (error) {
-        console.error("Failed to initialize CSRF token", error);
-    }
+  try {
+    const res = await API.get("/users/csrf-token");
+    API.defaults.headers.common["X-CSRF-Token"] = res.data.csrfToken;
+  } catch (error) {
+    console.error("Failed to initialize CSRF token", error);
+  }
 };
 
 /* =========================
@@ -30,7 +37,76 @@ export const initCSRF = async () => {
    (use on logout)
 ========================= */
 export const clearCSRF = () => {
-    delete API.defaults.headers.common["X-CSRF-Token"];
+  delete API.defaults.headers.common["X-CSRF-Token"];
 };
+
+// ─── USERS ────────────────────────────────────────────────────────────────────
+export const getUsers = (params) => API.get("/users", { params });
+export const getMe = () => API.get("/users/me");
+export const updateMe = (data) => API.put("/users/me", data);
+export const createUser = (data) => API.post("/users/create", data);
+export const updateUser = (id, data) => API.put(`/users/${id}`, data);
+export const deleteUser = (id) => API.delete(`/users/delete/${id}`);
+export const updatePassword = (data) =>
+  API.post("/users/update-password", data);
+
+// ─── PETS ─────────────────────────────────────────────────────────────────────
+export const getPets = (params) => API.get("/pets", { params });
+export const getPet = (id) => API.get(`/pets/${id}`);
+export const createPet = (data) => API.post("/pets", data);
+export const updatePet = (id, data) => API.put(`/pets/${id}`, data);
+export const deletePet = (id) => API.delete(`/pets/${id}`);
+
+// ─── APPOINTMENTS ─────────────────────────────────────────────────────────────
+export const getAppointments = (params) => API.get("/appointments", { params });
+export const getAppointment = (id) => API.get(`/appointments/${id}`);
+export const createAppointment = (data) => API.post("/appointments", data);
+export const updateAppointment = (id, data) =>
+  API.patch(`/appointments/${id}`, data);
+export const deleteAppointment = (id) => API.delete(`/appointments/${id}`);
+
+// ─── MEDICAL RECORDS ──────────────────────────────────────────────────────────
+export const getMedicalRecords = (params) =>
+  API.get("/medical-records", { params });
+export const getMedicalRecord = (id) => API.get(`/medical-records/${id}`);
+export const createMedicalRecord = (data) => API.post("/medical-records", data);
+export const updateMedicalRecord = (id, data) =>
+  API.put(`/medical-records/${id}`, data);
+
+// ─── PAYMENTS ─────────────────────────────────────────────────────────────────
+export const getPayments = (params) => API.get("/payments", { params });
+export const getPayment = (id) => API.get(`/payments/${id}`);
+export const createPayment = (data) => API.post("/payments", data);
+export const updatePayment = (id, data) => API.patch(`/payments/${id}`, data);
+
+// ─── INVENTORY ────────────────────────────────────────────────────────────────
+export const getInventory = () => API.get("/inventory");
+export const createInventoryItem = (data) => API.post("/inventory", data);
+export const updateInventoryItem = (id, data) =>
+  API.put(`/inventory/${id}`, data);
+export const updateStock = (id, stock) =>
+  API.patch(`/inventory/${id}/stock`, { stock });
+
+// ─── MESSAGES ─────────────────────────────────────────────────────────────────
+export const getMessageThreads = () => API.get("/messages/threads");
+export const getMessageThread = (userId) => API.get(`/messages/${userId}`);
+export const sendMessage = (data) => API.post("/messages", data);
+export const markMessageRead = (id) => API.patch(`/messages/${id}/read`);
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+export const getNotifications = () => API.get("/notifications");
+export const markAllNotificationsRead = () =>
+  API.patch("/notifications/mark-all-read");
+export const markNotificationRead = (id) =>
+  API.patch(`/notifications/${id}/read`);
+
+// ─── ACTIVITY LOGS ────────────────────────────────────────────────────────────
+export const getActivityLogs = () => API.get("/activity-logs");
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+export const getAdminStats = () => API.get("/stats/admin");
+export const getStaffStats = () => API.get("/stats/staff");
+export const getVetStats = () => API.get("/stats/vet");
+export const getPetOwnerStats = () => API.get("/stats/pet-owner");
 
 export default API;

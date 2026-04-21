@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffPaymentHistory.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getPayments } from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -22,31 +23,47 @@ const StaffPaymentHistory = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
 
-  // Sample data for payments
-  const [payments] = useState([
-    { id: "TXN-001", owner: "Juan Dela Cruz", pet: "Bella", service: "Checkup & Vaccination", amount: "â‚±1,200.00", date: "Feb 01, 2026", method: "GCash", status: "Paid" },
-    { id: "TXN-002", owner: "Maria Clara", pet: "Max", service: "Surgery", amount: "â‚±5,500.00", date: "Jan 30, 2026", method: "Cash", status: "Paid" },
-    { id: "TXN-003", owner: "Pedro Penduko", pet: "Luna", service: "Grooming", amount: "â‚±800.00", date: "Jan 28, 2026", method: "Bank Transfer", status: "Pending" },
-    { id: "TXN-004", owner: "Elena Gilbert", pet: "Cooper", service: "Medical Supplies", amount: "â‚±450.00", date: "Jan 25, 2026", method: "Cash", status: "Refunded" },
-  ]);
+  const [payments, setPayments] = useState([]);
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
+      return;
     }
+    getPayments()
+      .then((r) => setPayments(r.data))
+      .catch(() => {});
   }, [navigate, user]);
 
   return (
     <div className="dashboard-container">
-            <StaffSidebar isOpen={isOpen} onClose={close} />
+      <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>Payment History</h2>
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/staff-notifications")}><img src={bellIcon} alt="Notif" /></button>
-            <div className="user-profile" onClick={() => navigate("/staff-profile")}><img src={userIcon} alt="Profile" /></div>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/staff-notifications")}
+            >
+              <img src={bellIcon} alt="Notif" />
+            </button>
+            <div
+              className="user-profile"
+              onClick={() => navigate("/staff-profile")}
+            >
+              <img src={userIcon} alt="Profile" />
+            </div>
           </div>
         </header>
 
@@ -65,9 +82,13 @@ const StaffPaymentHistory = () => {
           <div className="payment-table-card">
             <div className="table-header">
               <h3>Transaction Records</h3>
-              <input type="text" placeholder="Search by Transaction ID or Owner..." className="payment-search" />
+              <input
+                type="text"
+                placeholder="Search by Transaction ID or Owner..."
+                className="payment-search"
+              />
             </div>
-            
+
             <table className="payment-table">
               <thead>
                 <tr>
@@ -83,22 +104,35 @@ const StaffPaymentHistory = () => {
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id}>
-                    <td className="txn-id">{p.id}</td>
+                    <td className="txn-id">
+                      TXN-{String(p.id).padStart(3, "0")}
+                    </td>
                     <td>
                       <div className="owner-info">
-                        <strong>{p.owner}</strong>
-                        <span>{p.pet}</span>
+                        <strong>
+                          {p.owner
+                            ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                              p.owner.username
+                            : "—"}
+                        </strong>
+                        <span>{p.pet?.name}</span>
                       </div>
                     </td>
                     <td>{p.service}</td>
-                    <td className="amount-cell">{p.amount}</td>
-                    <td>{p.date}</td>
+                    <td className="amount-cell">
+                      ₱{Number(p.amount).toLocaleString()}
+                    </td>
+                    <td>{new Date(p.createdAt).toLocaleDateString()}</td>
                     <td>
-                      <span className={`payment-status ${p.status.toLowerCase()}`}>
+                      <span
+                        className={`payment-status ${p.status?.toLowerCase()}`}
+                      >
                         {p.status}
                       </span>
                     </td>
-                    <td><button className="receipt-btn">Receipt</button></td>
+                    <td>
+                      <button className="receipt-btn">Receipt</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

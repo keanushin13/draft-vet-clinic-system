@@ -79,8 +79,17 @@ app.get("/api/users/csrf-token", csrfProtection, (req, res) => {
 // Public routes (NO CSRF)
 app.use("/api/users", require("./routes/userRoutes"));
 
-// Example of protected routes later:
-// app.use("/api/secure", csrfProtection, require("./routes/secureRoutes"));
+// Protected resource routes (JWT)
+app.use("/api/users", require("./routes/profileRoutes"));
+app.use("/api/pets", require("./routes/petRoutes"));
+app.use("/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/api/medical-records", require("./routes/medicalRecordRoutes"));
+app.use("/api/payments", require("./routes/paymentRoutes"));
+app.use("/api/inventory", require("./routes/inventoryRoutes"));
+app.use("/api/messages", require("./routes/messageRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
+app.use("/api/stats", require("./routes/statsRoutes"));
 
 /* =========================
    SERVER

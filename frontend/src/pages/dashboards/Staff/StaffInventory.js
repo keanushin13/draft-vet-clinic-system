@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffInventory.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getInventory, updateStock } from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -22,35 +23,56 @@ const StaffInventory = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
 
-  // Sample data for inventory
-  const [items] = useState([
-    { id: 1, name: "Amoxicillin 250mg", category: "Medication", stock: 45, unit: "Bottles", status: "In Stock" },
-    { id: 2, name: "Rabies Vaccine", category: "Vaccine", stock: 8, unit: "Vials", status: "Low Stock" },
-    { id: 3, name: "Surgical Gloves (M)", category: "Supplies", stock: 120, unit: "Pairs", status: "In Stock" },
-    { id: 4, name: "Pet Shampoo 500ml", category: "Grooming", stock: 3, unit: "Units", status: "Low Stock" },
-    { id: 5, name: "Microchips", category: "Medical", stock: 0, unit: "Units", status: "Out of Stock" },
-  ]);
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
+      return;
     }
+    loadInventory();
   }, [navigate, user]);
+
+  const loadInventory = () =>
+    getInventory()
+      .then((r) => setItems(r.data))
+      .catch(() => {});
+
+  const handleUpdateStock = async (item) => {
+    const val = prompt(`Enter new stock for ${item.name}:`, item.stock);
+    if (val === null || isNaN(val)) return;
+    await updateStock(item.id, { stock: parseInt(val) });
+    loadInventory();
+  };
 
   return (
     <div className="dashboard-container">
-            <StaffSidebar isOpen={isOpen} onClose={close} />
+      <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>Inventory Management</h2>
           <div className="top-bar-right">
             {/* Added the missing navigation handler here */}
-            <button className="notif-btn" onClick={() => navigate("/staff-notifications")}>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/staff-notifications")}
+            >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <div className="user-profile" onClick={() => navigate("/staff-profile")}>
+            <div
+              className="user-profile"
+              onClick={() => navigate("/staff-profile")}
+            >
               <img src={userIcon} alt="Profile" />
             </div>
           </div>
@@ -86,15 +108,26 @@ const StaffInventory = () => {
                 {items.map((item) => (
                   <tr key={item.id}>
                     <td className="item-name-cell">{item.name}</td>
-                    <td><span className="cat-badge">{item.category}</span></td>
-                    <td>{item.stock} {item.unit}</td>
                     <td>
-                      <span className={`stock-status ${item.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <span className="cat-badge">{item.category}</span>
+                    </td>
+                    <td>
+                      {item.stock} {item.unit}
+                    </td>
+                    <td>
+                      <span
+                        className={`stock-status ${item.status?.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
                         {item.status}
                       </span>
                     </td>
                     <td>
-                      <button className="stock-btn">Update Stock</button>
+                      <button
+                        className="stock-btn"
+                        onClick={() => handleUpdateStock(item)}
+                      >
+                        Update Stock
+                      </button>
                     </td>
                   </tr>
                 ))}

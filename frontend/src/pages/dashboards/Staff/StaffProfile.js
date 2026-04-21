@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/StaffProfile.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getMe } from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -19,26 +20,46 @@ import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffProfile = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const localUser = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
+  const [profile, setProfile] = useState(localUser);
 
   useEffect(() => {
-    if (!user || user.role !== "staff") {
+    if (!localUser || localUser.role !== "staff") {
       navigate("/login");
+      return;
     }
-  }, [navigate, user]);
+    getMe()
+      .then((r) => setProfile(r.data))
+      .catch(() => {});
+  }, [navigate]);
 
   return (
     <div className="dashboard-container">
-            <StaffSidebar isOpen={isOpen} onClose={close} />
+      <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>My Profile</h2>
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/staff-notifications")}><img src={bellIcon} alt="Notif" /></button>
-            <div className="user-profile active"><img src={userIcon} alt="Profile" /></div>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/staff-notifications")}
+            >
+              <img src={bellIcon} alt="Notif" />
+            </button>
+            <div className="user-profile active">
+              <img src={userIcon} alt="Profile" />
+            </div>
           </div>
         </header>
 
@@ -52,7 +73,11 @@ const StaffProfile = () => {
                   <img src={userIcon} alt="Avatar" />
                 </div>
                 <div className="profile-title">
-                  <h3>{user?.name || "Staff Member"}</h3>
+                  <h3>
+                    {profile?.firstName
+                      ? `${profile.firstName} ${profile.lastName}`
+                      : profile?.username || "Staff Member"}
+                  </h3>
                   <p>Clinic Administrator / Staff</p>
                 </div>
                 <button className="edit-profile-btn">Edit Profile</button>
@@ -65,15 +90,19 @@ const StaffProfile = () => {
                 <h4>Personal Information</h4>
                 <div className="info-row">
                   <label>Full Name</label>
-                  <span>{user?.name || "N/A"}</span>
+                  <span>
+                    {profile?.firstName
+                      ? `${profile.firstName} ${profile.lastName}`
+                      : profile?.username || "N/A"}
+                  </span>
                 </div>
                 <div className="info-row">
                   <label>Email Address</label>
-                  <span>{user?.email || "staff@pawcruz.com"}</span>
+                  <span>{profile?.email || ""}</span>
                 </div>
                 <div className="info-row">
                   <label>Phone Number</label>
-                  <span>+63 912 345 6789</span>
+                  <span>{profile?.phone || "N/A"}</span>
                 </div>
               </div>
 
@@ -90,11 +119,17 @@ const StaffProfile = () => {
                 <button className="change-pass-btn">Change Password</button>
               </div>
             </div>
-            
-            <button className="logout-btn" onClick={() => {
-              localStorage.removeItem("user");
-              navigate("/login");
-            }}>Logout Account</button>
+
+            <button
+              className="logout-btn"
+              onClick={() => {
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
+                navigate("/login");
+              }}
+            >
+              Logout Account
+            </button>
           </div>
         </section>
       </main>

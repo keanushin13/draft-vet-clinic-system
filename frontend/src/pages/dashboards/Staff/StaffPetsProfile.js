@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffPetsProfile.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
+import { getPets } from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -22,32 +23,45 @@ const StaffPetsProfile = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
 
-  const [pets] = useState([
-    { id: 1, name: "Bella", breed: "Golden Retriever", owner: "Juan Dela Cruz", age: "2 yrs", gender: "Female", status: "Healthy" },
-    { id: 2, name: "Max", breed: "Persian Cat", owner: "Maria Clara", age: "1 yr", gender: "Male", status: "Under Treatment" },
-    { id: 3, name: "Luna", breed: "Siamese Cat", owner: "Pedro Penduko", age: "3 yrs", gender: "Female", status: "Healthy" },
-    { id: 4, name: "Cooper", breed: "Beagle", owner: "Elena Gilbert", age: "4 yrs", gender: "Male", status: "Healthy" },
-  ]);
+  const [pets, setPets] = useState([]);
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
+      return;
     }
+    getPets()
+      .then((r) => setPets(r.data))
+      .catch(() => {});
   }, [navigate, user]);
 
   return (
     <div className="dashboard-container">
-            <StaffSidebar isOpen={isOpen} onClose={close} />
+      <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
-          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>Pets Profile</h2>
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/staff-notifications")}>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/staff-notifications")}
+            >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <div className="user-profile" onClick={() => navigate("/staff-profile")}>
+            <div
+              className="user-profile"
+              onClick={() => navigate("/staff-profile")}
+            >
               <img src={userIcon} alt="Profile" />
             </div>
           </div>
@@ -56,7 +70,10 @@ const StaffPetsProfile = () => {
         <section className="content-body">
           <div className="pets-mgmt-header">
             <div className="pet-search-bar">
-              <input type="text" placeholder="Search by pet name, breed, or owner..." />
+              <input
+                type="text"
+                placeholder="Search by pet name, breed, or owner..."
+              />
             </div>
             <button className="add-pet-btn">+ Register Pet</button>
           </div>
@@ -72,19 +89,28 @@ const StaffPetsProfile = () => {
                     <h3>{pet.name}</h3>
                     <span>{pet.breed}</span>
                   </div>
-                  <span className={`pet-status-tag ${pet.status.toLowerCase().replace(' ', '-')}`}>
+                  <span
+                    className={`pet-status-tag ${pet.status?.toLowerCase().replace(/ /g, "-")}`}
+                  >
                     {pet.status}
                   </span>
                 </div>
-                
+
                 <div className="pet-card-body">
                   <div className="pet-info-row">
                     <label>Owner:</label>
-                    <p>{pet.owner}</p>
+                    <p>
+                      {pet.owner
+                        ? `${pet.owner.firstName ?? ""} ${pet.owner.lastName ?? ""}`.trim() ||
+                          pet.owner.username
+                        : "—"}
+                    </p>
                   </div>
                   <div className="pet-info-row">
                     <label>Gender / Age:</label>
-                    <p>{pet.gender}, {pet.age}</p>
+                    <p>
+                      {pet.gender}, {pet.age} yr(s)
+                    </p>
                   </div>
                 </div>
 
