@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  admin
+  veterinarian
+  staff
+  pet_owner
+}
+
+enum PetStatus {
+  Healthy
+  UnderTreatment
+  Deceased
+}
+
+enum AppointmentStatus {
+  Pending
+  Confirmed
+  Completed
+  Cancelled
+}
+
+enum MedicalRecordStatus {
+  Finalized
+  FollowUp
+}
+
+enum PaymentMethod {
+  Cash
+  GCash
+  BankTransfer
+}
+
+enum PaymentStatus {
+  Paid
+  Pending
+  Refunded
+}
+
+enum InventoryCategory {
+  Medication
+  Vaccine
+  Supplies
+  Grooming
+  Medical
+}
+
+enum InventoryStatus {
+  InStock
+  LowStock
+  OutOfStock
+}
+
+enum ActivityStatus {
+  Completed
+  Pending
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id                       String    @id @default(cuid())
+  username                 String    @unique
+  email                    String    @unique
+  password                 String
+  role                     Role      @default(pet_owner)
+
+  // Profile
+  firstName                String?
+  lastName                 String?
+  phone                    String?
+  address                  String?
+  profileImage             String?
+
+  // Email verification
+  isVerified               Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+
+  // Login OTP
+  otp                      String?
+  otpExpires               DateTime?
+
+  // Forgot password
+  resetPasswordToken       String?
+  resetPasswordExpires     DateTime?
+  passwordResetUsed        Boolean   @default(false)
+
+  // Brute force protection
+  loginAttempts            Int       @default(0)
+  lockUntil                DateTime?
+
+  // Unlock account
+  unlockToken              String?
+  unlockTokenExpires       DateTime?
+
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  // Relations
+  pets                     Pet[]                  @relation("PetOwner")
+  appointmentsAsOwner      Appointment[]          @relation("AppointmentOwner")
+  appointmentsAsVet        Appointment[]          @relation("AppointmentVet")
+  medicalRecordsAsVet      MedicalRecord[]        @relation("MedicalRecordVet")
+  paymentsAsOwner          Payment[]              @relation("PaymentOwner")
+  sentMessages             Message[]              @relation("MessageSender")
+  receivedMessages         Message[]              @relation("MessageReceiver")
+  notifications            Notification[]
+  activityLogs             ActivityLog[]
+}
+
+// ─── Pet ──────────────────────────────────────────────────────────────────────
+
+model Pet {
+  id           String    @id @default(cuid())
+  name         String
+  species      String
+  breed        String?
+  age          Int?
+  gender       String?
+  status       PetStatus @default(Healthy)
+  image        String?
+  notes        String?
+
+  ownerId      String
+  owner        User      @relation("PetOwner", fields: [ownerId], references: [id])
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+  payments      Payment[]
+}
+
+// ─── Appointment ──────────────────────────────────────────────────────────────
+
+model Appointment {
+  id            String            @id @default(cuid())
+  scheduledAt   DateTime
+  reason        String?
+  status        AppointmentStatus @default(Pending)
+  notes         String?
+
+  petId         String
+  pet           Pet               @relation(fields: [petId], references: [id])
+
+  ownerId       String
+  owner         User              @relation("AppointmentOwner", fields: [ownerId], references: [id])
+
+  vetId         String?
+  vet           User?             @relation("AppointmentVet", fields: [vetId], references: [id])
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  medicalRecord MedicalRecord?
+  payment       Payment?
+}
+
+// ─── Medical Record ───────────────────────────────────────────────────────────
+
+model MedicalRecord {
+  id            String              @id @default(cuid())
+  diagnosis     String
+  treatment     String?
+  prescription  String?
+  notes         String?
+  status        MedicalRecordStatus @default(Finalized)
+  followUpDate  DateTime?
+
+  appointmentId String              @unique
+  appointment   Appointment         @relation(fields: [appointmentId], references: [id])
+
+  petId         String
+  pet           Pet                 @relation(fields: [petId], references: [id])
+
+  vetId         String
+  vet           User                @relation("MedicalRecordVet", fields: [vetId], references: [id])
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id            String        @id @default(cuid())
+  service       String
+  amount        Decimal       @db.Decimal(10, 2)
+  method        PaymentMethod @default(Cash)
+  status        PaymentStatus @default(Pending)
+  reference     String?
+  notes         String?
+
+  appointmentId String?       @unique
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
+
+  petId         String
+  pet           Pet           @relation(fields: [petId], references: [id])
+
+  ownerId       String
+  owner         User          @relation("PaymentOwner", fields: [ownerId], references: [id])
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+model InventoryItem {
+  id        String            @id @default(cuid())
+  name      String
+  category  InventoryCategory
+  stock     Int               @default(0)
+  unit      String
+  status    InventoryStatus   @default(InStock)
+  notes     String?
+
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+// ─── Message ──────────────────────────────────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  body       String
+  isRead     Boolean  @default(false)
+
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Activity Log ─────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id        String         @id @default(cuid())
+  action    String
+  target    String?
+  status    ActivityStatus @default(Completed)
+
+  staffId   String
+  staff     User           @relation(fields: [staffId], references: [id])
+
+  createdAt DateTime       @default(now())
+}

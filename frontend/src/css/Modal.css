@@ -160,3 +160,7 @@
     transform: scale(1) translateY(0);
   }
 }
+
+@media (max-width: 480px) {
+  .modal-box, .otp-box { width: 92% !important; padding: 20px 16px !important; }
+}

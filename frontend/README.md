@@ -1,70 +1,141 @@
-# Getting Started with Create React App
+﻿# PawCruz — Frontend (Web + Android)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React web application for the PawCruz veterinary clinic system. Supports 4 user roles with dedicated dashboards. Wrapped with Capacitor for Android APK generation.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Tech Stack
 
-### `npm start`
+| Layer | Technology |
+|---|---|
+| Framework | React 19 |
+| Routing | React Router 7 |
+| HTTP Client | Axios |
+| Mobile Wrapper | Capacitor 8 |
+| Styling | Plain CSS (responsive, mobile-first) |
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Project Structure
 
-### `npm test`
+```
+frontend/
+├── public/
+│   └── index.html                  # Viewport meta for mobile
+├── src/
+│   ├── App.js                      # Route definitions
+│   ├── index.js                    # App entry, imports global CSS
+│   ├── api/
+│   │   └── api.js                  # Axios instance + API calls
+│   ├── components/
+│   │   ├── useSidebar.js           # Sidebar open/close hook
+│   │   ├── AdminSidebar.js
+│   │   ├── StaffSidebar.js
+│   │   ├── VetSidebar.js
+│   │   └── PetOwnerSidebar.js
+│   ├── css/
+│   │   ├── global-mobile.css       # Global responsive base styles
+│   │   └── *.css                   # Per-page styles
+│   └── pages/
+│       ├── Login.js
+│       ├── Register.js
+│       ├── DevNav.js               # Dev-only page to bypass auth
+│       ├── dashboards/
+│       │   ├── Admin/              # AdminDashboard, Users, Messages, Notif, Profile
+│       │   ├── Staff/              # 8 pages
+│       │   ├── Vet/                # 6 pages
+│       │   └── PetOwner/           # 8 pages
+│       └── security/               # ResetPassword, VerifyEmail, UnlockAccount, LoginOtp
+├── android/                        # Capacitor Android project
+├── capacitor.config.ts             # Capacitor config (appId, webDir)
+└── build/                          # Production build output (git-ignored)
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Roles & Dashboards
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| Role | Dashboard Route | Pages |
+|---|---|---|
+| `admin` | `/admin` | Dashboard, User Management, Messages, Notifications, Profile |
+| `veterinarian` | `/vet` | Dashboard, Patients, Calendar, Messages, Medical Records, Inventory, Notifications, Profile |
+| `staff` | `/staff` | Dashboard, Appointments, User Management, Pets Profile, Messages, Inventory, Payment History, Activity Log, Notifications, Profile |
+| `pet_owner` | `/pet-owner` | Dashboard, Appointments, My Pets, Messages, Medical Records, Payment History, Notifications, Profile |
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Setup
 
-### `npm run eject`
+```bash
+npm install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Run development server
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+npm start
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Runs at `http://localhost:3000`.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Dev navigation (bypass login)
 
-## Learn More
+Visit `http://localhost:3000/dev` to get one-click access to all pages as any role — no backend or login required.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Build for Web
 
-### Code Splitting
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Output goes to `build/`.
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Build for Android (APK)
 
-### Making a Progressive Web App
+### Requirements
+- Android Studio installed
+- Java 17+
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Steps
 
-### Advanced Configuration
+```bash
+# 1. Build React app and sync to Android project
+npm run build:android
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# 2. Open in Android Studio
+npm run open:android
+```
 
-### Deployment
+Then in Android Studio:
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+APK output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
-### `npm run build` fails to minify
+### Capacitor config (`capacitor.config.ts`)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```ts
+{
+  appId: "com.pawcruz.app",
+  appName: "PawCruz",
+  webDir: "build",
+  server: { androidScheme: "https" }
+}
+```
+
+---
+
+## Environment / API
+
+The frontend connects to the backend via Axios. Update the base URL in `src/api/api.js` to match your backend address (default: `http://localhost:5000`).
+
+When running on a physical Android device, replace `localhost` with your machine LAN IP (e.g., `http://192.168.x.x:5000`).
+
+---
+
+## Responsiveness
+
+All pages are responsive for mobile (375px+) and tablet using CSS media queries. The sidebar converts to a drawer overlay on screens <= 768px, toggled by a hamburger button in the top bar.

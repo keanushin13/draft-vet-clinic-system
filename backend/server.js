@@ -1,10 +1,8 @@
 const express = require("express");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const cookieParser = require("cookie-parser");
 const csrf = require("csurf");
-const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -13,24 +11,29 @@ const app = express();
 /* =========================
    CORS
 ========================= */
-const allowedOrigins = new Set([
-   "http://localhost:3000", // React Web Admin
-   "http://localhost:8081", // Expo Web
-   process.env.CLIENT_URL, // LAN web frontend used by email links
-].filter(Boolean));
+const allowedOrigins = new Set(
+  [
+    "http://localhost:3000", // React Web Admin
+    "http://localhost:8081", // Expo Web
+    process.env.CLIENT_URL, // LAN web frontend used by email links
+  ].filter(Boolean),
+);
 
-app.use(cors({
-   origin: function (origin, callback) {
+app.use(
+  cors({
+    origin: function (origin, callback) {
       // allow requests with no origin like Postman
       if (!origin) return callback(null, true);
       if (!allowedOrigins.has(origin)) {
-         const msg = "The CORS policy for this site does not allow access from the specified Origin.";
-         return callback(new Error(msg), false);
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
       }
       return callback(null, true);
-   },
-   credentials: true
-}));
+    },
+    credentials: true,
+  }),
+);
 
 /* =========================
    SECURITY HEADERS
@@ -54,24 +57,14 @@ app.use(cookieParser());
 app.use(xss());
 
 /* =========================
-   NoSQL INJECTION PROTECTION
-   (SAFE VERSION)
-========================= */
-app.use((req, res, next) => {
-   mongoSanitize.sanitize(req.body);
-   mongoSanitize.sanitize(req.params);
-   next();
-});
-
-/* =========================
    CSRF SETUP
 ========================= */
 const csrfProtection = csrf({
-   cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-   },
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  },
 });
 
 /* =========================
@@ -80,7 +73,7 @@ const csrfProtection = csrf({
 
 // CSRF token fetcher
 app.get("/api/users/csrf-token", csrfProtection, (req, res) => {
-   res.json({ csrfToken: req.csrfToken() });
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 // Public routes (NO CSRF)
@@ -90,13 +83,8 @@ app.use("/api/users", require("./routes/userRoutes"));
 // app.use("/api/secure", csrfProtection, require("./routes/secureRoutes"));
 
 /* =========================
-   DATABASE + SERVER
+   SERVER
 ========================= */
-mongoose
-   .connect(process.env.MONGO_URI)
-   .then(() => {
-      app.listen(process.env.PORT, "0.0.0.0", () => {
-         console.log(`Server running on port ${process.env.PORT}`);
-      });
-   })
-   .catch((err) => console.error(err));
+app.listen(process.env.PORT || 5000, "0.0.0.0", () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
+});

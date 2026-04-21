@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/StaffPetsProfile.css";
+import StaffSidebar from "../../../components/StaffSidebar";
+import { useSidebar } from "../../../components/useSidebar";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -18,6 +20,7 @@ import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 const StaffPetsProfile = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const { isOpen, toggle, close } = useSidebar();
 
   const [pets] = useState([
     { id: 1, name: "Bella", breed: "Golden Retriever", owner: "Juan Dela Cruz", age: "2 yrs", gender: "Female", status: "Healthy" },
@@ -34,25 +37,11 @@ const StaffPetsProfile = () => {
 
   return (
     <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <img src={pawLogo} alt="Logo" />
-          <span>PawCruz</span>
-        </div>
-        <nav className="sidebar-nav">
-          <div className="nav-item" onClick={() => navigate("/staff")}><img src={dashboardIcon} alt="" /><span>Dashboard</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-appointments")}><img src={appointmentIcon} alt="" /><span>Appointment</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-users")}><img src={userManagementIcon} alt="" /><span>User Management</span></div>
-          <div className="nav-item active" onClick={() => navigate("/staff-pets")}><img src={petsProfileIcon} alt="" /><span>Pets Profile</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-messages")}><img src={messageIcon} alt="" /><span>Messages</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-inventory")}><img src={inventoryIcon} alt="" /><span>Inventory</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-payments")}><img src={payHistoryIcon} alt="" /><span>Payment History</span></div>
-          <div className="nav-item" onClick={() => navigate("/staff-activity")}><img src={activityLogIcon} alt="" /><span>Activity Log</span></div>
-        </nav>
-      </aside>
+            <StaffSidebar isOpen={isOpen} onClose={close} />
 
       <main className="main-area">
         <header className="top-bar">
+          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
           <h2>Pets Profile</h2>
           <div className="top-bar-right">
             <button className="notif-btn" onClick={() => navigate("/staff-notifications")}>

@@ -89,3 +89,25 @@
   font-weight: 700;
   font-family: 'Quicksand', sans-serif;
 }
+/* =====================
+    RESPONSIVE
+===================== */
+@media (max-width: 480px) {
+  .reset-card,
+  .unlock-card,
+  .verify-card,
+  .success-card,
+  .security-card,
+  .auth-card {
+    width: 90% !important;
+    max-width: 100% !important;
+    padding: 24px 16px !important;
+  }
+
+  .bottom-bar {
+    height: auto !important;
+    flex-direction: column;
+    padding: 16px !important;
+    gap: 8px;
+  }
+}

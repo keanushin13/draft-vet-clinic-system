@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { initCSRF } from "./api/api";
 
+// DEV
+import DevNav from "./pages/DevNav";
+
 // AUTH & SECURITY IMPORTS
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -58,6 +61,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* DEV ROUTE */}
+        <Route path="/dev" element={<DevNav />} />
+
         {/* PUBLIC / AUTH ROUTES */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
@@ -70,7 +76,10 @@ function App() {
 
         {/* PET OWNER DASHBOARD ROUTES */}
         <Route path="/pet-owner" element={<PetOwnerDashboard />} />
-        <Route path="/pet-owner-appointments" element={<PetOwnerAppointment />} />
+        <Route
+          path="/pet-owner-appointments"
+          element={<PetOwnerAppointment />}
+        />
         <Route path="/pet-owner-pets" element={<PetOwnerMyPets />} />
         <Route path="/pet-owner-messages" element={<PetOwnerMessages />} />
         <Route path="/pet-owner-records" element={<PetOwnerMedRec />} />

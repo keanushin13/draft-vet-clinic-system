@@ -101,3 +101,99 @@
 
 .btn-view:hover { border-color: #63b6c5; color: #63b6c5; }
 .btn-edit:hover { border-color: #255065; color: #255065; }
+/* =====================
+    RESPONSIVE - MOBILE
+    (global-mobile.css handles sidebar toggle)
+===================== */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
+  .main-area {
+    margin-left: 0 !important;
+    width: 100% !important;
+    overflow-y: auto;
+  }
+
+  .top-bar {
+    height: auto !important;
+    min-height: 56px;
+    padding: 0 12px !important;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .top-bar h2 {
+    font-size: 1rem !important;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .content-body {
+    padding: 16px !important;
+  }
+
+  /* Stats grid: 2 columns on tablet, 1 on phone */
+  .admin-stats-grid,
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Tables: horizontal scroll */
+  table {
+    min-width: 520px;
+  }
+
+  .table-wrapper,
+  .user-table-wrapper,
+  .inventory-table-wrapper,
+  .payment-table-wrapper,
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Profile grids */
+  .profile-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Search inputs */
+  .search-box input,
+  .log-search {
+    width: 100% !important;
+  }
+
+  /* Admin recent flex */
+  .admin-recent-flex {
+    flex-direction: column !important;
+  }
+
+  /* Message layout */
+  .message-container {
+    flex-direction: column !important;
+  }
+
+  .inbox-panel {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stats-grid,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .content-body {
+    padding: 12px !important;
+  }
+}

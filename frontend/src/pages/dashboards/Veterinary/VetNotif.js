@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/VetNotif.css";
+import VetSidebar from "../../../components/VetSidebar";
+import { useSidebar } from "../../../components/useSidebar";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -16,6 +18,7 @@ import userIcon from "../../../assets/Profile.png";
 const VetNotif = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const { isOpen, toggle, close } = useSidebar();
 
   // Dummy Notification Data
   const [notifications] = useState([
@@ -54,49 +57,12 @@ const VetNotif = () => {
 
   return (
     <div className="dashboard-container">
-      {/* SIDEBAR - Keep the same order as your other pages */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <img src={pawLogo} alt="Logo" />
-          <span>PawCruz</span>
-        </div>
-
-        <nav className="sidebar-nav">
-          <div className="nav-item" onClick={() => navigate("/vet")}>
-            <img src={dashboardIcon} alt="" />
-            <span>Dashboard</span>
-          </div>
-          
-          <div className="nav-item" onClick={() => navigate("/vet-patients")}>
-            <img src={patientsIcon} alt="" />
-            <span>Patients</span>
-          </div>
-
-          <div className="nav-item" onClick={() => navigate("/vet-calendar")}>
-            <img src={appointmentIcon} alt="" />
-            <span>Calendar</span>
-          </div>
-
-          <div className="nav-item" onClick={() => navigate("/vet-messages")}>
-            <img src={messageIcon} alt="" />
-            <span>Messages</span>
-          </div>
-
-          <div className="nav-item" onClick={() => navigate("/vet-medical-records")}>
-            <img src={medicalIcon} alt="" />
-            <span>Medical Records</span>
-          </div>
-
-          <div className="nav-item" onClick={() => navigate("/vet-inventory")}>
-            <img src={inventoryIcon} alt="" />
-            <span>Inventory</span>
-          </div>
-        </nav>
-      </aside>
+      <VetSidebar isOpen={isOpen} onClose={close} />
 
       {/* MAIN CONTENT */}
       <main className="main-area">
         <header className="top-bar">
+          <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu"><span /><span /><span /></button>
           <h2>Notifications</h2>
           <div className="top-bar-right">
             <button className="notif-btn active">

@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/AdminProfile.css";
+import AdminSidebar from "../../../components/AdminSidebar";
+import { useSidebar } from "../../../components/useSidebar";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
 import userIcon from "../../../assets/Profile.png";
-import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const AdminProfile = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const { isOpen, toggle, close } = useSidebar();
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -27,37 +26,26 @@ const AdminProfile = () => {
 
   return (
     <div className="dashboard-container">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <img src={pawLogo} alt="Logo" />
-          <span>PawCruz</span>
-        </div>
-
-        <nav className="sidebar-nav">
-          <div className="nav-item" onClick={() => navigate("/admin")}>
-            <img src={dashboardIcon} alt="Dashboard" />
-            <span>Dashboard</span>
-          </div>
-          
-          <div className="nav-item" onClick={() => navigate("/admin-users")}>
-            <img src={userManagementIcon} alt="Management" />
-            <span>User Management</span>
-          </div>
-
-          <div className="nav-item" onClick={() => navigate("/admin-messages")}>
-            <img src={messageIcon} alt="Messages" />
-            <span>Messages</span>
-          </div>
-        </nav>
-      </aside>
+      <AdminSidebar isOpen={isOpen} onClose={close} />
 
       {/* MAIN AREA */}
       <main className="main-area">
         <header className="top-bar">
+          <button
+            className="hamburger-btn"
+            onClick={toggle}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <h2>My Profile</h2>
           <div className="top-bar-right">
-            <button className="notif-btn" onClick={() => navigate("/admin-notifications")}>
+            <button
+              className="notif-btn"
+              onClick={() => navigate("/admin-notifications")}
+            >
               <img src={bellIcon} alt="Notifications" />
             </button>
             <div className="user-profile active-profile">
@@ -74,8 +62,10 @@ const AdminProfile = () => {
                 <img src={userIcon} alt="Admin" className="profile-main-img" />
                 <button className="edit-img-btn">ðŸ“·</button>
               </div>
-              
-              <h2 className="profile-name">{user.username || "System Administrator"}</h2>
+
+              <h2 className="profile-name">
+                {user.username || "System Administrator"}
+              </h2>
               <span className="profile-role-badge">Administrator</span>
 
               <div className="profile-details-grid">
@@ -98,8 +88,12 @@ const AdminProfile = () => {
               </div>
 
               <div className="profile-actions">
-                <button className="edit-profile-btn">Edit Profile Information</button>
-                <button className="logout-danger-btn" onClick={handleLogout}>Log Out of Account</button>
+                <button className="edit-profile-btn">
+                  Edit Profile Information
+                </button>
+                <button className="logout-danger-btn" onClick={handleLogout}>
+                  Log Out of Account
+                </button>
               </div>
             </div>
           </div>
