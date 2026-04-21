@@ -1,7 +1,7 @@
-const bcrypt = require("bcryptjs");
+﻿const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const validator = require("validator");
-const User = require("../models/User");
+const prisma = require("../lib/prisma");
 const sendEmail = require("../utils/sendEmail");
 
 // ===================== CONFIG =====================
@@ -18,41 +18,20 @@ exports.registerUser = async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
 
-        /* =========================
-           BASIC REQUIRED CHECK
-        ========================== */
         if (!username || !email || !password || !role) {
-            return res.status(400).json({
-                message: "All fields are required",
-            });
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-        /* =========================
-           USERNAME VALIDATION
-           Letters & numbers only
-        ========================== */
         if (!/^[a-zA-Z0-9]+$/.test(username)) {
             return res.status(400).json({
                 message: "Username must contain letters and numbers only",
             });
         }
 
-        /* =========================
-           EMAIL VALIDATION
-        ========================== */
         if (!validator.isEmail(email)) {
-            return res.status(400).json({
-                message: "Invalid email format",
-            });
+            return res.status(400).json({ message: "Invalid email format" });
         }
 
-        /* =========================
-           PASSWORD VALIDATION
-           - 8 chars
-           - letter
-           - number
-           - special char
-        ========================== */
         if (!PASSWORD_REGEX.test(password)) {
             return res.status(400).json({
                 message:
@@ -60,63 +39,40 @@ exports.registerUser = async (req, res) => {
             });
         }
 
-        /* =========================
-           ROLE VALIDATION
-        ========================== */
         const allowedRoles = ["pet_owner", "veterinarian", "staff"];
         if (!allowedRoles.includes(role)) {
-            return res.status(400).json({
-                message: "Invalid role selected",
-            });
+            return res.status(400).json({ message: "Invalid role selected" });
         }
 
-        /* =========================
-           CHECK IF USER EXISTS
-        ========================== */
-        const userExists = await User.findOne({
-            $or: [{ email }, { username }],
+        const userExists = await prisma.user.findFirst({
+            where: { OR: [{ email }, { username }] },
         });
 
         if (userExists) {
-            return res.status(400).json({
-                message: "Email or username already exists",
-            });
+            return res.status(400).json({ message: "Email or username already exists" });
         }
 
-        /* =========================
-           HASH PASSWORD
-        ========================== */
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        /* =========================
-           EMAIL VERIFICATION TOKEN
-        ========================== */
         const emailToken = crypto.randomBytes(32).toString("hex");
 
-        await User.create({
-            username,
-            email,
-            password: hashedPassword,
-            role,
-            isVerified: false,
-            emailVerificationToken: emailToken,
-            emailVerificationExpires: Date.now() + 5 * 60 * 1000, // ✅ 5 MINUTES
+        await prisma.user.create({
+            data: {
+                username,
+                email,
+                password: hashedPassword,
+                role,
+                isVerified: false,
+                emailVerificationToken: emailToken,
+                emailVerificationExpires: new Date(Date.now() + TIME_EXPIRATION),
+            },
         });
 
-        /* =========================
-           SEND VERIFICATION EMAIL
-        ========================== */
         const verifyLink = `${PUBLIC_SERVER_URL}/api/users/verify-email/${emailToken}`;
 
         await sendEmail(
             email,
-            "Verify Your PetCare Account",
-            `
-        <h2>Email Verification</h2>
-        <p>Click the link below to verify your account:</p>
-        <a href="${verifyLink}">Verify Email</a>
-        <p>This link expires in 5 minutes.</p>
-      `
+            "Verify Your PawCruz Account",
+            `<h2>Email Verification</h2><p>Click the link below to verify your account:</p><a href="${verifyLink}">Verify Email</a><p>This link expires in 5 minutes.</p>`
         );
 
         return res.status(201).json({
@@ -125,9 +81,7 @@ exports.registerUser = async (req, res) => {
 
     } catch (error) {
         console.error("Register Error:", error);
-        return res.status(500).json({
-            message: "Server error",
-        });
+        return res.status(500).json({ message: "Server error" });
     }
 };
 
@@ -137,46 +91,34 @@ exports.verifyEmail = async (req, res) => {
     try {
         const { token } = req.params;
 
-        const user = await User.findOne({
-            emailVerificationToken: token,
-            emailVerificationExpires: { $gt: Date.now() }
+        const user = await prisma.user.findFirst({
+            where: {
+                emailVerificationToken: token,
+                emailVerificationExpires: { gt: new Date() },
+            },
         });
 
         if (!user) {
             const message = "Invalid or expired verification link";
-
             if (req.method === "GET") {
-                return res.status(400).send(
-                    renderStatusPage({
-                        title: "Verification Failed",
-                        message,
-                        tone: "error",
-                    })
-                );
+                return res.status(400).send(renderStatusPage({ title: "Verification Failed", message, tone: "error" }));
             }
-
             return res.status(400).json({ message });
         }
 
-        // ✅ Mark email as verified
-        user.isVerified = true;
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpires = undefined;
-
-        await user.save();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isVerified: true,
+                emailVerificationToken: null,
+                emailVerificationExpires: null,
+            },
+        });
 
         const message = "Email verified successfully. Return to the app and log in.";
-
         if (req.method === "GET") {
-            return res.status(200).send(
-                renderStatusPage({
-                    title: "Email Verified",
-                    message,
-                    tone: "success",
-                })
-            );
+            return res.status(200).send(renderStatusPage({ title: "Email Verified", message, tone: "success" }));
         }
-
         res.status(200).json({ message });
 
     } catch (error) {
@@ -185,7 +127,7 @@ exports.verifyEmail = async (req, res) => {
     }
 };
 
-// ===================== LOGIN USER (PASSWORD STEP) =====================
+// ===================== LOGIN USER =====================
 // POST /api/users/login
 exports.loginUser = async (req, res) => {
     try {
@@ -195,63 +137,63 @@ exports.loginUser = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = await User.findOne({ username });
+        const user = await prisma.user.findUnique({ where: { username } });
         if (!user) {
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
-        // 🔒 ACCOUNT LOCKED
-        if (user.lockUntil && user.lockUntil > Date.now()) {
-            return res.status(429).json({
-                message: "Account locked. Check your email to unlock."
-            });
+        if (user.lockUntil && user.lockUntil > new Date()) {
+            return res.status(429).json({ message: "Account locked. Check your email to unlock." });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        // ❌ WRONG PASSWORD
         if (!isMatch) {
-            user.loginAttempts += 1;
+            const newAttempts = user.loginAttempts + 1;
 
-            if (user.loginAttempts >= MAX_ATTEMPTS) {
+            if (newAttempts >= MAX_ATTEMPTS) {
                 const unlockToken = crypto.randomBytes(32).toString("hex");
-
-                user.lockUntil = Date.now() + TIME_EXPIRATION;
-                user.loginAttempts = 0;
-                user.unlockToken = unlockToken;
-                user.unlockTokenExpires = Date.now() + TIME_EXPIRATION;
-                await user.save();
-
-                return res.status(429).json({
-                    message: "Too many attempts. Account locked."
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        lockUntil: new Date(Date.now() + TIME_EXPIRATION),
+                        loginAttempts: 0,
+                        unlockToken,
+                        unlockTokenExpires: new Date(Date.now() + TIME_EXPIRATION),
+                    },
                 });
+                return res.status(429).json({ message: "Too many attempts. Account locked." });
             }
 
-            await user.save();
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { loginAttempts: newAttempts },
+            });
+
             return res.status(401).json({ message: "Invalid username or password" });
         }
 
-
-        // ❗ EMAIL NOT VERIFIED
         if (!user.isVerified) {
-            return res.status(403).json({
-                message: "Please verify your email first."
-            });
+            return res.status(403).json({ message: "Please verify your email first." });
         }
 
-        // ✅ PASSWORD OK → SEND OTP
         const otp = generateOtp();
-        user.otp = await bcrypt.hash(otp, 10);
-        user.otpExpires = Date.now() + TIME_EXPIRATION;
-        user.loginAttempts = 0;
-        await user.save();
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                otp: await bcrypt.hash(otp, 10),
+                otpExpires: new Date(Date.now() + TIME_EXPIRATION),
+                loginAttempts: 0,
+            },
+        });
 
         await sendOtpEmail(user.email, otp, "Your Login OTP");
 
         res.status(200).json({
             message: "OTP sent to email",
             requiresOtp: true,
-            email: user.email
+            email: user.email,
         });
 
     } catch (error) {
@@ -270,41 +212,60 @@ exports.forgotPassword = async (req, res) => {
             return res.status(400).json({ message: "Email is required" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-            // security: don't reveal if email exists
-            return res.status(200).json({
-                message: "If the email exists, a reset link was sent"
-            });
+            return res.status(200).json({ message: "If the email exists, a reset link was sent" });
         }
 
         const resetToken = crypto.randomBytes(32).toString("hex");
 
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = Date.now() + 5 * 60 * 1000;
-        user.passwordResetUsed = false; // 👈 allow new reset
-        await user.save();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetPasswordToken: resetToken,
+                resetPasswordExpires: new Date(Date.now() + TIME_EXPIRATION),
+                passwordResetUsed: false,
+            },
+        });
 
         const resetLink = `${PUBLIC_SERVER_URL}/api/users/reset-password/${resetToken}`;
 
         await sendEmail(
             user.email,
             "Reset Your PawCruz Password",
-            `
-            <h2>Password Reset</h2>
-            <p>Click the link below to reset your password:</p>
-            <a href="${resetLink}">Reset Password</a>
-            <p>This link expires in 5 minutes.</p>
-        `
+            `<h2>Password Reset</h2><p>Click the link below to reset your password:</p><a href="${resetLink}">Reset Password</a><p>This link expires in 5 minutes.</p>`
         );
 
-        res.status(200).json({
-            message: "If the email exists, a reset link was sent"
-        });
+        res.status(200).json({ message: "If the email exists, a reset link was sent" });
 
     } catch (error) {
         console.error("Forgot Password Error:", error);
         res.status(500).json({ message: "Server error" });
+    }
+};
+
+// ===================== RESET PASSWORD PAGE =====================
+// GET /api/users/reset-password/:token
+exports.getResetPasswordPage = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const user = await prisma.user.findFirst({
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { gt: new Date() },
+                passwordResetUsed: false,
+            },
+        });
+
+        if (!user) {
+            return res.status(400).send(renderStatusPage({ title: "Reset Link Invalid", message: "This reset link has already been used or expired.", tone: "error" }));
+        }
+
+        return res.status(200).send(renderResetPasswordPage(token));
+    } catch (error) {
+        console.error("Reset Password Page Error:", error);
+        return res.status(500).send(renderStatusPage({ title: "Reset Failed", message: "Server error", tone: "error" }));
     }
 };
 
@@ -317,136 +278,57 @@ exports.resetPassword = async (req, res) => {
         const isBrowserForm = req.is("application/x-www-form-urlencoded");
 
         if (!newPassword) {
-            if (isBrowserForm) {
-                return res.status(400).send(
-                    renderResetPasswordPage(token, {
-                        error: "New password is required.",
-                    })
-                );
-            }
-
+            if (isBrowserForm) return res.status(400).send(renderResetPasswordPage(token, { error: "New password is required." }));
             return res.status(400).json({ message: "New password is required" });
         }
 
         if (confirmPassword && newPassword !== confirmPassword) {
-            if (isBrowserForm) {
-                return res.status(400).send(
-                    renderResetPasswordPage(token, {
-                        error: "Passwords do not match.",
-                    })
-                );
-            }
-
+            if (isBrowserForm) return res.status(400).send(renderResetPasswordPage(token, { error: "Passwords do not match." }));
             return res.status(400).json({ message: "Passwords do not match" });
         }
 
         if (!PASSWORD_REGEX.test(newPassword)) {
-            const message =
-                "Password must be at least 8 characters and include a letter, number, and special character";
-
-            if (isBrowserForm) {
-                return res.status(400).send(
-                    renderResetPasswordPage(token, { error: message })
-                );
-            }
-
+            const message = "Password must be at least 8 characters and include a letter, number, and special character";
+            if (isBrowserForm) return res.status(400).send(renderResetPasswordPage(token, { error: message }));
             return res.status(400).json({ message });
         }
 
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() },
-            passwordResetUsed: false   // 👈 BLOCK reused links
+        const user = await prisma.user.findFirst({
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { gt: new Date() },
+                passwordResetUsed: false,
+            },
         });
 
         if (!user) {
             const message = "This reset link has already been used or expired";
-
-            if (isBrowserForm) {
-                return res.status(400).send(
-                    renderStatusPage({
-                        title: "Reset Link Invalid",
-                        message,
-                        tone: "error",
-                    })
-                );
-            }
-
+            if (isBrowserForm) return res.status(400).send(renderStatusPage({ title: "Reset Link Invalid", message, tone: "error" }));
             return res.status(400).json({ message });
         }
 
-        user.password = await bcrypt.hash(newPassword, 10);
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
-        user.passwordResetUsed = true;
-        await user.save();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: await bcrypt.hash(newPassword, 10),
+                resetPasswordToken: null,
+                resetPasswordExpires: null,
+                passwordResetUsed: true,
+            },
+        });
 
         const message = "Password reset successful. Return to the app and log in.";
-
-        if (isBrowserForm) {
-            return res.status(200).send(
-                renderStatusPage({
-                    title: "Password Updated",
-                    message,
-                    tone: "success",
-                })
-            );
-        }
-
+        if (isBrowserForm) return res.status(200).send(renderStatusPage({ title: "Password Updated", message, tone: "success" }));
         res.status(200).json({ message });
 
     } catch (error) {
         console.error("Reset Password Error:", error);
-
         if (req.is("application/x-www-form-urlencoded")) {
-            return res.status(500).send(
-                renderStatusPage({
-                    title: "Reset Failed",
-                    message: "Server error",
-                    tone: "error",
-                })
-            );
+            return res.status(500).send(renderStatusPage({ title: "Reset Failed", message: "Server error", tone: "error" }));
         }
-
         res.status(500).json({ message: "Server error" });
     }
 };
-
-// ===================== RESET PASSWORD PAGE =====================
-// GET /api/users/reset-password/:token
-exports.getResetPasswordPage = async (req, res) => {
-    try {
-        const { token } = req.params;
-
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() },
-            passwordResetUsed: false,
-        });
-
-        if (!user) {
-            return res.status(400).send(
-                renderStatusPage({
-                    title: "Reset Link Invalid",
-                    message: "This reset link has already been used or expired.",
-                    tone: "error",
-                })
-            );
-        }
-
-        return res.status(200).send(renderResetPasswordPage(token));
-    } catch (error) {
-        console.error("Reset Password Page Error:", error);
-        return res.status(500).send(
-            renderStatusPage({
-                title: "Reset Failed",
-                message: "Server error",
-                tone: "error",
-            })
-        );
-    }
-};
-
 
 // ===================== VERIFY LOGIN OTP =====================
 // POST /api/users/verify-login-otp
@@ -454,8 +336,8 @@ exports.verifyLoginOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user || !user.otp || user.otpExpires < Date.now()) {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.otp || !user.otpExpires || user.otpExpires < new Date()) {
             return res.status(400).json({ message: "OTP expired or invalid" });
         }
 
@@ -464,18 +346,19 @@ exports.verifyLoginOtp = async (req, res) => {
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
-        user.otp = undefined;
-        user.otpExpires = undefined;
-        await user.save();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { otp: null, otpExpires: null },
+        });
 
         res.status(200).json({
             message: "Login successful",
             user: {
-                id: user._id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
-                role: user.role
-            }
+                role: user.role,
+            },
         });
 
     } catch (error) {
@@ -494,21 +377,24 @@ exports.resendLoginOtp = async (req, res) => {
             return res.status(400).json({ message: "Email is required" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!user.otp || user.otpExpires < Date.now()) {
-            return res.status(400).json({
-                message: "OTP session expired. Please login again."
-            });
+        if (!user.otp || !user.otpExpires || user.otpExpires < new Date()) {
+            return res.status(400).json({ message: "OTP session expired. Please login again." });
         }
 
         const otp = generateOtp();
-        user.otp = await bcrypt.hash(otp, 10);
-        user.otpExpires = Date.now() + TIME_EXPIRATION;
-        await user.save();
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                otp: await bcrypt.hash(otp, 10),
+                otpExpires: new Date(Date.now() + TIME_EXPIRATION),
+            },
+        });
 
         await sendOtpEmail(user.email, otp, "Your Login OTP (Resent)");
 
@@ -525,59 +411,36 @@ exports.unlockAccount = async (req, res) => {
     try {
         const { token } = req.params;
 
-        const user = await User.findOne({
-            unlockToken: token,
-            unlockTokenExpires: { $gt: Date.now() }
+        const user = await prisma.user.findFirst({
+            where: {
+                unlockToken: token,
+                unlockTokenExpires: { gt: new Date() },
+            },
         });
 
         if (!user) {
             const message = "Invalid or expired link";
-
-            if (req.method === "GET") {
-                return res.status(400).send(
-                    renderStatusPage({
-                        title: "Unlock Failed",
-                        message,
-                        tone: "error",
-                    })
-                );
-            }
-
+            if (req.method === "GET") return res.status(400).send(renderStatusPage({ title: "Unlock Failed", message, tone: "error" }));
             return res.status(400).json({ message });
         }
 
-        user.lockUntil = null;
-        user.loginAttempts = 0;
-        user.unlockToken = undefined;
-        user.unlockTokenExpires = undefined;
-        await user.save();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                lockUntil: null,
+                loginAttempts: 0,
+                unlockToken: null,
+                unlockTokenExpires: null,
+            },
+        });
 
         const message = "Account unlocked successfully. Return to the app and log in.";
-
-        if (req.method === "GET") {
-            return res.status(200).send(
-                renderStatusPage({
-                    title: "Account Unlocked",
-                    message,
-                    tone: "success",
-                })
-            );
-        }
-
+        if (req.method === "GET") return res.status(200).send(renderStatusPage({ title: "Account Unlocked", message, tone: "success" }));
         return res.status(200).json({ message });
+
     } catch (error) {
         console.error("Unlock Account Error:", error);
-
-        if (req.method === "GET") {
-            return res.status(500).send(
-                renderStatusPage({
-                    title: "Unlock Failed",
-                    message: "Server error",
-                    tone: "error",
-                })
-            );
-        }
-
+        if (req.method === "GET") return res.status(500).send(renderStatusPage({ title: "Unlock Failed", message: "Server error", tone: "error" }));
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -592,33 +455,31 @@ exports.sendUnlockEmail = async (req, res) => {
             return res.status(400).json({ message: "Username is required" });
         }
 
-        const user = await User.findOne({ username });
-
+        const user = await prisma.user.findUnique({ where: { username } });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!user.lockUntil || user.lockUntil < Date.now()) {
+        if (!user.lockUntil || user.lockUntil < new Date()) {
             return res.status(400).json({ message: "Account is not locked" });
         }
 
-        // Generate new unlock token
         const unlockToken = crypto.randomBytes(32).toString("hex");
-        user.unlockToken = unlockToken;
-        user.unlockTokenExpires = Date.now() + TIME_EXPIRATION;
-        await user.save();
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                unlockToken,
+                unlockTokenExpires: new Date(Date.now() + TIME_EXPIRATION),
+            },
+        });
 
         const unlockLink = `${PUBLIC_SERVER_URL}/api/users/unlock/${unlockToken}`;
 
         await sendEmail(
             user.email,
-            "Unlock Your PetCare Account",
-            `
-        <h2>Account Locked</h2>
-        <p>Click the link below to unlock your account:</p>
-        <a href="${unlockLink}">Unlock Account</a>
-        <p>This link expires in 5 minutes.</p>
-      `
+            "Unlock Your PawCruz Account",
+            `<h2>Account Locked</h2><p>Click the link below to unlock your account:</p><a href="${unlockLink}">Unlock Account</a><p>This link expires in 5 minutes.</p>`
         );
 
         return res.status(200).json({ message: "Unlock email sent" });
@@ -629,19 +490,18 @@ exports.sendUnlockEmail = async (req, res) => {
     }
 };
 
-
 // ===================== DELETE USER =====================
 // DELETE /api/users/delete/:id
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const user = await User.findById(id);
+        const user = await prisma.user.findUnique({ where: { id } });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        await User.findByIdAndDelete(id);
+        await prisma.user.delete({ where: { id } });
 
         res.status(200).json({ message: "Account deleted successfully" });
 
@@ -661,24 +521,20 @@ exports.updatePassword = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = await User.findById(userId);
+        const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const isMatch = await bcrypt.compare(
-            currentPassword,
-            user.password
-        );
-
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
-            return res
-                .status(400)
-                .json({ message: "Current password is incorrect" });
+            return res.status(400).json({ message: "Current password is incorrect" });
         }
 
-        user.password = await bcrypt.hash(newPassword, 10);
-        await user.save();
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password: await bcrypt.hash(newPassword, 10) },
+        });
 
         res.status(200).json({ message: "Password updated successfully" });
 
@@ -756,7 +612,7 @@ const renderResetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
   <div class="wrap">
     <div class="card">
       <h1>Reset Password</h1>
-      <p>Enter a new password for your account. Use at least 8 characters with a letter, a number, and a special character.</p>
+      <p>Enter a new password for your account.</p>
       <form method="POST" action="/api/users/reset-password/${escapeHtml(token)}">
         <label for="newPassword">New Password</label>
         <input id="newPassword" name="newPassword" type="password" minlength="8" required />
@@ -775,11 +631,6 @@ const sendOtpEmail = async (email, otp, subject) => {
     await sendEmail(
         email,
         subject,
-        `
-      <h2>Login Verification</h2>
-      <p>Your OTP code is:</p>
-      <h1 style="letter-spacing:4px;">${otp}</h1>
-      <p>This code expires in ${TIME_EXPIRATION / 60000} minutes.</p>
-    `
+        `<h2>Login Verification</h2><p>Your OTP code is:</p><h1 style="letter-spacing:4px;">${otp}</h1><p>This code expires in ${TIME_EXPIRATION / 60000} minutes.</p>`
     );
 };
