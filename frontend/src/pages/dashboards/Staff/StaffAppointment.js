@@ -36,7 +36,8 @@ const StaffAppointment = () => {
     getAppointments()
       .then((r) => setAppointments(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">

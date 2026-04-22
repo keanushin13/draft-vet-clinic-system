@@ -106,15 +106,13 @@ exports.verifyEmail = async (req, res) => {
     if (!user) {
       const message = "Invalid or expired verification link";
       if (req.method === "GET") {
-        return res
-          .status(400)
-          .send(
-            renderStatusPage({
-              title: "Verification Failed",
-              message,
-              tone: "error",
-            }),
-          );
+        return res.status(400).send(
+          renderStatusPage({
+            title: "Verification Failed",
+            message,
+            tone: "error",
+          }),
+        );
       }
       return res.status(400).json({ message });
     }
@@ -131,15 +129,13 @@ exports.verifyEmail = async (req, res) => {
     const message =
       "Email verified successfully. Return to the app and log in.";
     if (req.method === "GET") {
-      return res
-        .status(200)
-        .send(
-          renderStatusPage({
-            title: "Email Verified",
-            message,
-            tone: "success",
-          }),
-        );
+      return res.status(200).send(
+        renderStatusPage({
+          title: "Email Verified",
+          message,
+          tone: "success",
+        }),
+      );
     }
     res.status(200).json({ message });
   } catch (error) {
@@ -158,7 +154,9 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const user = await prisma.user.findUnique({ where: { username } });
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ username }, { email: username }] },
+    });
     if (!user) {
       return res.status(401).json({ message: "Invalid username or password" });
     }
@@ -204,23 +202,27 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Please verify your email first." });
     }
 
-    const otp = generateOtp();
-
+    // OTP disabled — issue JWT directly
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        otp: await bcrypt.hash(otp, 10),
-        otpExpires: new Date(Date.now() + TIME_EXPIRATION),
-        loginAttempts: 0,
-      },
+      data: { loginAttempts: 0 },
     });
 
-    await sendOtpEmail(user.email, otp, "Your Login OTP");
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
 
     res.status(200).json({
-      message: "OTP sent to email",
-      requiresOtp: true,
-      email: user.email,
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
     });
   } catch (error) {
     console.error("Login Error:", error);
@@ -288,29 +290,25 @@ exports.getResetPasswordPage = async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .send(
-          renderStatusPage({
-            title: "Reset Link Invalid",
-            message: "This reset link has already been used or expired.",
-            tone: "error",
-          }),
-        );
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Reset Link Invalid",
+          message: "This reset link has already been used or expired.",
+          tone: "error",
+        }),
+      );
     }
 
     return res.status(200).send(renderResetPasswordPage(token));
   } catch (error) {
     console.error("Reset Password Page Error:", error);
-    return res
-      .status(500)
-      .send(
-        renderStatusPage({
-          title: "Reset Failed",
-          message: "Server error",
-          tone: "error",
-        }),
-      );
+    return res.status(500).send(
+      renderStatusPage({
+        title: "Reset Failed",
+        message: "Server error",
+        tone: "error",
+      }),
+    );
   }
 };
 
@@ -324,25 +322,21 @@ exports.resetPassword = async (req, res) => {
 
     if (!newPassword) {
       if (isBrowserForm)
-        return res
-          .status(400)
-          .send(
-            renderResetPasswordPage(token, {
-              error: "New password is required.",
-            }),
-          );
+        return res.status(400).send(
+          renderResetPasswordPage(token, {
+            error: "New password is required.",
+          }),
+        );
       return res.status(400).json({ message: "New password is required" });
     }
 
     if (confirmPassword && newPassword !== confirmPassword) {
       if (isBrowserForm)
-        return res
-          .status(400)
-          .send(
-            renderResetPasswordPage(token, {
-              error: "Passwords do not match.",
-            }),
-          );
+        return res.status(400).send(
+          renderResetPasswordPage(token, {
+            error: "Passwords do not match.",
+          }),
+        );
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
@@ -367,15 +361,13 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       const message = "This reset link has already been used or expired";
       if (isBrowserForm)
-        return res
-          .status(400)
-          .send(
-            renderStatusPage({
-              title: "Reset Link Invalid",
-              message,
-              tone: "error",
-            }),
-          );
+        return res.status(400).send(
+          renderStatusPage({
+            title: "Reset Link Invalid",
+            message,
+            tone: "error",
+          }),
+        );
       return res.status(400).json({ message });
     }
 
@@ -391,28 +383,24 @@ exports.resetPassword = async (req, res) => {
 
     const message = "Password reset successful. Return to the app and log in.";
     if (isBrowserForm)
-      return res
-        .status(200)
-        .send(
-          renderStatusPage({
-            title: "Password Updated",
-            message,
-            tone: "success",
-          }),
-        );
+      return res.status(200).send(
+        renderStatusPage({
+          title: "Password Updated",
+          message,
+          tone: "success",
+        }),
+      );
     res.status(200).json({ message });
   } catch (error) {
     console.error("Reset Password Error:", error);
     if (req.is("application/x-www-form-urlencoded")) {
-      return res
-        .status(500)
-        .send(
-          renderStatusPage({
-            title: "Reset Failed",
-            message: "Server error",
-            tone: "error",
-          }),
-        );
+      return res.status(500).send(
+        renderStatusPage({
+          title: "Reset Failed",
+          message: "Server error",
+          tone: "error",
+        }),
+      );
     }
     res.status(500).json({ message: "Server error" });
   }
@@ -519,15 +507,13 @@ exports.unlockAccount = async (req, res) => {
     if (!user) {
       const message = "Invalid or expired link";
       if (req.method === "GET")
-        return res
-          .status(400)
-          .send(
-            renderStatusPage({
-              title: "Unlock Failed",
-              message,
-              tone: "error",
-            }),
-          );
+        return res.status(400).send(
+          renderStatusPage({
+            title: "Unlock Failed",
+            message,
+            tone: "error",
+          }),
+        );
       return res.status(400).json({ message });
     }
 
@@ -544,28 +530,24 @@ exports.unlockAccount = async (req, res) => {
     const message =
       "Account unlocked successfully. Return to the app and log in.";
     if (req.method === "GET")
-      return res
-        .status(200)
-        .send(
-          renderStatusPage({
-            title: "Account Unlocked",
-            message,
-            tone: "success",
-          }),
-        );
+      return res.status(200).send(
+        renderStatusPage({
+          title: "Account Unlocked",
+          message,
+          tone: "success",
+        }),
+      );
     return res.status(200).json({ message });
   } catch (error) {
     console.error("Unlock Account Error:", error);
     if (req.method === "GET")
-      return res
-        .status(500)
-        .send(
-          renderStatusPage({
-            title: "Unlock Failed",
-            message: "Server error",
-            tone: "error",
-          }),
-        );
+      return res.status(500).send(
+        renderStatusPage({
+          title: "Unlock Failed",
+          message: "Server error",
+          tone: "error",
+        }),
+      );
     return res.status(500).json({ message: "Server error" });
   }
 };

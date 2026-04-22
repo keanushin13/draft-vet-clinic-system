@@ -43,7 +43,8 @@ const StaffMessages = () => {
         if (r.data.length) openThread(r.data[0]);
       })
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openThread = (thread) => {
     setActiveChat(thread);

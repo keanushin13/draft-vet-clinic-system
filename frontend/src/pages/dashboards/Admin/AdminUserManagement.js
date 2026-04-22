@@ -28,7 +28,8 @@ const AdminUserManagement = () => {
       return;
     }
     loadUsers();
-  }, [navigate, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Remove this user?")) return;

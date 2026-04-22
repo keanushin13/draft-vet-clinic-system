@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerAppointment.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
@@ -31,7 +31,8 @@ const PetOwnerAppointment = () => {
     getAppointments()
       .then((r) => setAppointments(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">

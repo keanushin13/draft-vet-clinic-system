@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerNotif.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
@@ -35,7 +35,8 @@ const PetOwnerNotif = () => {
     getNotifications()
       .then((r) => setNotifications(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead();

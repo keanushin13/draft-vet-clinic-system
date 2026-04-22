@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerPayHis.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
@@ -31,7 +31,8 @@ const PetOwnerPayHis = () => {
     getPayments()
       .then((r) => setPayments(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -129,7 +130,7 @@ const PetOwnerPayHis = () => {
                   <div>
                     <strong style={{ color: "#255065" }}>{p.service}</strong>
                     <div style={{ color: "#666", fontSize: "0.85rem" }}>
-                      {p.pet?.name} •{" "}
+                      {p.pet?.name} �{" "}
                       {new Date(p.createdAt).toLocaleDateString()}
                     </div>
                     <div style={{ color: "#888", fontSize: "0.8rem" }}>
@@ -138,7 +139,7 @@ const PetOwnerPayHis = () => {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontWeight: "700", color: "#255065" }}>
-                      ₱{Number(p.amount).toLocaleString()}
+                      ?{Number(p.amount).toLocaleString()}
                     </div>
                     <span
                       style={{

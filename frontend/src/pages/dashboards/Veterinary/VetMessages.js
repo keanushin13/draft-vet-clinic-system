@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/VetMessages.css";
 import VetSidebar from "../../../components/VetSidebar";
@@ -38,7 +38,8 @@ const VetMessages = () => {
     getMessageThreads()
       .then((r) => setThreads(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openThread = (thread) => {
     setActiveThread(thread);

@@ -31,7 +31,8 @@ const AdminNotif = () => {
       return;
     }
     load();
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead();
@@ -47,7 +48,8 @@ const AdminNotif = () => {
     if (!user || user.role !== "admin") {
       navigate("/login");
     }
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">

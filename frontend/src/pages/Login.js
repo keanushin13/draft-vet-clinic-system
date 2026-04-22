@@ -60,9 +60,10 @@ const Login = () => {
         return;
       }
 
-      const user = res.data.user;
+      const { token, user } = res.data;
+      if (token) localStorage.setItem("token", token);
+      if (user) localStorage.setItem("user", JSON.stringify(user));
       handleOtpSuccess(user);
-
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data;
@@ -92,7 +93,6 @@ const Login = () => {
     }
   };
 
-
   const handleSendUnlock = async () => {
     try {
       if (!formData.username) {
@@ -121,7 +121,6 @@ const Login = () => {
       });
     }
   };
-
 
   const handleOtpSuccess = (user) => {
     const role = user.role;
@@ -201,13 +200,7 @@ const Login = () => {
         </div>
 
         <div className="login-right">
-          <video
-            className="login-video"
-            autoPlay
-            loop
-            muted
-            playsInline
-          >
+          <video className="login-video" autoPlay loop muted playsInline>
             <source src={loginVideo} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
@@ -218,7 +211,9 @@ const Login = () => {
         <div className="bottom-left">
           <div className="info-item">
             <img src={location} alt="Location" />
-            <span>2189 Stall G, Felimarc Pet Center, A. Luna St., Pasay City</span>
+            <span>
+              2189 Stall G, Felimarc Pet Center, A. Luna St., Pasay City
+            </span>
           </div>
           <div className="info-item">
             <img src={phone} alt="Phone" />
@@ -234,7 +229,9 @@ const Login = () => {
 
       <Modal
         show={alertModal.show}
-        onClose={() => setAlertModal({ show: false, message: "", extraAction: null })}
+        onClose={() =>
+          setAlertModal({ show: false, message: "", extraAction: null })
+        }
         extraAction={alertModal.extraAction} // pass the button if exists
       >
         <p>{alertModal.message}</p>
@@ -245,7 +242,11 @@ const Login = () => {
       </Modal>
 
       {showOtpModal && (
-        <LoginOtp email={loginEmail} onClose={() => setShowOtpModal(false)} onSuccess={handleOtpSuccess} />
+        <LoginOtp
+          email={loginEmail}
+          onClose={() => setShowOtpModal(false)}
+          onSuccess={handleOtpSuccess}
+        />
       )}
     </>
   );

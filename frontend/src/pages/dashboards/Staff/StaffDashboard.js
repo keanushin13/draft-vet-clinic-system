@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/StaffDashboard.css";
 import StaffSidebar from "../../../components/StaffSidebar";
@@ -37,7 +37,8 @@ const StaffDashboard = () => {
     getStaffStats()
       .then((r) => setStats(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">

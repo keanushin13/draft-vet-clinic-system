@@ -37,7 +37,8 @@ const StaffNotif = () => {
     getNotifications()
       .then((r) => setNotifications(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead();

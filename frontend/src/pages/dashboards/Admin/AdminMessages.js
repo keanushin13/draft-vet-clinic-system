@@ -31,7 +31,8 @@ const AdminMessages = () => {
     getMessageThreads()
       .then((r) => setThreads(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openThread = (thread) => {
     setActiveThread(thread);

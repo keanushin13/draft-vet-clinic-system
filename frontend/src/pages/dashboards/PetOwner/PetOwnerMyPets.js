@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerMyPets.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
@@ -31,7 +31,8 @@ const PetOwnerMyPets = () => {
     getPets()
       .then((r) => setPets(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -135,10 +136,10 @@ const PetOwnerMyPets = () => {
                     }}
                   >
                     {pet.species === "Dog"
-                      ? "🐶"
+                      ? "??"
                       : pet.species === "Cat"
-                        ? "🐱"
-                        : "🐾"}
+                        ? "??"
+                        : "??"}
                   </div>
                   <h4
                     style={{
@@ -156,7 +157,7 @@ const PetOwnerMyPets = () => {
                       fontSize: "0.85rem",
                     }}
                   >
-                    {pet.breed} • {pet.age} yr(s)
+                    {pet.breed} � {pet.age} yr(s)
                   </p>
                   <p
                     style={{

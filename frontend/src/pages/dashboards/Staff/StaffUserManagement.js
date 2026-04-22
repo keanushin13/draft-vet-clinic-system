@@ -34,7 +34,8 @@ const StaffUserManagement = () => {
     getUsers({ role: "pet_owner" })
       .then((r) => setUsers(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="dashboard-container">

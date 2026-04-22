@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/VetNotif.css";
 import VetSidebar from "../../../components/VetSidebar";
@@ -36,7 +36,8 @@ const VetNotif = () => {
     getNotifications()
       .then((r) => setNotifications(r.data))
       .catch(() => {});
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead();

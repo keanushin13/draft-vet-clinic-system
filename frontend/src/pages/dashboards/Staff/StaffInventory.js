@@ -31,7 +31,8 @@ const StaffInventory = () => {
       return;
     }
     loadInventory();
-  }, [navigate, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadInventory = () =>
     getInventory()
