@@ -7,6 +7,7 @@ import {
   getMessageThreads,
   getMessageThread,
   sendMessage,
+  getUsers,
 } from "../../../api/api";
 
 // ASSETS
@@ -23,16 +24,46 @@ const AdminMessages = () => {
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
 
+  const [showCompose, setShowCompose] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+
+  const loadThreads = () =>
+    getMessageThreads()
+      .then((r) => setThreads(r.data))
+      .catch(() => {});
+
   useEffect(() => {
     if (!user || user.role !== "admin") {
       navigate("/login");
       return;
     }
-    getMessageThreads()
-      .then((r) => setThreads(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadThreads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openCompose = () => {
+    getUsers()
+      .then((r) => {
+        setAllUsers(r.data.filter((u) => u.id !== user.id));
+        setUserSearch("");
+        setShowCompose(true);
+      })
+      .catch(() => {});
+  };
+
+  const startThread = (u) => {
+    setShowCompose(false);
+    setActiveThread({
+      partner: u,
+      lastMessage: "",
+      lastAt: new Date().toISOString(),
+      unread: 0,
+    });
+    getMessageThread(u.id)
+      .then((r) => setMessages(r.data))
+      .catch(() => setMessages([]));
+  };
 
   const openThread = (thread) => {
     setActiveThread(thread);
@@ -48,6 +79,7 @@ const AdminMessages = () => {
     getMessageThread(activeThread.partner.id)
       .then((r) => setMessages(r.data))
       .catch(() => {});
+    loadThreads();
   };
 
   return (
@@ -89,11 +121,9 @@ const AdminMessages = () => {
             <div className="inbox-panel">
               <div className="inbox-header">
                 <h3>Inbox</h3>
-                <input
-                  type="text"
-                  placeholder="Search chats..."
-                  className="msg-search"
-                />
+                <button className="compose-btn" onClick={openCompose}>
+                  + New
+                </button>
               </div>
               <div className="thread-list">
                 {threads.map((thread) => (
@@ -173,6 +203,72 @@ const AdminMessages = () => {
           </div>
         </section>
       </main>
+
+      {/* COMPOSE MODAL */}
+      {showCompose && (
+        <div className="modal-overlay" onClick={() => setShowCompose(false)}>
+          <div
+            className="modal-box compose-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>New Message</h3>
+            <input
+              className="compose-search"
+              type="text"
+              placeholder="Search users by name, role or email..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              autoFocus
+            />
+            <div className="compose-user-list">
+              {allUsers
+                .filter((u) =>
+                  (
+                    (u.firstName || "") +
+                    " " +
+                    (u.lastName || "") +
+                    " " +
+                    u.username +
+                    " " +
+                    u.email +
+                    " " +
+                    u.role
+                  )
+                    .toLowerCase()
+                    .includes(userSearch.toLowerCase()),
+                )
+                .map((u) => (
+                  <div
+                    key={u.id}
+                    className="compose-user-item"
+                    onClick={() => startThread(u)}
+                  >
+                    <div className="thread-avatar">
+                      {(u.firstName || u.username || "?").charAt(0)}
+                    </div>
+                    <div>
+                      <div className="compose-name">
+                        {u.firstName
+                          ? `${u.firstName} ${u.lastName || ""}`.trim()
+                          : u.username}
+                      </div>
+                      <div className="compose-role">
+                        {u.role} · {u.email}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <button
+              className="cancel-btn"
+              style={{ marginTop: 12 }}
+              onClick={() => setShowCompose(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

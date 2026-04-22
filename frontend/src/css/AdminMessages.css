@@ -233,3 +233,94 @@
     padding: 12px !important;
   }
 }
+/* ===== COMPOSE BUTTON ===== */
+.inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.compose-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.compose-btn:hover { background: #1d4ed8; }
+
+/* ===== COMPOSE MODAL ===== */
+.compose-modal { max-width: 440px; }
+.compose-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  outline: none;
+}
+.compose-search:focus { border-color: #2563eb; }
+.compose-user-list { max-height: 320px; overflow-y: auto; }
+.compose-user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.compose-user-item:hover { background: #f1f5f9; }
+.compose-name { font-weight: 600; font-size: 14px; color: #0f172a; }
+.compose-role { font-size: 12px; color: #6b7280; text-transform: capitalize; }
+
+/* ===== COMPOSE BUTTON ===== */
+.inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.compose-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.compose-btn:hover { background: #1d4ed8; }
+
+/* ===== COMPOSE MODAL ===== */
+.compose-modal { max-width: 440px; }
+.compose-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  outline: none;
+}
+.compose-search:focus { border-color: #2563eb; }
+.compose-user-list { max-height: 320px; overflow-y: auto; }
+.compose-user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.compose-user-item:hover { background: #f1f5f9; }
+.compose-name { font-weight: 600; font-size: 14px; color: #0f172a; }
+.compose-role { font-size: 12px; color: #6b7280; text-transform: capitalize; }
