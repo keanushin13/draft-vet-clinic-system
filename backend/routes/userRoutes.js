@@ -5,6 +5,8 @@ const csrf = require("csurf");
 
 const csrfProtection = csrf({ cookie: true });
 
+const { protect, authorizeRoles } = require("../middleware/auth");
+
 const {
   registerUser,
   verifyEmail,
@@ -18,6 +20,9 @@ const {
   sendUnlockEmail,
   deleteUser,
   updatePassword,
+  getUsers,
+  createUser,
+  updateUserAdmin,
 } = require("../controllers/userController");
 
 /* =====================
@@ -59,7 +64,12 @@ router.post("/send-unlock-email", sendUnlockEmail);
    USER MANAGEMENT (CSRF PROTECTED)
    Logged-in actions
 ===================== */
-router.delete("/delete/:id", csrfProtection, deleteUser);
-router.post("/update-password", csrfProtection, updatePassword);
+router.delete("/delete/:id", protect, authorizeRoles("admin"), deleteUser);
+router.post("/update-password", protect, updatePassword);
+
+// Admin CRUD
+router.get("/", protect, authorizeRoles("admin"), getUsers);
+router.post("/create", protect, authorizeRoles("admin"), createUser);
+router.put("/:id", protect, authorizeRoles("admin"), updateUserAdmin);
 
 module.exports = router;

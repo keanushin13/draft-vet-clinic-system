@@ -648,6 +648,189 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
+// ===================== GET ALL USERS (Admin) =====================
+// GET /api/users
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isVerified: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Get Users Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===================== CREATE USER (Admin) =====================
+// POST /api/users/create
+exports.createUser = async (req, res) => {
+  try {
+    const {
+      username,
+      email,
+      password,
+      role,
+      firstName,
+      lastName,
+      phone,
+      address,
+    } = req.body;
+
+    if (!username || !email || !password || !role) {
+      return res
+        .status(400)
+        .json({ message: "username, email, password, and role are required" });
+    }
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+    if (!PASSWORD_REGEX.test(password)) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Password must be at least 8 characters with a letter, number, and special character",
+        });
+    }
+    const allowedRoles = ["pet_owner", "veterinarian", "staff", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ username }, { email }] },
+    });
+    if (existing)
+      return res
+        .status(409)
+        .json({ message: "Username or email already in use" });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashed,
+        role,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        phone: phone || null,
+        address: address || null,
+        isVerified: true,
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===================== UPDATE USER (Admin) =====================
+// PUT /api/users/:id
+exports.updateUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      username,
+      email,
+      role,
+      firstName,
+      lastName,
+      phone,
+      address,
+      password,
+    } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (email && !validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+    if (username && username !== user.username) {
+      const taken = await prisma.user.findFirst({
+        where: { username, NOT: { id } },
+      });
+      if (taken)
+        return res.status(409).json({ message: "Username already taken" });
+    }
+    if (email && email !== user.email) {
+      const taken = await prisma.user.findFirst({
+        where: { email, NOT: { id } },
+      });
+      if (taken)
+        return res.status(409).json({ message: "Email already in use" });
+    }
+
+    const data = {};
+    if (username) data.username = username;
+    if (email) data.email = email;
+    if (role) data.role = role;
+    if (firstName !== undefined) data.firstName = firstName || null;
+    if (lastName !== undefined) data.lastName = lastName || null;
+    if (phone !== undefined) data.phone = phone || null;
+    if (address !== undefined) data.address = address || null;
+    if (password) {
+      if (!PASSWORD_REGEX.test(password)) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Password must be at least 8 characters with a letter, number, and special character",
+          });
+      }
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("Update User Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ===================== HELPERS =====================
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/AdminUserManagement.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getUsers, deleteUser } from "../../../api/api";
+import { getUsers, createUser, updateUser, deleteUser } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -16,6 +16,20 @@ const AdminUserManagement = () => {
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+
+  const EMPTY_FORM = {
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    role: "pet_owner",
+    password: "",
+  };
+  const [modalMode, setModalMode] = useState(null); // "add" | "edit"
+  const [editTarget, setEditTarget] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const loadUsers = () =>
     getUsers()
@@ -35,6 +49,56 @@ const AdminUserManagement = () => {
     if (!window.confirm("Remove this user?")) return;
     await deleteUser(id);
     loadUsers();
+  };
+
+  const openAdd = () => {
+    setForm(EMPTY_FORM);
+    setFormError("");
+    setEditTarget(null);
+    setModalMode("add");
+  };
+
+  const openEdit = (u) => {
+    setForm({
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      username: u.username || "",
+      email: u.email || "",
+      role: u.role || "pet_owner",
+      password: "",
+    });
+    setFormError("");
+    setEditTarget(u);
+    setModalMode("edit");
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setEditTarget(null);
+  };
+
+  const handleFormChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setSaving(true);
+    try {
+      if (modalMode === "add") {
+        await createUser(form);
+      } else {
+        const payload = { ...form };
+        if (!payload.password) delete payload.password;
+        await updateUser(editTarget.id, payload);
+      }
+      closeModal();
+      loadUsers();
+    } catch (err) {
+      setFormError(err.response?.data?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filtered = users.filter((u) =>
@@ -87,7 +151,9 @@ const AdminUserManagement = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <button className="add-user-btn">+ Add New User</button>
+              <button className="add-user-btn" onClick={openAdd}>
+                + Add New User
+              </button>
             </div>
 
             <div className="user-table-wrapper">
@@ -127,7 +193,12 @@ const AdminUserManagement = () => {
                       </td>
                       <td>
                         <div className="action-btns">
-                          <button className="edit-btn">Edit</button>
+                          <button
+                            className="edit-btn"
+                            onClick={() => openEdit(u)}
+                          >
+                            Edit
+                          </button>
                           <button
                             className="delete-btn"
                             onClick={() => handleDelete(u.id)}
@@ -144,6 +215,113 @@ const AdminUserManagement = () => {
           </div>
         </section>
       </main>
+      {/* ADD / EDIT MODAL */}
+      {modalMode && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>{modalMode === "add" ? "Add New User" : "Edit User"}</h3>
+
+            <form onSubmit={handleSubmit} className="user-modal-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleFormChange}
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleFormChange}
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Username *</label>
+                <input
+                  name="username"
+                  value={form.username}
+                  onChange={handleFormChange}
+                  placeholder="Username"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleFormChange}
+                  placeholder="Email"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Role *</label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="pet_owner">Pet Owner</option>
+                  <option value="staff">Staff</option>
+                  <option value="veterinarian">Veterinarian</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  Password{" "}
+                  {modalMode === "edit" ? "(leave blank to keep current)" : "*"}
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleFormChange}
+                  placeholder={
+                    modalMode === "edit"
+                      ? "New password (optional)"
+                      : "Password"
+                  }
+                  required={modalMode === "add"}
+                />
+              </div>
+
+              {formError && <p className="modal-error">{formError}</p>}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving
+                    ? "Saving..."
+                    : modalMode === "add"
+                      ? "Create User"
+                      : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
