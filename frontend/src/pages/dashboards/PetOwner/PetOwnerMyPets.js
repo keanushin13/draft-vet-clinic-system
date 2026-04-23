@@ -25,12 +25,19 @@ const PetOwnerMyPets = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [pets, setPets] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+
+  const filtered = pets.filter((p) =>
+    (p.name + " " + p.species + " " + (p.breed || ""))
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
 
   useEffect(() => {
     if (!user || user.role !== "pet_owner") {
@@ -146,282 +153,218 @@ const PetOwnerMyPets = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/pet-owner-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/pet-owner-profile"
+            />
           </div>
         </header>
 
         <section className="content-body">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <h3 style={{ fontFamily: "Poppins", fontWeight: "600" }}>
-              Manage Your Pets
-            </h3>
-            <button
-              className="add-btn"
-              style={{
-                backgroundColor: "#438fb5",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-              onClick={openCreate}
-            >
-              + Add New Pet
-            </button>
+          <div className="pets-management-card">
+            <div className="table-header-actions">
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Search pets by name or species..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <button className="add-user-btn" onClick={openCreate}>
+                + Add New Pet
+              </button>
+            </div>
+
+            {error && <p className="pets-error">{error}</p>}
+
+            <div className="user-table-wrapper">
+              <table className="user-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Species / Breed</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{ textAlign: "center", color: "#888" }}
+                      >
+                        Loading pets...
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{ textAlign: "center", color: "#888" }}
+                      >
+                        No pets found. Add one to get started.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((pet) => (
+                      <tr key={pet.id}>
+                        <td className="user-name-cell">
+                          <div className="user-avatar-small">
+                            {pet.name.charAt(0)}
+                          </div>
+                          <span>{pet.name}</span>
+                        </td>
+                        <td>
+                          {pet.species}
+                          {pet.breed ? ` — ${pet.breed}` : ""}
+                        </td>
+                        <td>{pet.age ? `${pet.age} yr(s)` : "—"}</td>
+                        <td>{pet.gender || "—"}</td>
+                        <td>
+                          <span
+                            className={`status-pill ${pet.status === "Healthy" ? "active" : "inactive"}`}
+                          >
+                            {pet.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-btns">
+                            <button
+                              className="edit-btn"
+                              onClick={() => openEdit(pet)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="delete-btn"
+                              onClick={() => archivePet(pet)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          {loading && <p>Loading pets...</p>}
-          {error && (
-            <p style={{ color: "#c62828", marginBottom: "10px" }}>{error}</p>
-          )}
-
-          {!loading && pets.length === 0 ? (
-            <div
-              className="dashboard-welcome-card"
-              style={{
-                background: "white",
-                padding: "30px",
-                borderRadius: "15px",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <p style={{ color: "#555" }}>
-                You have no active pets. Add one to get started.
-              </p>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
-                gap: "16px",
-              }}
-            >
-              {pets.map((pet) => (
-                <div
-                  key={pet.id}
-                  style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <h4
-                    style={{
-                      textAlign: "center",
-                      color: "#255065",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    {pet.name}
-                  </h4>
-                  <p
-                    style={{
-                      textAlign: "center",
-                      color: "#888",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {pet.species} {pet.breed ? `- ${pet.breed}` : ""}
-                  </p>
-                  <p
-                    style={{
-                      textAlign: "center",
-                      color: "#888",
-                      fontSize: "0.82rem",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {pet.age ? `${pet.age} yr(s)` : "Age not set"}
-                  </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <button
-                      onClick={() => openEdit(pet)}
-                      style={{
-                        border: "none",
-                        background: "#e4e6ea",
-                        color: "#505866",
-                        padding: "6px 10px",
-                        borderRadius: "7px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => archivePet(pet)}
-                      style={{
-                        border: "none",
-                        background: "#fbeef0",
-                        color: "#ef575a",
-                        padding: "6px 10px",
-                        borderRadius: "7px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
       </main>
 
       {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15,23,42,0.45)",
-            zIndex: 999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-        >
-          <div
-            style={{
-              width: "min(640px,100%)",
-              background: "#fff",
-              borderRadius: "14px",
-              padding: "20px",
-              boxShadow: "0 20px 45px rgba(0,0,0,0.2)",
-            }}
-          >
-            <h3 style={{ marginBottom: "14px", color: "#1f495f" }}>
-              {editing ? "Edit Pet" : "Add Pet"}
-            </h3>
-            <form onSubmit={submitPet} style={{ display: "grid", gap: "10px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  placeholder="Name"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, name: e.target.value }))
-                  }
-                />
-                <input
-                  placeholder="Species"
-                  value={form.species}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, species: e.target.value }))
-                  }
-                />
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  placeholder="Breed"
-                  value={form.breed}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, breed: e.target.value }))
-                  }
-                />
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Age"
-                  value={form.age}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, age: e.target.value }))
-                  }
-                />
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  placeholder="Gender"
-                  value={form.gender}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, gender: e.target.value }))
-                  }
-                />
-                <select
-                  value={form.status}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, status: e.target.value }))
-                  }
-                >
-                  <option value="Healthy">Healthy</option>
-                  <option value="UnderTreatment">UnderTreatment</option>
-                  <option value="Deceased">Deceased</option>
-                </select>
-              </div>
-              <textarea
-                rows={3}
-                placeholder="Notes"
-                value={form.notes}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, notes: e.target.value }))
-                }
-              />
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>{editing ? "Edit Pet" : "Add New Pet"}</h3>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "10px",
-                }}
-              >
+            <form onSubmit={submitPet} className="user-modal-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input
+                    placeholder="Pet name"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, name: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Species *</label>
+                  <input
+                    placeholder="e.g. Dog, Cat"
+                    value={form.species}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, species: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Breed</label>
+                  <input
+                    placeholder="Breed"
+                    value={form.breed}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, breed: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Age</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Age"
+                    value={form.age}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, age: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Gender</label>
+                  <input
+                    placeholder="Gender"
+                    value={form.gender}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, gender: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Status *</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, status: e.target.value }))
+                    }
+                    required
+                  >
+                    <option value="Healthy">Healthy</option>
+                    <option value="UnderTreatment">Under Treatment</option>
+                    <option value="Deceased">Deceased</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  rows={3}
+                  placeholder="Notes"
+                  value={form.notes}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, notes: e.target.value }))
+                  }
+                />
+              </div>
+
+              {error && <p className="modal-error">{error}</p>}
+
+              <div className="modal-actions">
                 <button
                   type="button"
+                  className="cancel-btn"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "9px 14px",
-                    background: "#eff4f8",
-                    color: "#1f495f",
-                  }}
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "9px 14px",
-                    background: "#2e86ab",
-                    color: "#fff",
-                  }}
-                >
-                  {saving ? "Saving..." : "Save"}
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : editing ? "Save Changes" : "Add Pet"}
                 </button>
               </div>
             </form>
