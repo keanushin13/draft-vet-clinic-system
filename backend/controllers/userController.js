@@ -648,6 +648,87 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
+// ===================== GET ME =====================
+// GET /api/users/me
+exports.getMe = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===================== UPDATE ME =====================
+// PUT /api/users/me
+exports.updateMe = async (req, res) => {
+  try {
+    const { firstName, lastName, phone, address, email, username } = req.body;
+    const id = req.user.id;
+
+    if (email && !validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+    if (username) {
+      const taken = await prisma.user.findFirst({
+        where: { username, NOT: { id } },
+      });
+      if (taken)
+        return res.status(409).json({ message: "Username already taken" });
+    }
+    if (email) {
+      const taken = await prisma.user.findFirst({
+        where: { email, NOT: { id } },
+      });
+      if (taken)
+        return res.status(409).json({ message: "Email already in use" });
+    }
+
+    const data = {};
+    if (firstName !== undefined) data.firstName = firstName || null;
+    if (lastName !== undefined) data.lastName = lastName || null;
+    if (phone !== undefined) data.phone = phone || null;
+    if (address !== undefined) data.address = address || null;
+    if (email) data.email = email;
+    if (username) data.username = username;
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ===================== GET ALL USERS (Admin) =====================
 // GET /api/users
 exports.getUsers = async (req, res) => {
@@ -698,12 +779,10 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
     if (!PASSWORD_REGEX.test(password)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Password must be at least 8 characters with a letter, number, and special character",
-        });
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters with a letter, number, and special character",
+      });
     }
     const allowedRoles = ["pet_owner", "veterinarian", "staff", "admin"];
     if (!allowedRoles.includes(role)) {
@@ -798,12 +877,10 @@ exports.updateUserAdmin = async (req, res) => {
     if (address !== undefined) data.address = address || null;
     if (password) {
       if (!PASSWORD_REGEX.test(password)) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Password must be at least 8 characters with a letter, number, and special character",
-          });
+        return res.status(400).json({
+          message:
+            "Password must be at least 8 characters with a letter, number, and special character",
+        });
       }
       data.password = await bcrypt.hash(password, 10);
     }

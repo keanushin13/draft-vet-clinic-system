@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/AdminProfile.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getMe } from "../../../api/api";
+import { getMe, updateMe } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -14,6 +14,10 @@ const AdminProfile = () => {
   const localUser = JSON.parse(localStorage.getItem("user") || "{}");
   const { isOpen, toggle, close } = useSidebar();
   const [profile, setProfile] = useState(localUser);
+  const [showEdit, setShowEdit] = useState(false);
+  const [form, setForm] = useState({});
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!localUser || localUser.role !== "admin") {
@@ -23,7 +27,40 @@ const AdminProfile = () => {
     getMe()
       .then((r) => setProfile(r.data))
       .catch(() => {});
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const openEdit = () => {
+    setForm({
+      firstName: profile?.firstName || "",
+      lastName: profile?.lastName || "",
+      username: profile?.username || "",
+      email: profile?.email || "",
+      phone: profile?.phone || "",
+      address: profile?.address || "",
+    });
+    setFormError("");
+    setShowEdit(true);
+  };
+
+  const handleFormChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setSaving(true);
+    try {
+      const res = await updateMe(form);
+      setProfile(res.data);
+      localStorage.setItem("user", JSON.stringify(res.data));
+      setShowEdit(false);
+    } catch (err) {
+      setFormError(err.response?.data?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -97,7 +134,7 @@ const AdminProfile = () => {
               </div>
 
               <div className="profile-actions">
-                <button className="edit-profile-btn">
+                <button className="edit-profile-btn" onClick={openEdit}>
                   Edit Profile Information
                 </button>
                 <button className="logout-danger-btn" onClick={handleLogout}>
@@ -108,6 +145,86 @@ const AdminProfile = () => {
           </div>
         </section>
       </main>
+      {/* EDIT PROFILE MODAL */}
+      {showEdit && (
+        <div className="modal-overlay" onClick={() => setShowEdit(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Profile</h3>
+            <form onSubmit={handleSave} className="user-modal-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleFormChange}
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleFormChange}
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Username</label>
+                <input
+                  name="username"
+                  value={form.username}
+                  onChange={handleFormChange}
+                  placeholder="Username"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleFormChange}
+                  placeholder="Email"
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleFormChange}
+                  placeholder="Phone number"
+                />
+              </div>
+              <div className="form-group">
+                <label>Address</label>
+                <input
+                  name="address"
+                  value={form.address}
+                  onChange={handleFormChange}
+                  placeholder="Address"
+                />
+              </div>
+              {formError && <p className="modal-error">{formError}</p>}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={() => setShowEdit(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

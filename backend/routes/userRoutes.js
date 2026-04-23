@@ -23,6 +23,8 @@ const {
   getUsers,
   createUser,
   updateUserAdmin,
+  getMe,
+  updateMe,
 } = require("../controllers/userController");
 
 /* =====================
@@ -66,6 +68,8 @@ router.post("/send-unlock-email", sendUnlockEmail);
 ===================== */
 router.delete("/delete/:id", protect, authorizeRoles("admin"), deleteUser);
 router.post("/update-password", protect, updatePassword);
+router.get("/me", protect, getMe);
+router.put("/me", protect, updateMe);
 
 // Admin CRUD
 router.get("/", protect, authorizeRoles("admin"), getUsers);

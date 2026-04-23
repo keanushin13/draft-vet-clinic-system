@@ -7,6 +7,7 @@ import {
   getMessageThreads,
   getMessageThread,
   sendMessage,
+  getUsers,
 } from "../../../api/api";
 
 // ASSETS
@@ -31,6 +32,14 @@ const StaffMessages = () => {
   const [threads, setThreads] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
+  const [showCompose, setShowCompose] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+
+  const loadThreads = () =>
+    getMessageThreads()
+      .then((r) => setThreads(r.data))
+      .catch(() => {});
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
@@ -40,26 +49,50 @@ const StaffMessages = () => {
     getMessageThreads()
       .then((r) => {
         setThreads(r.data);
-        if (r.data.length) openThread(r.data[0]);
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openCompose = () => {
+    getUsers()
+      .then((r) => {
+        setAllUsers(r.data.filter((u) => u.id !== user.id));
+        setUserSearch("");
+        setShowCompose(true);
+      })
+      .catch(() => {});
+  };
+
+  const startThread = (u) => {
+    setShowCompose(false);
+    const synthetic = {
+      partner: u,
+      lastMessage: "",
+      lastAt: new Date().toISOString(),
+      unread: 0,
+    };
+    setActiveChat(synthetic);
+    getMessageThread(u.id)
+      .then((r) => setMessages(r.data))
+      .catch(() => setMessages([]));
+  };
 
   const openThread = (thread) => {
     setActiveChat(thread);
-    getMessageThread(thread.partnerId)
+    getMessageThread(thread.partner.id)
       .then((r) => setMessages(r.data))
       .catch(() => {});
   };
 
   const handleSend = async () => {
     if (!newMsg.trim() || !activeChat) return;
-    await sendMessage({ receiverId: activeChat.partnerId, body: newMsg });
+    await sendMessage({ receiverId: activeChat.partner.id, body: newMsg });
     setNewMsg("");
-    getMessageThread(activeChat.partnerId)
+    getMessageThread(activeChat.partner.id)
       .then((r) => setMessages(r.data))
       .catch(() => {});
+    loadThreads();
   };
 
   return (
@@ -99,14 +132,24 @@ const StaffMessages = () => {
           <div className="messaging-wrapper">
             {/* CONTACT LIST */}
             <div className="contact-sidebar">
-              <div className="search-messages">
-                <input type="text" placeholder="Search contacts..." />
+              <div
+                className="search-messages"
+                style={{ display: "flex", gap: 8, alignItems: "center" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search contacts..."
+                  style={{ flex: 1 }}
+                />
+                <button className="compose-btn" onClick={openCompose}>
+                  + New
+                </button>
               </div>
               <div className="contact-list">
                 {threads.map((thread) => (
                   <div
-                    key={thread.partnerId}
-                    className={`contact-item ${activeChat?.partnerId === thread.partnerId ? "active" : ""} ${thread.unreadCount > 0 ? "unread" : ""}`}
+                    key={thread.partner.id}
+                    className={`contact-item ${activeChat?.partner?.id === thread.partner.id ? "active" : ""} ${thread.unread > 0 ? "unread" : ""}`}
                     onClick={() => openThread(thread)}
                   >
                     <div className="contact-avatar">
@@ -120,18 +163,16 @@ const StaffMessages = () => {
                       <div className="contact-name-row">
                         <h4>
                           {thread.partner?.firstName
-                            ? `${thread.partner.firstName} ${thread.partner.lastName}`
+                            ? `${thread.partner.firstName} ${thread.partner.lastName || ""}`.trim()
                             : thread.partner?.username}
                         </h4>
                         <span>
-                          {thread.lastMessage
-                            ? new Date(
-                                thread.lastMessage.createdAt,
-                              ).toLocaleDateString()
+                          {thread.lastAt
+                            ? new Date(thread.lastAt).toLocaleDateString()
                             : ""}
                         </span>
                       </div>
-                      <p>{thread.lastMessage?.body}</p>
+                      <p>{thread.lastMessage}</p>
                     </div>
                   </div>
                 ))}
@@ -173,6 +214,72 @@ const StaffMessages = () => {
           </div>
         </section>
       </main>
+
+      {/* COMPOSE MODAL */}
+      {showCompose && (
+        <div className="modal-overlay" onClick={() => setShowCompose(false)}>
+          <div
+            className="modal-box compose-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>New Message</h3>
+            <input
+              className="compose-search"
+              type="text"
+              placeholder="Search users by name, role or email..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              autoFocus
+            />
+            <div className="compose-user-list">
+              {allUsers
+                .filter((u) =>
+                  (
+                    (u.firstName || "") +
+                    " " +
+                    (u.lastName || "") +
+                    " " +
+                    u.username +
+                    " " +
+                    u.email +
+                    " " +
+                    u.role
+                  )
+                    .toLowerCase()
+                    .includes(userSearch.toLowerCase()),
+                )
+                .map((u) => (
+                  <div
+                    key={u.id}
+                    className="compose-user-item"
+                    onClick={() => startThread(u)}
+                  >
+                    <div className="contact-avatar">
+                      {(u.firstName || u.username || "?").charAt(0)}
+                    </div>
+                    <div>
+                      <div className="compose-name">
+                        {u.firstName
+                          ? `${u.firstName} ${u.lastName || ""}`.trim()
+                          : u.username}
+                      </div>
+                      <div className="compose-role">
+                        {u.role} · {u.email}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <button
+              className="cancel-btn"
+              style={{ marginTop: 12 }}
+              onClick={() => setShowCompose(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
