@@ -66,7 +66,11 @@ const StaffDashboard = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -80,18 +84,31 @@ const StaffDashboard = () => {
             </p>
           </div>
 
-          <div className="dashboard-content dashboard-content-wide">
-            {[
-              { label: "Total Appointments", value: stats.totalAppointments },
-              { label: "Today's Appointments", value: stats.todayAppointments },
-              { label: "Total Pets", value: stats.totalPets },
-              { label: "Pending Payments", value: stats.pendingPayments },
-            ].map((s) => (
-              <div key={s.label} className="dashboard-stat-card">
-                <div className="dashboard-stat-value">{s.value}</div>
-                <div className="dashboard-stat-label">{s.label}</div>
+          <div className="shared-stats-grid">
+            <div className="stat-card blue">
+              <div className="stat-info">
+                <span>Total Appointments</span>
+                <h4>{stats.totalAppointments}</h4>
               </div>
-            ))}
+            </div>
+            <div className="stat-card green">
+              <div className="stat-info">
+                <span>Today's Appointments</span>
+                <h4>{stats.todayAppointments}</h4>
+              </div>
+            </div>
+            <div className="stat-card yellow">
+              <div className="stat-info">
+                <span>Total Pets</span>
+                <h4>{stats.totalPets}</h4>
+              </div>
+            </div>
+            <div className="stat-card red">
+              <div className="stat-info">
+                <span>Pending Payments</span>
+                <h4>{stats.pendingPayments}</h4>
+              </div>
+            </div>
           </div>
         </section>
       </main>

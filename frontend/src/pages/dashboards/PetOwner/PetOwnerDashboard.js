@@ -82,20 +82,25 @@ const PetOwnerDashboard = () => {
             </p>
           </div>
 
-          <div className="dashboard-content">
-            {[
-              { label: "My Pets", value: stats.totalPets },
-              {
-                label: "Upcoming Appointments",
-                value: stats.upcomingAppointments,
-              },
-              { label: "Unread Messages", value: stats.unreadMessages },
-            ].map((s) => (
-              <div key={s.label} className="dashboard-stat-card">
-                <div className="dashboard-stat-value">{s.value}</div>
-                <div className="dashboard-stat-label">{s.label}</div>
+          <div className="shared-stats-grid">
+            <div className="stat-card blue">
+              <div className="stat-info">
+                <span>My Pets</span>
+                <h4>{stats.totalPets}</h4>
               </div>
-            ))}
+            </div>
+            <div className="stat-card green">
+              <div className="stat-info">
+                <span>Upcoming Appointments</span>
+                <h4>{stats.upcomingAppointments}</h4>
+              </div>
+            </div>
+            <div className="stat-card yellow">
+              <div className="stat-info">
+                <span>Unread Messages</span>
+                <h4>{stats.unreadMessages}</h4>
+              </div>
+            </div>
           </div>
         </section>
       </main>

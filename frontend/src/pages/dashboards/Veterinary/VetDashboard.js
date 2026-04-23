@@ -68,7 +68,11 @@ const VetDashboard = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/vet-profile"
+            />
           </div>
         </header>
 
@@ -81,17 +85,25 @@ const VetDashboard = () => {
             </p>
           </div>
 
-          <div className="dashboard-content">
-            {[
-              { label: "Total Patients", value: stats.totalPatients },
-              { label: "Today's Appointments", value: stats.todayAppointments },
-              { label: "Medical Records", value: stats.totalRecords },
-            ].map((s) => (
-              <div key={s.label} className="dashboard-stat-card">
-                <div className="dashboard-stat-value">{s.value}</div>
-                <div className="dashboard-stat-label">{s.label}</div>
+          <div className="shared-stats-grid">
+            <div className="stat-card blue">
+              <div className="stat-info">
+                <span>Total Patients</span>
+                <h4>{stats.totalPatients}</h4>
               </div>
-            ))}
+            </div>
+            <div className="stat-card green">
+              <div className="stat-info">
+                <span>Today's Appointments</span>
+                <h4>{stats.todayAppointments}</h4>
+              </div>
+            </div>
+            <div className="stat-card yellow">
+              <div className="stat-info">
+                <span>Medical Records</span>
+                <h4>{stats.totalRecords}</h4>
+              </div>
+            </div>
           </div>
         </section>
       </main>
