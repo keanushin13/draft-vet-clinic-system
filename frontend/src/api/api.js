@@ -85,6 +85,8 @@ export const getPayments = (params) => API.get("/payments", { params });
 export const getPayment = (id) => API.get(`/payments/${id}`);
 export const createPayment = (data) => API.post("/payments", data);
 export const updatePayment = (id, data) => API.patch(`/payments/${id}`, data);
+export const deletePayment = (id) => API.delete(`/payments/${id}`);
+export const restorePayment = (id) => API.patch(`/payments/${id}/restore`);
 
 // ─── INVENTORY ────────────────────────────────────────────────────────────────
 export const getInventory = (params) => API.get("/inventory", { params });
@@ -111,7 +113,8 @@ export const markNotificationRead = (id) =>
   API.patch(`/notifications/${id}/read`);
 
 // ─── ACTIVITY LOGS ────────────────────────────────────────────────────────────
-export const getActivityLogs = () => API.get("/activity-logs");
+export const getActivityLogs = (params) =>
+  API.get("/activity-logs", { params });
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
 export const getAdminStats = () => API.get("/stats/admin");

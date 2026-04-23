@@ -3,20 +3,18 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffPaymentHistory.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getPayments } from "../../../api/api";
+import {
+  createPayment,
+  deletePayment,
+  getPayments,
+  getPets,
+  restorePayment,
+  updatePayment,
+} from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import inventoryIcon from "../../../assets/Inventory_Icon.png";
-import activityLogIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import payHistoryIcon from "../../../assets/payment_icon.png";
-import petsProfileIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
-import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffPaymentHistory = () => {
   const navigate = useNavigate();
@@ -24,17 +22,158 @@ const StaffPaymentHistory = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [payments, setPayments] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    petId: "",
+    service: "",
+    amount: "",
+    method: "Cash",
+    status: "Pending",
+    reference: "",
+    notes: "",
+  });
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
       return;
     }
-    getPayments()
-      .then((r) => setPayments(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadData(showArchived);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived]);
+
+  const loadData = async (includeArchived = false) => {
+    setError("");
+    try {
+      const [paymentRes, petRes] = await Promise.all([
+        getPayments({ includeArchived }),
+        getPets(),
+      ]);
+      setPayments(paymentRes.data || []);
+      setPets(petRes.data || []);
+    } catch {
+      setError("Failed to load payments");
+    }
+  };
+
+  const totalRevenue = payments
+    .filter((p) => !p.isArchived && p.status === "Paid")
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const pendingAmount = payments
+    .filter((p) => !p.isArchived && p.status === "Pending")
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const filteredPayments = payments.filter((p) => {
+    const ownerName =
+      `${p.owner?.firstName || ""} ${p.owner?.lastName || ""}`.trim() ||
+      p.owner?.username ||
+      "";
+    const query = search.toLowerCase();
+    return (
+      p.id.toLowerCase().includes(query) ||
+      ownerName.toLowerCase().includes(query) ||
+      (p.service || "").toLowerCase().includes(query) ||
+      (p.status || "").toLowerCase().includes(query)
+    );
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      petId: pets[0]?.id || "",
+      service: "",
+      amount: "",
+      method: "Cash",
+      status: "Pending",
+      reference: "",
+      notes: "",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
+  const openEdit = (payment) => {
+    setEditing(payment);
+    setForm({
+      petId: payment.petId,
+      service: payment.service || "",
+      amount: String(payment.amount ?? ""),
+      method: payment.method || "Cash",
+      status: payment.status || "Pending",
+      reference: payment.reference || "",
+      notes: payment.notes || "",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditing(null);
+    setSaving(false);
+    setError("");
+  };
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.petId || !form.service || !form.amount) {
+      setError("Pet, service, and amount are required");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      if (editing) {
+        await updatePayment(editing.id, {
+          service: form.service,
+          amount: Number(form.amount),
+          method: form.method,
+          status: form.status,
+          reference: form.reference,
+          notes: form.notes,
+        });
+      } else {
+        await createPayment({
+          petId: form.petId,
+          service: form.service,
+          amount: Number(form.amount),
+          method: form.method,
+          status: form.status,
+          reference: form.reference,
+          notes: form.notes,
+        });
+      }
+      closeModal();
+      await loadData(showArchived);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save payment");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleArchive = async (payment) => {
+    try {
+      if (payment.isArchived) await restorePayment(payment.id);
+      else await deletePayment(payment.id);
+      await loadData(showArchived);
+    } catch {
+      setError("Failed to update payment status");
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -72,22 +211,47 @@ const StaffPaymentHistory = () => {
           <div className="payment-summary-row">
             <div className="summary-card">
               <span>Total Revenue (Feb)</span>
-              <h3>â‚±12,450.00</h3>
+              <h3>
+                ₱
+                {totalRevenue.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}
+              </h3>
             </div>
             <div className="summary-card">
               <span>Pending Payments</span>
-              <h3>â‚±1,800.00</h3>
+              <h3>
+                ₱
+                {pendingAmount.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}
+              </h3>
             </div>
           </div>
 
           <div className="payment-table-card">
             <div className="table-header">
               <h3>Transaction Records</h3>
-              <input
-                type="text"
-                placeholder="Search by Transaction ID or Owner..."
-                className="payment-search"
-              />
+              <div className="table-header-actions">
+                <input
+                  type="text"
+                  placeholder="Search by Transaction ID or Owner..."
+                  className="payment-search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <label className="archived-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                  />
+                  Show archived
+                </label>
+                <button className="add-payment-btn" onClick={openCreate}>
+                  + Add Payment
+                </button>
+              </div>
             </div>
 
             <table className="payment-table">
@@ -103,10 +267,10 @@ const StaffPaymentHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p) => (
+                {filteredPayments.map((p) => (
                   <tr key={p.id}>
                     <td className="txn-id">
-                      TXN-{String(p.id).padStart(3, "0")}
+                      TXN-{p.id.slice(-6).toUpperCase()}
                     </td>
                     <td>
                       <div className="owner-info">
@@ -130,17 +294,139 @@ const StaffPaymentHistory = () => {
                       >
                         {p.status}
                       </span>
+                      {p.isArchived && (
+                        <span className="payment-status archived">
+                          Archived
+                        </span>
+                      )}
                     </td>
                     <td>
-                      <button className="receipt-btn">Receipt</button>
+                      <div className="action-btns">
+                        <button
+                          className="receipt-btn"
+                          onClick={() => openEdit(p)}
+                          disabled={p.isArchived}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="receipt-btn btn-muted"
+                          onClick={() => toggleArchive(p)}
+                        >
+                          {p.isArchived ? "Restore" : "Archive"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {!filteredPayments.length && (
+              <p className="list-placeholder">No payments found.</p>
+            )}
+            {error && <p className="modal-error">{error}</p>}
           </div>
         </section>
       </main>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <form className="user-modal-form" onSubmit={onSubmit}>
+              <h3>{editing ? "Edit Payment" : "Add Payment"}</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pet</label>
+                  <select
+                    name="petId"
+                    value={form.petId}
+                    onChange={onChange}
+                    required
+                    disabled={Boolean(editing)}
+                  >
+                    <option value="">Select pet</option>
+                    {pets.map((pet) => (
+                      <option key={pet.id} value={pet.id}>
+                        {pet.name} ({pet.species})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Service</label>
+                  <input
+                    name="service"
+                    value={form.service}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    name="amount"
+                    value={form.amount}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Method</label>
+                  <select name="method" value={form.method} onChange={onChange}>
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="BankTransfer">BankTransfer</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Status</label>
+                  <select name="status" value={form.status} onChange={onChange}>
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Refunded">Refunded</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Reference</label>
+                  <input
+                    name="reference"
+                    value={form.reference}
+                    onChange={onChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea name="notes" value={form.notes} onChange={onChange} />
+              </div>
+
+              {error && <p className="modal-error">{error}</p>}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

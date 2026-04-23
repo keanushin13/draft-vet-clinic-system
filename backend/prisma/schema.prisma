@@ -200,6 +200,8 @@ model Payment {
   amount        Decimal       @db.Decimal(10, 2)
   method        PaymentMethod @default(Cash)
   status        PaymentStatus @default(Pending)
+  isArchived    Boolean       @default(false)
+  archivedAt    DateTime?
   reference     String?
   notes         String?
 

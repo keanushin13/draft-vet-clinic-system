@@ -11,5 +11,17 @@ router.patch(
   authorizeRoles("admin", "staff"),
   c.updatePayment,
 );
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "staff"),
+  c.deletePayment,
+);
+router.patch(
+  "/:id/restore",
+  protect,
+  authorizeRoles("admin", "staff"),
+  c.restorePayment,
+);
 
 module.exports = router;

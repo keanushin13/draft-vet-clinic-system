@@ -18,7 +18,11 @@ const include = {
 exports.getPayments = async (req, res) => {
   try {
     const where = {};
+    const includeArchived =
+      String(req.query.includeArchived || "").toLowerCase() === "true";
     if (req.user.role === "pet_owner") where.ownerId = req.user.id;
+    if (!includeArchived) where.isArchived = false;
+
     const payments = await prisma.payment.findMany({
       where,
       include,
@@ -39,6 +43,18 @@ exports.getPayment = async (req, res) => {
       include,
     });
     if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    if (req.user.role === "pet_owner" && payment.ownerId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (
+      payment.isArchived &&
+      String(req.query.includeArchived || "").toLowerCase() !== "true"
+    ) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
     res.json(payment);
   } catch (e) {
     console.error(e);
@@ -65,10 +81,18 @@ exports.createPayment = async (req, res) => {
         .status(400)
         .json({ message: "petId, service, amount are required" });
 
+    const pet = await prisma.pet.findUnique({
+      where: { id: petId },
+      select: { ownerId: true },
+    });
+    if (!pet) return res.status(404).json({ message: "Pet not found" });
+
+    const resolvedOwnerId = ownerId || pet.ownerId;
+
     const payment = await prisma.payment.create({
       data: {
         petId,
-        ownerId,
+        ownerId: resolvedOwnerId,
         appointmentId,
         service,
         amount: parseFloat(amount),
@@ -76,6 +100,8 @@ exports.createPayment = async (req, res) => {
         status,
         reference,
         notes,
+        isArchived: false,
+        archivedAt: null,
       },
       include,
     });
@@ -89,10 +115,48 @@ exports.createPayment = async (req, res) => {
 // PATCH /api/payments/:id
 exports.updatePayment = async (req, res) => {
   try {
-    const { status, method, reference, notes } = req.body;
+    const { status, method, reference, notes, service, amount } = req.body;
+    const data = {};
+    if (status !== undefined) data.status = status;
+    if (method !== undefined) data.method = method;
+    if (reference !== undefined) data.reference = reference;
+    if (notes !== undefined) data.notes = notes;
+    if (service !== undefined) data.service = service;
+    if (amount !== undefined) data.amount = parseFloat(amount);
+
     const payment = await prisma.payment.update({
       where: { id: req.params.id },
-      data: { status, method, reference, notes },
+      data,
+      include,
+    });
+    res.json(payment);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/payments/:id (soft delete)
+exports.deletePayment = async (req, res) => {
+  try {
+    const payment = await prisma.payment.update({
+      where: { id: req.params.id },
+      data: { isArchived: true, archivedAt: new Date() },
+      include,
+    });
+    res.json(payment);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// PATCH /api/payments/:id/restore
+exports.restorePayment = async (req, res) => {
+  try {
+    const payment = await prisma.payment.update({
+      where: { id: req.params.id },
+      data: { isArchived: false, archivedAt: null },
       include,
     });
     res.json(payment);

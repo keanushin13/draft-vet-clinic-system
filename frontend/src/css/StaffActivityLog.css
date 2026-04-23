@@ -25,6 +25,21 @@
   font-family: "Poppins", sans-serif;
 }
 
+.filter-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-status-filter {
+  border-radius: 10px;
+  border: 1px solid #d7dde4;
+  background: #fff;
+  padding: 10px 12px;
+  font-family: "Poppins", sans-serif;
+  color: #3d4654;
+}
+
 .log-table-card {
   background: white;
   border-radius: 15px;
@@ -129,6 +144,17 @@
   background: #dbe9ef;
   color: #4d9dbd;
   font-size: 16px;
+}
+
+.list-placeholder {
+  padding: 16px 4px 4px;
+  color: #5f6876;
+}
+
+.modal-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 10px;
 }
 
 /* REUSE THE DASHBOARD BASE LAYOUT STYLES */

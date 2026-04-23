@@ -26,7 +26,7 @@
 .view-toggle button.active {
   background: white;
   color: #255065;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .add-apt-btn {
@@ -39,11 +39,25 @@
   cursor: pointer;
 }
 
+.appointment-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apt-search {
+  width: 280px;
+  border-radius: 12px;
+  border: 1px solid #d7dde4;
+  padding: 10px 14px;
+  background: #fff;
+}
+
 .calendar-container {
   background: white;
   border-radius: 15px;
   padding: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .calendar-month-header {
@@ -77,7 +91,14 @@
   border-bottom: 1px solid #eee;
 }
 
-.day-num { font-size: 14px; color: #999; }
+.calendar-day.empty {
+  background: #fbfcfe;
+}
+
+.day-num {
+  font-size: 14px;
+  color: #999;
+}
 
 .event-item {
   font-size: 10px;
@@ -87,8 +108,189 @@
   font-weight: 500;
 }
 
-.event-item.confirmed { background: #e3f2fd; color: #1976d2; }
-.event-item.pending { background: #fff3e0; color: #e65100; }
+.event-item.confirmed {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+.event-item.pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+.event-item.completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.event-item.cancelled {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.list-view-container {
+  background: #f4f5f7;
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.appointment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.appointment-table th {
+  text-align: left;
+  color: #5fb3ca;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #dde3e8;
+  padding: 14px;
+}
+
+.appointment-table td {
+  border-bottom: 1px solid #e8edf2;
+  color: #2f3541;
+  padding: 14px;
+}
+
+.apt-status {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apt-status.pending {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.apt-status.confirmed {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.apt-status.completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.apt-status.cancelled {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit,
+.btn-remove {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background: #e4e6ea;
+  color: #505866;
+}
+
+.btn-remove {
+  background: #fbeef0;
+  color: #ef575a;
+}
+
+.btn-edit:hover {
+  background: #d8dbe0;
+}
+
+.btn-remove:hover {
+  background: #f7dfe3;
+}
+
+.list-placeholder {
+  padding: 18px;
+  color: #5f6876;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.user-modal-form .form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.user-modal-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cancel-btn,
+.save-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.save-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-error {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.user-modal-form select,
+.user-modal-form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.user-modal-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)

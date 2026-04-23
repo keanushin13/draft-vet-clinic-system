@@ -38,6 +38,12 @@
   margin-bottom: 20px;
 }
 
+.table-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .payment-search {
   padding: 10px 15px;
   border-radius: 8px;
@@ -157,6 +163,131 @@
 .receipt-btn:hover {
   background: #d8dbe0;
   color: #39414f;
+}
+
+.btn-muted {
+  background: #fbeef0;
+  color: #ef575a;
+}
+
+.btn-muted:hover {
+  background: #f7dfe3;
+  color: #e13f42;
+}
+
+.add-payment-btn {
+  background: #2a607d;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-payment-btn:hover {
+  background: #1f4f68;
+}
+
+.archived-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4f5968;
+  font-size: 13px;
+}
+
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.payment-status.archived {
+  background: #f3f4f6;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.list-placeholder {
+  padding: 16px 4px 4px;
+  color: #5f6876;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.user-modal-form .form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.user-modal-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.user-modal-form input,
+.user-modal-form select,
+.user-modal-form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.user-modal-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cancel-btn,
+.save-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.save-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-error {
+  color: #dc2626;
+  font-size: 13px;
 }
 /* =====================
     RESPONSIVE - MOBILE

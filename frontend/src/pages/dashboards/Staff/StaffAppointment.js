@@ -3,41 +3,184 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffAppointment.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getAppointments } from "../../../api/api";
+import {
+  createAppointment,
+  deleteAppointment,
+  getAppointments,
+  getPets,
+  updateAppointment,
+} from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import inventoryIcon from "../../../assets/Inventory_Icon.png";
-import activityLogIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import payHistoryIcon from "../../../assets/payment_icon.png";
-import petsProfileIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
-import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffAppointment = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
   const [viewMode, setViewMode] = useState("calendar");
-
-  const days = Array.from({ length: 28 }, (_, i) => i + 1);
-
+  const [calendarDate, setCalendarDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    petId: "",
+    scheduledAt: "",
+    reason: "",
+    notes: "",
+    status: "Pending",
+  });
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
       return;
     }
-    getAppointments()
-      .then((r) => setAppointments(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [appointmentRes, petRes] = await Promise.all([
+        getAppointments(),
+        getPets(),
+      ]);
+      setAppointments(appointmentRes.data || []);
+      setPets(petRes.data || []);
+    } catch {
+      setError("Failed to load appointments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditing(null);
+    setSaving(false);
+    setError("");
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      petId: pets[0]?.id || "",
+      scheduledAt: "",
+      reason: "",
+      notes: "",
+      status: "Pending",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
+  const openEdit = (appointment) => {
+    setEditing(appointment);
+    setForm({
+      petId: appointment.petId,
+      scheduledAt: new Date(appointment.scheduledAt).toISOString().slice(0, 16),
+      reason: appointment.reason || "",
+      notes: appointment.notes || "",
+      status: appointment.status || "Pending",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.petId || !form.scheduledAt) {
+      setError("Pet and schedule are required");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      if (editing) {
+        await updateAppointment(editing.id, {
+          scheduledAt: form.scheduledAt,
+          reason: form.reason,
+          notes: form.notes,
+          status: form.status,
+        });
+      } else {
+        await createAppointment({
+          petId: form.petId,
+          scheduledAt: form.scheduledAt,
+          reason: form.reason,
+          notes: form.notes,
+        });
+      }
+      closeModal();
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save appointment");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (appointment) => {
+    if (!window.confirm("Delete this appointment?")) return;
+    try {
+      await deleteAppointment(appointment.id);
+      await loadData();
+    } catch {
+      setError("Failed to delete appointment");
+    }
+  };
+
+  const filteredAppointments = appointments.filter((a) => {
+    const ownerName =
+      `${a.owner?.firstName || ""} ${a.owner?.lastName || ""}`.trim() ||
+      a.owner?.username ||
+      "";
+    const query = search.toLowerCase();
+    return (
+      a.pet?.name?.toLowerCase().includes(query) ||
+      ownerName.toLowerCase().includes(query) ||
+      (a.status || "").toLowerCase().includes(query)
+    );
+  });
+
+  const monthStart = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth(),
+    1,
+  );
+  const daysInMonth = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth() + 1,
+    0,
+  ).getDate();
+  const firstWeekday = monthStart.getDay();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const shiftMonth = (delta) => {
+    setCalendarDate(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1),
+    );
+  };
+
+  const monthLabel = calendarDate.toLocaleString([], {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="dashboard-container">
@@ -87,16 +230,32 @@ const StaffAppointment = () => {
                 List View
               </button>
             </div>
-            <button className="add-apt-btn">+ Book Appointment</button>
+            <div className="appointment-actions">
+              <input
+                type="text"
+                className="apt-search"
+                placeholder="Search pet, owner, or status"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="add-apt-btn" onClick={openCreate}>
+                + Book Appointment
+              </button>
+            </div>
           </div>
 
-          {viewMode === "calendar" ? (
+          {loading && (
+            <p className="list-placeholder">Loading appointments...</p>
+          )}
+          {!loading && error && <p className="modal-error">{error}</p>}
+
+          {!loading && viewMode === "calendar" ? (
             <div className="calendar-container">
               <div className="calendar-month-header">
-                <h3>February 2026</h3>
+                <h3>{monthLabel}</h3>
                 <div className="month-nav">
-                  <button>&lt; Prev</button>
-                  <button>Next &gt;</button>
+                  <button onClick={() => shiftMonth(-1)}>&lt; Prev</button>
+                  <button onClick={() => shiftMonth(1)}>Next &gt;</button>
                 </div>
               </div>
               <div className="calendar-grid">
@@ -107,16 +266,28 @@ const StaffAppointment = () => {
                     </div>
                   ),
                 )}
+                {Array.from({ length: firstWeekday }).map((_, idx) => (
+                  <div key={`empty-${idx}`} className="calendar-day empty" />
+                ))}
                 {days.map((d) => (
                   <div key={d} className="calendar-day">
                     <span className="day-num">{d}</span>
                     <div className="day-events">
-                      {appointments
-                        .filter((a) => new Date(a.scheduledAt).getDate() === d)
+                      {filteredAppointments
+                        .filter((a) => {
+                          const scheduled = new Date(a.scheduledAt);
+                          return (
+                            scheduled.getFullYear() ===
+                              calendarDate.getFullYear() &&
+                            scheduled.getMonth() === calendarDate.getMonth() &&
+                            scheduled.getDate() === d
+                          );
+                        })
                         .map((apt) => (
                           <div
                             key={apt.id}
-                            className={`event-item ${apt.status}`}
+                            className={`event-item ${(apt.status || "").toLowerCase()}`}
+                            title={`${apt.pet?.name || "Pet"} - ${apt.status}`}
                           >
                             {new Date(apt.scheduledAt).toLocaleTimeString([], {
                               hour: "2-digit",
@@ -132,12 +303,135 @@ const StaffAppointment = () => {
             </div>
           ) : (
             <div className="list-view-container">
-              {/* List view table can go here */}
-              <p style={{ padding: "20px" }}>List View implementation...</p>
+              <table className="appointment-table">
+                <thead>
+                  <tr>
+                    <th>Pet</th>
+                    <th>Owner</th>
+                    <th>Date & Time</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppointments.map((apt) => (
+                    <tr key={apt.id}>
+                      <td>{apt.pet?.name || "-"}</td>
+                      <td>
+                        {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                          apt.owner?.username ||
+                          "-"}
+                      </td>
+                      <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
+                      <td>{apt.reason || "-"}</td>
+                      <td>
+                        <span
+                          className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                        >
+                          {apt.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-btns">
+                          <button
+                            className="btn-edit"
+                            onClick={() => openEdit(apt)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-remove"
+                            onClick={() => handleDelete(apt)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!filteredAppointments.length && (
+                <p className="list-placeholder">No appointments found.</p>
+              )}
             </div>
           )}
         </section>
       </main>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <form className="user-modal-form" onSubmit={onSubmit}>
+              <h3>{editing ? "Edit Appointment" : "Book Appointment"}</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pet</label>
+                  <select
+                    name="petId"
+                    value={form.petId}
+                    onChange={onChange}
+                    required
+                  >
+                    <option value="">Select pet</option>
+                    {pets.map((pet) => (
+                      <option key={pet.id} value={pet.id}>
+                        {pet.name} ({pet.species})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={onChange}
+                    disabled={!editing}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Schedule</label>
+                <input
+                  type="datetime-local"
+                  name="scheduledAt"
+                  value={form.scheduledAt}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Reason</label>
+                <input name="reason" value={form.reason} onChange={onChange} />
+              </div>
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea name="notes" value={form.notes} onChange={onChange} />
+              </div>
+              {error && <p className="modal-error">{error}</p>}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

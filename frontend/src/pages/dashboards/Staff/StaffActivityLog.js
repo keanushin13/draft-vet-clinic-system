@@ -6,17 +6,8 @@ import { useSidebar } from "../../../components/useSidebar";
 import { getActivityLogs } from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import inventoryIcon from "../../../assets/Inventory_Icon.png";
-import activityLogIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import payHistoryIcon from "../../../assets/payment_icon.png";
-import petsProfileIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
-import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffActivityLog = () => {
   const navigate = useNavigate();
@@ -24,17 +15,35 @@ const StaffActivityLog = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [activities, setActivities] = useState([]);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
       return;
     }
-    getActivityLogs()
-      .then((r) => setActivities(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, status]);
+
+  const loadLogs = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await getActivityLogs({
+        q: search || undefined,
+        status: status || undefined,
+      });
+      setActivities(res.data || []);
+    } catch {
+      setError("Failed to load activity logs");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -78,7 +87,18 @@ const StaffActivityLog = () => {
                   type="text"
                   placeholder="Search activity..."
                   className="log-search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
+                <select
+                  className="log-status-filter"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                </select>
               </div>
             </div>
 
@@ -94,36 +114,44 @@ const StaffActivityLog = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {activities.map((log) => (
-                    <tr key={log.id}>
-                      <td className="staff-cell">
-                        <div className="staff-avatar">
-                          {(
-                            log.staff?.firstName ||
-                            log.staff?.username ||
-                            "?"
-                          ).charAt(0)}
-                        </div>
-                        {log.staff?.firstName
-                          ? `${log.staff.firstName} ${log.staff.lastName}`
-                          : log.staff?.username}
-                      </td>
-                      <td className="action-text">{log.action}</td>
-                      <td>{log.target}</td>
-                      <td className="time-text">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </td>
-                      <td>
-                        <span
-                          className={`status-pill ${log.status?.toLowerCase()}`}
-                        >
-                          {log.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {!loading &&
+                    activities.map((log) => (
+                      <tr key={log.id}>
+                        <td className="staff-cell">
+                          <div className="staff-avatar">
+                            {(
+                              log.staff?.firstName ||
+                              log.staff?.username ||
+                              "?"
+                            ).charAt(0)}
+                          </div>
+                          {log.staff?.firstName
+                            ? `${log.staff.firstName} ${log.staff.lastName}`
+                            : log.staff?.username}
+                        </td>
+                        <td className="action-text">{log.action}</td>
+                        <td>{log.target}</td>
+                        <td className="time-text">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${log.status?.toLowerCase()}`}
+                          >
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
+              {loading && (
+                <p className="list-placeholder">Loading activity logs...</p>
+              )}
+              {!loading && !activities.length && (
+                <p className="list-placeholder">No activity logs found.</p>
+              )}
+              {error && <p className="modal-error">{error}</p>}
             </div>
           </div>
         </section>
