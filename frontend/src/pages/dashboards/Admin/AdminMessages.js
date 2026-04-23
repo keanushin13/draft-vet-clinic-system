@@ -107,46 +107,59 @@ const AdminMessages = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Admin Profile" profilePath="/admin-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Admin Profile"
+              profilePath="/admin-profile"
+            />
           </div>
         </header>
 
-        <section className="content-body message-layout">
-          <div className="message-container">
+        <section className="content-body no-scroll">
+          <div className="messaging-wrapper">
             {/* INBOX LIST */}
-            <div className="inbox-panel">
-              <div className="inbox-header">
-                <h3>Inbox</h3>
+            <div className="contact-sidebar">
+              <div
+                className="search-messages"
+                style={{ display: "flex", gap: 8, alignItems: "center" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search contacts..."
+                  style={{ flex: 1 }}
+                />
                 <button className="compose-btn" onClick={openCompose}>
                   + New
                 </button>
               </div>
-              <div className="thread-list">
+              <div className="contact-list">
                 {threads.map((thread) => (
                   <div
                     key={thread.partner.id}
-                    className={`thread-item ${thread.unread > 0 ? "unread" : ""}`}
+                    className={`contact-item ${activeThread?.partner?.id === thread.partner.id ? "active" : ""} ${thread.unread > 0 ? "unread" : ""}`}
                     onClick={() => openThread(thread)}
                   >
-                    <div className="thread-avatar">
+                    <div className="contact-avatar">
                       {(
                         thread.partner.firstName ||
                         thread.partner.username ||
                         "?"
                       ).charAt(0)}
                     </div>
-                    <div className="thread-info">
-                      <div className="thread-top">
-                        <span className="thread-name">
+                    <div className="contact-info">
+                      <div className="contact-name-row">
+                        <h4>
                           {thread.partner.firstName
                             ? `${thread.partner.firstName} ${thread.partner.lastName || ""}`.trim()
                             : thread.partner.username}
-                        </span>
-                        <span className="thread-time">
-                          {new Date(thread.lastAt).toLocaleDateString()}
+                        </h4>
+                        <span>
+                          {thread.lastAt
+                            ? new Date(thread.lastAt).toLocaleDateString()
+                            : ""}
                         </span>
                       </div>
-                      <p className="thread-preview">{thread.lastMessage}</p>
+                      <p>{thread.lastMessage}</p>
                     </div>
                   </div>
                 ))}
@@ -154,17 +167,17 @@ const AdminMessages = () => {
             </div>
 
             {/* CHAT VIEW */}
-            <div className="chat-panel">
+            <div className="chat-window">
               {activeThread ? (
                 <>
-                  <div className="chat-header-bar">
-                    <h4>
+                  <div className="chat-header">
+                    <h3>
                       {activeThread.partner.firstName
                         ? `${activeThread.partner.firstName} ${activeThread.partner.lastName || ""}`.trim()
                         : activeThread.partner.username}
-                    </h4>
+                    </h3>
                   </div>
-                  <div className="chat-messages-list">
+                  <div className="chat-messages">
                     {messages.map((m) => (
                       <div
                         key={m.id}
@@ -177,7 +190,7 @@ const AdminMessages = () => {
                   <div className="chat-input-area">
                     <input
                       type="text"
-                      placeholder="Type a message..."
+                      placeholder="Type your message here..."
                       value={newMsg}
                       onChange={(e) => setNewMsg(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -188,11 +201,10 @@ const AdminMessages = () => {
                   </div>
                 </>
               ) : (
-                <div className="chat-placeholder">
-                  <h4>Select a conversation</h4>
-                  <p>
-                    Click on a thread to view your messages and start chatting.
-                  </p>
+                <div className="chat-header">
+                  <h3 style={{ color: "#aaa", fontWeight: 400 }}>
+                    Select a conversation
+                  </h3>
                 </div>
               )}
             </div>
@@ -239,7 +251,7 @@ const AdminMessages = () => {
                     className="compose-user-item"
                     onClick={() => startThread(u)}
                   >
-                    <div className="thread-avatar">
+                    <div className="contact-avatar">
                       {(u.firstName || u.username || "?").charAt(0)}
                     </div>
                     <div>
