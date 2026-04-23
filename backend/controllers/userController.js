@@ -664,6 +664,7 @@ exports.getMe = async (req, res) => {
         lastName: true,
         phone: true,
         address: true,
+        profileImage: true,
         isVerified: true,
         createdAt: true,
       },
@@ -679,7 +680,15 @@ exports.getMe = async (req, res) => {
 // PUT /api/users/me
 exports.updateMe = async (req, res) => {
   try {
-    const { firstName, lastName, phone, address, email, username } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      email,
+      username,
+      profileImage,
+    } = req.body;
     const id = req.user.id;
 
     if (email && !validator.isEmail(email)) {
@@ -705,6 +714,7 @@ exports.updateMe = async (req, res) => {
     if (lastName !== undefined) data.lastName = lastName || null;
     if (phone !== undefined) data.phone = phone || null;
     if (address !== undefined) data.address = address || null;
+    if (profileImage !== undefined) data.profileImage = profileImage || null;
     if (email) data.email = email;
     if (username) data.username = username;
 
@@ -720,6 +730,7 @@ exports.updateMe = async (req, res) => {
         lastName: true,
         phone: true,
         address: true,
+        profileImage: true,
         isVerified: true,
         createdAt: true,
       },

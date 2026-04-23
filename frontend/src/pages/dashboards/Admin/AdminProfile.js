@@ -4,7 +4,7 @@ import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/AdminProfile.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getMe, updateMe } from "../../../api/api";
+import { getMe, updateMe, updatePassword } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -16,22 +16,45 @@ const AdminProfile = () => {
   const { isOpen, toggle, close } = useSidebar();
   const [profile, setProfile] = useState(localUser);
   const [showEdit, setShowEdit] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [form, setForm] = useState({});
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [formError, setFormError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState("");
 
   useEffect(() => {
     if (!localUser || localUser.role !== "admin") {
       navigate("/login");
       return;
     }
-    getMe()
-      .then((r) => setProfile(r.data))
-      .catch(() => {});
+    loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadProfile = async () => {
+    setLoading(true);
+    setFormError("");
+    try {
+      const r = await getMe();
+      setProfile(r.data || {});
+    } catch {
+      setFormError("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openEdit = () => {
+    setMessage("");
     setForm({
       firstName: profile?.firstName || "",
       lastName: profile?.lastName || "",
@@ -39,7 +62,9 @@ const AdminProfile = () => {
       email: profile?.email || "",
       phone: profile?.phone || "",
       address: profile?.address || "",
+      profileImage: profile?.profileImage || "",
     });
+    setAvatarPreview(profile?.profileImage || "");
     setFormError("");
     setShowEdit(true);
   };
@@ -47,14 +72,61 @@ const AdminProfile = () => {
   const handleFormChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const handlePasswordFormChange = (e) =>
+    setPasswordForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const onSelectAvatar = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Please select an image file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      setAvatarPreview(result);
+      setForm((prev) => ({ ...prev, profileImage: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setFormError("");
+    setMessage("");
     setSaving(true);
     try {
-      const res = await updateMe(form);
-      setProfile(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
+      const payload = {
+        ...form,
+        firstName: form.firstName || null,
+        lastName: form.lastName || null,
+        phone: form.phone || null,
+        address: form.address || null,
+        profileImage: form.profileImage || null,
+      };
+      const res = await updateMe(payload);
+      setProfile(res.data || payload);
+
+      const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...existingUser,
+          firstName: res.data?.firstName,
+          lastName: res.data?.lastName,
+          username: res.data?.username,
+          email: res.data?.email,
+          phone: res.data?.phone,
+          address: res.data?.address,
+          profileImage: res.data?.profileImage,
+          role: res.data?.role || existingUser.role,
+        }),
+      );
+
+      setMessage("Profile updated successfully");
       setShowEdit(false);
     } catch (err) {
       setFormError(err.response?.data?.message || "Save failed");
@@ -63,11 +135,48 @@ const AdminProfile = () => {
     }
   };
 
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordError("");
+  };
+
+  const submitPassword = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setMessage("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New password and confirm password do not match");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      await updatePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setMessage("Password changed successfully");
+      closePasswordModal();
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Password update failed");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     navigate("/login");
   };
+
+  const avatarSource = profile?.profileImage || userIcon;
 
   return (
     <div className="dashboard-container">
@@ -93,17 +202,38 @@ const AdminProfile = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Admin Profile" profilePath="/admin-profile" />
+            <TopbarUserMenu
+              avatarSrc={avatarSource}
+              avatarAlt="Admin Profile"
+              profilePath="/admin-profile"
+            />
           </div>
         </header>
 
         <section className="content-body profile-layout">
+          {loading && <p className="profile-feedback">Loading profile...</p>}
+          {!loading && message && <p className="profile-success">{message}</p>}
+          {!loading && formError && (
+            <p className="profile-error">{formError}</p>
+          )}
+
           <div className="profile-card">
             <div className="profile-header-bg"></div>
             <div className="profile-content">
               <div className="profile-image-wrapper">
-                <img src={userIcon} alt="Admin" className="profile-main-img" />
-                <button className="edit-img-btn">ðŸ“·</button>
+                <img
+                  src={avatarSource}
+                  alt="Admin"
+                  className="profile-main-img"
+                />
+                <button
+                  className="edit-img-btn"
+                  type="button"
+                  onClick={openEdit}
+                  title="Edit profile image"
+                >
+                  Edit
+                </button>
               </div>
 
               <h2 className="profile-name">
@@ -136,6 +266,17 @@ const AdminProfile = () => {
                 <button className="edit-profile-btn" onClick={openEdit}>
                   Edit Profile Information
                 </button>
+                <button
+                  className="edit-profile-btn"
+                  type="button"
+                  onClick={() => {
+                    setMessage("");
+                    setPasswordError("");
+                    setShowPasswordModal(true);
+                  }}
+                >
+                  Change Password
+                </button>
                 <button className="logout-danger-btn" onClick={handleLogout}>
                   Log Out of Account
                 </button>
@@ -150,6 +291,23 @@ const AdminProfile = () => {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>Edit Profile</h3>
             <form onSubmit={handleSave} className="user-modal-form">
+              <div className="avatar-upload-wrap">
+                <img
+                  src={avatarPreview || avatarSource}
+                  alt="Preview"
+                  className="avatar-preview"
+                />
+                <label className="upload-btn">
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={onSelectAvatar}
+                  />
+                </label>
+              </div>
+
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name</label>
@@ -218,6 +376,67 @@ const AdminProfile = () => {
                 </button>
                 <button type="submit" className="save-btn" disabled={saving}>
                   {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={closePasswordModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>Change Password</h3>
+            <form onSubmit={submitPassword} className="user-modal-form">
+              <div className="form-group">
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Confirm Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordFormChange}
+                  required
+                />
+              </div>
+
+              {passwordError && <p className="modal-error">{passwordError}</p>}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closePasswordModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="save-btn"
+                  disabled={savingPassword}
+                >
+                  {savingPassword ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </form>
