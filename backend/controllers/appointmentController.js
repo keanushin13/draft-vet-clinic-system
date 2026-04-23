@@ -74,6 +74,12 @@ exports.createAppointment = async (req, res) => {
     const pet = await prisma.pet.findUnique({ where: { id: petId } });
     if (!pet) return res.status(404).json({ message: "Pet not found" });
 
+    if (req.user.role === "pet_owner" && pet.ownerId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "You can only book appointments for your own pets" });
+    }
+
     const ownerId = req.user.role === "pet_owner" ? req.user.id : pet.ownerId;
 
     const resolvedVetId =
@@ -228,8 +234,11 @@ exports.deleteAppointment = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    await prisma.appointment.delete({ where: { id: req.params.id } });
-    res.json({ message: "Appointment deleted" });
+    await prisma.appointment.update({
+      where: { id: req.params.id },
+      data: { status: "Cancelled" },
+    });
+    res.json({ message: "Appointment cancelled" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });

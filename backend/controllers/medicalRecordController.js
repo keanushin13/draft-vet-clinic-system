@@ -78,11 +78,47 @@ exports.createMedicalRecord = async (req, res) => {
         .status(400)
         .json({ message: "petId and diagnosis are required" });
 
+    const pet = await prisma.pet.findUnique({
+      where: { id: petId },
+      select: { id: true, ownerId: true },
+    });
+    if (!pet) return res.status(404).json({ message: "Pet not found" });
+
+    if (req.user.role === "pet_owner" && pet.ownerId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    let resolvedVetId = req.user.id;
+    if (req.user.role === "pet_owner") {
+      if (!appointmentId) {
+        return res
+          .status(400)
+          .json({ message: "appointmentId is required for pet owners" });
+      }
+
+      const appt = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        select: { id: true, ownerId: true, petId: true, vetId: true },
+      });
+      if (!appt) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      if (appt.ownerId !== req.user.id || appt.petId !== petId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      if (!appt.vetId) {
+        return res
+          .status(400)
+          .json({ message: "Appointment has no assigned veterinarian" });
+      }
+      resolvedVetId = appt.vetId;
+    }
+
     const record = await prisma.medicalRecord.create({
       data: {
         petId,
         appointmentId,
-        vetId: req.user.id,
+        vetId: resolvedVetId,
         diagnosis,
         treatment,
         prescription,
@@ -104,11 +140,18 @@ exports.updateMedicalRecord = async (req, res) => {
   try {
     const existing = await prisma.medicalRecord.findUnique({
       where: { id: req.params.id },
-      select: { id: true, vetId: true },
+      select: { id: true, vetId: true, pet: { select: { ownerId: true } } },
     });
     if (!existing) return res.status(404).json({ message: "Record not found" });
 
     if (req.user.role === "veterinarian" && existing.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (
+      req.user.role === "pet_owner" &&
+      existing.pet?.ownerId !== req.user.id
+    ) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -127,6 +170,34 @@ exports.updateMedicalRecord = async (req, res) => {
       include,
     });
     res.json(record);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/medical-records/:id
+exports.deleteMedicalRecord = async (req, res) => {
+  try {
+    const existing = await prisma.medicalRecord.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, vetId: true, pet: { select: { ownerId: true } } },
+    });
+    if (!existing) return res.status(404).json({ message: "Record not found" });
+
+    if (req.user.role === "veterinarian" && existing.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (
+      req.user.role === "pet_owner" &&
+      existing.pet?.ownerId !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await prisma.medicalRecord.delete({ where: { id: req.params.id } });
+    res.json({ message: "Record deleted" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });

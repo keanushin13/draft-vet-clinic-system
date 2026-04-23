@@ -3,18 +3,20 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerMyPets.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getPets, createPet } from "../../../api/api";
+import { createPet, deletePet, getPets, updatePet } from "../../../api/api";
 
-// ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import medicalIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import paymentIcon from "../../../assets/payment_icon.png";
-import petsIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
+
+const emptyForm = {
+  name: "",
+  species: "Dog",
+  breed: "",
+  age: "",
+  gender: "",
+  status: "Healthy",
+  notes: "",
+};
 
 const PetOwnerMyPets = () => {
   const navigate = useNavigate();
@@ -22,23 +24,108 @@ const PetOwnerMyPets = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [pets, setPets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
     if (!user || user.role !== "pet_owner") {
       navigate("/login");
       return;
     }
-    getPets()
-      .then((r) => setPets(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadPets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadPets = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const r = await getPets();
+      setPets(r.data || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load pets");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setError("");
+    setShowModal(true);
+  };
+
+  const openEdit = (pet) => {
+    setEditing(pet);
+    setForm({
+      name: pet.name || "",
+      species: pet.species || "Dog",
+      breed: pet.breed || "",
+      age: pet.age?.toString() || "",
+      gender: pet.gender || "",
+      status: pet.status || "Healthy",
+      notes: pet.notes || "",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
+  const submitPet = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.species.trim()) {
+      setError("Name and species are required");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        ...form,
+        name: form.name.trim(),
+        species: form.species.trim(),
+        breed: form.breed || null,
+        age: form.age ? Number(form.age) : null,
+        gender: form.gender || null,
+        notes: form.notes || null,
+      };
+
+      if (editing) {
+        await updatePet(editing.id, payload);
+      } else {
+        await createPet(payload);
+      }
+
+      setShowModal(false);
+      setEditing(null);
+      setForm(emptyForm);
+      await loadPets();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save pet");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const archivePet = async (pet) => {
+    if (!window.confirm(`Archive ${pet.name}?`)) return;
+    try {
+      await deletePet(pet.id);
+      await loadPets();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to archive pet");
+    }
+  };
 
   return (
     <div className="dashboard-container">
       <PetOwnerSidebar isOpen={isOpen} onClose={close} />
 
-      {/* MAIN CONTENT */}
       <main className="main-area">
         <header className="top-bar">
           <button
@@ -69,7 +156,6 @@ const PetOwnerMyPets = () => {
 
         <section className="content-body">
           <div
-            className="pets-header-action"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -90,12 +176,18 @@ const PetOwnerMyPets = () => {
                 borderRadius: "8px",
                 cursor: "pointer",
               }}
+              onClick={openCreate}
             >
               + Add New Pet
             </button>
           </div>
 
-          {pets.length === 0 ? (
+          {loading && <p>Loading pets...</p>}
+          {error && (
+            <p style={{ color: "#c62828", marginBottom: "10px" }}>{error}</p>
+          )}
+
+          {!loading && pets.length === 0 ? (
             <div
               className="dashboard-welcome-card"
               style={{
@@ -106,8 +198,7 @@ const PetOwnerMyPets = () => {
               }}
             >
               <p style={{ color: "#555" }}>
-                You haven't registered any pets yet. Let's add one to get
-                started!
+                You have no active pets. Add one to get started.
               </p>
             </div>
           ) : (
@@ -128,24 +219,11 @@ const PetOwnerMyPets = () => {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "2rem",
-                      textAlign: "center",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {pet.species === "Dog"
-                      ? "??"
-                      : pet.species === "Cat"
-                        ? "??"
-                        : "??"}
-                  </div>
                   <h4
                     style={{
                       textAlign: "center",
                       color: "#255065",
-                      margin: "0 0 4px",
+                      marginBottom: "4px",
                     }}
                   >
                     {pet.name}
@@ -157,32 +235,203 @@ const PetOwnerMyPets = () => {
                       fontSize: "0.85rem",
                     }}
                   >
-                    {pet.breed} • {pet.age} yr(s)
+                    {pet.species} {pet.breed ? `- ${pet.breed}` : ""}
                   </p>
                   <p
                     style={{
                       textAlign: "center",
-                      fontSize: "0.8rem",
-                      marginTop: "4px",
+                      color: "#888",
+                      fontSize: "0.82rem",
+                      marginBottom: "10px",
                     }}
                   >
-                    <span
+                    {pet.age ? `${pet.age} yr(s)` : "Age not set"}
+                  </p>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <button
+                      onClick={() => openEdit(pet)}
                       style={{
-                        padding: "3px 10px",
-                        borderRadius: "20px",
-                        background: "#dcfce7",
-                        color: "#166534",
+                        border: "none",
+                        background: "#e4e6ea",
+                        color: "#505866",
+                        padding: "6px 10px",
+                        borderRadius: "7px",
+                        cursor: "pointer",
                       }}
                     >
-                      {pet.status}
-                    </span>
-                  </p>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => archivePet(pet)}
+                      style={{
+                        border: "none",
+                        background: "#fbeef0",
+                        color: "#ef575a",
+                        padding: "6px 10px",
+                        borderRadius: "7px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </section>
       </main>
+
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15,23,42,0.45)",
+            zIndex: 999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "min(640px,100%)",
+              background: "#fff",
+              borderRadius: "14px",
+              padding: "20px",
+              boxShadow: "0 20px 45px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h3 style={{ marginBottom: "14px", color: "#1f495f" }}>
+              {editing ? "Edit Pet" : "Add Pet"}
+            </h3>
+            <form onSubmit={submitPet} style={{ display: "grid", gap: "10px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                }}
+              >
+                <input
+                  placeholder="Name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, name: e.target.value }))
+                  }
+                />
+                <input
+                  placeholder="Species"
+                  value={form.species}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, species: e.target.value }))
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                }}
+              >
+                <input
+                  placeholder="Breed"
+                  value={form.breed}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, breed: e.target.value }))
+                  }
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Age"
+                  value={form.age}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, age: e.target.value }))
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                }}
+              >
+                <input
+                  placeholder="Gender"
+                  value={form.gender}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, gender: e.target.value }))
+                  }
+                />
+                <select
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, status: e.target.value }))
+                  }
+                >
+                  <option value="Healthy">Healthy</option>
+                  <option value="UnderTreatment">UnderTreatment</option>
+                  <option value="Deceased">Deceased</option>
+                </select>
+              </div>
+              <textarea
+                rows={3}
+                placeholder="Notes"
+                value={form.notes}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, notes: e.target.value }))
+                }
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "9px 14px",
+                    background: "#eff4f8",
+                    color: "#1f495f",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "9px 14px",
+                    background: "#2e86ab",
+                    color: "#fff",
+                  }}
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

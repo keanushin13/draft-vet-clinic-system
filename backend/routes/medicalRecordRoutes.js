@@ -7,14 +7,20 @@ router.get("/:id", protect, c.getMedicalRecord);
 router.post(
   "/",
   protect,
-  authorizeRoles("veterinarian"),
+  authorizeRoles("veterinarian", "pet_owner"),
   c.createMedicalRecord,
 );
 router.put(
   "/:id",
   protect,
-  authorizeRoles("veterinarian"),
+  authorizeRoles("veterinarian", "pet_owner"),
   c.updateMedicalRecord,
+);
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("veterinarian", "pet_owner"),
+  c.deleteMedicalRecord,
 );
 
 module.exports = router;

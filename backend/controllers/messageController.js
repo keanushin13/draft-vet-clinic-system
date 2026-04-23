@@ -157,6 +157,19 @@ exports.deleteMessage = async (req, res) => {
 // PATCH /api/messages/:id/read
 exports.markRead = async (req, res) => {
   try {
+    const existing = await prisma.message.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, receiverId: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (existing.receiverId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const message = await prisma.message.update({
       where: { id: req.params.id },
       data: { isRead: true },

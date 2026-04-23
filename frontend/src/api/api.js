@@ -94,6 +94,7 @@ export const getMedicalRecord = (id) => API.get(`/medical-records/${id}`);
 export const createMedicalRecord = (data) => API.post("/medical-records", data);
 export const updateMedicalRecord = (id, data) =>
   API.put(`/medical-records/${id}`, data);
+export const deleteMedicalRecord = (id) => API.delete(`/medical-records/${id}`);
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 export const getPayments = (params) => API.get("/payments", { params });

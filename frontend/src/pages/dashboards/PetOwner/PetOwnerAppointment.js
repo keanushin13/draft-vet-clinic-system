@@ -5,10 +5,12 @@ import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
   createAppointment,
+  deleteAppointment,
   getAppointments,
   getAvailableVets,
   getPets,
   getVetAvailableSlots,
+  updateAppointment,
 } from "../../../api/api";
 
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -26,6 +28,7 @@ const PetOwnerAppointment = () => {
   const [loading, setLoading] = useState(false);
   const [booking, setBooking] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     petId: "",
@@ -73,6 +76,7 @@ const PetOwnerAppointment = () => {
   };
 
   const openBookingModal = () => {
+    setEditing(null);
     setShowModal(true);
     setError("");
     setSlots([]);
@@ -85,6 +89,24 @@ const PetOwnerAppointment = () => {
       reason: "",
       notes: "",
     }));
+  };
+
+  const openEditModal = async (appointment) => {
+    const iso = new Date(appointment.scheduledAt).toISOString();
+    const date = iso.slice(0, 10);
+    setEditing(appointment);
+    setShowModal(true);
+    setError("");
+    setForm({
+      petId: appointment.petId,
+      vetId: appointment.vetId || "",
+      date,
+      slot: iso,
+      reason: appointment.reason || "",
+      notes: appointment.notes || "",
+    });
+
+    await fetchSlots(appointment.vetId, date);
   };
 
   const fetchSlots = async (vetId, date) => {
@@ -125,19 +147,39 @@ const PetOwnerAppointment = () => {
     setBooking(true);
     setError("");
     try {
-      await createAppointment({
-        petId: form.petId,
-        vetId: form.vetId,
-        scheduledAt: form.slot,
-        reason: form.reason,
-        notes: form.notes,
-      });
+      if (editing) {
+        await updateAppointment(editing.id, {
+          vetId: form.vetId,
+          scheduledAt: form.slot,
+          reason: form.reason,
+          notes: form.notes,
+        });
+      } else {
+        await createAppointment({
+          petId: form.petId,
+          vetId: form.vetId,
+          scheduledAt: form.slot,
+          reason: form.reason,
+          notes: form.notes,
+        });
+      }
       setShowModal(false);
+      setEditing(null);
       await loadData();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create appointment");
     } finally {
       setBooking(false);
+    }
+  };
+
+  const cancelAppointment = async (appointment) => {
+    if (!window.confirm("Cancel this appointment?")) return;
+    try {
+      await deleteAppointment(appointment.id);
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to cancel appointment");
     }
   };
 
@@ -234,6 +276,40 @@ const PetOwnerAppointment = () => {
                     <div style={{ color: "#888", fontSize: "0.8rem" }}>
                       {a.reason}
                     </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        marginTop: "8px",
+                      }}
+                    >
+                      <button
+                        onClick={() => openEditModal(a)}
+                        style={{
+                          border: "none",
+                          background: "#e4e6ea",
+                          color: "#505866",
+                          padding: "6px 10px",
+                          borderRadius: "7px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Reschedule
+                      </button>
+                      <button
+                        onClick={() => cancelAppointment(a)}
+                        style={{
+                          border: "none",
+                          background: "#fbeef0",
+                          color: "#ef575a",
+                          padding: "6px 10px",
+                          borderRadius: "7px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                   <span
                     style={{
@@ -257,7 +333,7 @@ const PetOwnerAppointment = () => {
       {showModal && (
         <div className="po-modal-backdrop">
           <div className="po-modal-card">
-            <h3>Book Appointment</h3>
+            <h3>{editing ? "Update Appointment" : "Book Appointment"}</h3>
 
             <form onSubmit={submitBooking} className="po-booking-form">
               <label>
@@ -351,7 +427,10 @@ const PetOwnerAppointment = () => {
                 <button
                   type="button"
                   className="po-btn po-btn-ghost"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditing(null);
+                  }}
                   disabled={booking}
                 >
                   Cancel
@@ -361,7 +440,13 @@ const PetOwnerAppointment = () => {
                   className="po-btn po-btn-primary"
                   disabled={booking}
                 >
-                  {booking ? "Booking..." : "Book Appointment"}
+                  {booking
+                    ? editing
+                      ? "Updating..."
+                      : "Booking..."
+                    : editing
+                      ? "Update Appointment"
+                      : "Book Appointment"}
                 </button>
               </div>
             </form>
