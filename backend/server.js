@@ -76,11 +76,11 @@ app.get("/api/users/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
-// Public routes (NO CSRF)
-app.use("/api/users", require("./routes/userRoutes"));
-
 // Protected resource routes (JWT)
 app.use("/api/users", require("./routes/profileRoutes"));
+
+// Public routes (NO CSRF)
+app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/pets", require("./routes/petRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
 app.use("/api/medical-records", require("./routes/medicalRecordRoutes"));

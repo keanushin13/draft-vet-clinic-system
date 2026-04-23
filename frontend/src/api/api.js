@@ -49,6 +49,12 @@ export const updateUser = (id, data) => API.put(`/users/${id}`, data);
 export const deleteUser = (id) => API.delete(`/users/delete/${id}`);
 export const updatePassword = (data) =>
   API.post("/users/update-password", data);
+export const getStaffClients = () =>
+  API.get("/users", { params: { role: "pet_owner" } });
+export const createStaffClient = (data) => API.post("/users/create", data);
+export const updateStaffClient = (id, data) => API.put(`/users/${id}`, data);
+export const toggleStaffClientActive = (id) =>
+  API.patch(`/users/${id}/toggle-active`);
 
 // ─── PETS ─────────────────────────────────────────────────────────────────────
 export const getPets = (params) => API.get("/pets", { params });
@@ -56,6 +62,7 @@ export const getPet = (id) => API.get(`/pets/${id}`);
 export const createPet = (data) => API.post("/pets", data);
 export const updatePet = (id, data) => API.put(`/pets/${id}`, data);
 export const deletePet = (id) => API.delete(`/pets/${id}`);
+export const restorePet = (id) => API.patch(`/pets/${id}/restore`);
 
 // ─── APPOINTMENTS ─────────────────────────────────────────────────────────────
 export const getAppointments = (params) => API.get("/appointments", { params });
@@ -80,12 +87,15 @@ export const createPayment = (data) => API.post("/payments", data);
 export const updatePayment = (id, data) => API.patch(`/payments/${id}`, data);
 
 // ─── INVENTORY ────────────────────────────────────────────────────────────────
-export const getInventory = () => API.get("/inventory");
+export const getInventory = (params) => API.get("/inventory", { params });
 export const createInventoryItem = (data) => API.post("/inventory", data);
 export const updateInventoryItem = (id, data) =>
   API.put(`/inventory/${id}`, data);
 export const updateStock = (id, stock) =>
   API.patch(`/inventory/${id}/stock`, { stock });
+export const deleteInventoryItem = (id) => API.delete(`/inventory/${id}`);
+export const restoreInventoryItem = (id) =>
+  API.patch(`/inventory/${id}/restore`);
 
 // ─── MESSAGES ─────────────────────────────────────────────────────────────────
 export const getMessageThreads = () => API.get("/messages/threads");

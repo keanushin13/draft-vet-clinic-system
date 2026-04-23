@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/StaffPetsProfile.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getPets } from "../../../api/api";
+import {
+  getPets,
+  createPet,
+  updatePet,
+  deletePet,
+  restorePet,
+  getStaffClients,
+} from "../../../api/api";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -24,17 +31,133 @@ const StaffPetsProfile = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [pets, setPets] = useState([]);
+  const [owners, setOwners] = useState([]);
+  const [search, setSearch] = useState("");
+  const [modalMode, setModalMode] = useState(null);
+  const [selectedPet, setSelectedPet] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    species: "",
+    breed: "",
+    age: "",
+    gender: "",
+    status: "Healthy",
+    notes: "",
+    ownerId: "",
+  });
+
+  const loadPets = () =>
+    getPets()
+      .then((r) => setPets(r.data))
+      .catch(() => setPets([]));
+
+  const loadOwners = () =>
+    getStaffClients()
+      .then((r) => setOwners(r.data.filter((o) => o.isActive)))
+      .catch(() => setOwners([]));
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
       navigate("/login");
       return;
     }
-    getPets()
-      .then((r) => setPets(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadPets();
+    loadOwners();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const filteredPets = pets.filter((pet) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    const ownerName = pet.owner
+      ? `${pet.owner.firstName || ""} ${pet.owner.lastName || ""} ${pet.owner.username || ""}`
+      : "";
+    return (
+      (pet.name || "").toLowerCase().includes(q) ||
+      (pet.breed || "").toLowerCase().includes(q) ||
+      ownerName.toLowerCase().includes(q)
+    );
+  });
+
+  const openCreate = () => {
+    setError("");
+    setSelectedPet(null);
+    setForm({
+      name: "",
+      species: "",
+      breed: "",
+      age: "",
+      gender: "",
+      status: "Healthy",
+      notes: "",
+      ownerId: owners[0]?.id || "",
+    });
+    setModalMode("create");
+  };
+
+  const openEdit = (pet) => {
+    setError("");
+    setSelectedPet(pet);
+    setForm({
+      name: pet.name || "",
+      species: pet.species || "",
+      breed: pet.breed || "",
+      age: pet.age ?? "",
+      gender: pet.gender || "",
+      status: pet.status || "Healthy",
+      notes: pet.notes || "",
+      ownerId: pet.ownerId || "",
+    });
+    setModalMode("edit");
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setSelectedPet(null);
+    setError("");
+  };
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const submitPet = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        ...form,
+        age: form.age === "" ? null : Number(form.age),
+      };
+
+      if (modalMode === "create") {
+        await createPet(payload);
+      } else if (modalMode === "edit" && selectedPet) {
+        await updatePet(selectedPet.id, payload);
+      }
+
+      closeModal();
+      await loadPets();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save pet");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const archiveToggle = async (pet) => {
+    try {
+      if (pet.isArchived) await restorePet(pet.id);
+      else await deletePet(pet.id);
+      await loadPets();
+    } catch {
+      setError("Failed to update pet status");
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -74,13 +197,17 @@ const StaffPetsProfile = () => {
               <input
                 type="text"
                 placeholder="Search by pet name, breed, or owner..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button className="add-pet-btn">+ Register Pet</button>
+            <button className="add-pet-btn" onClick={openCreate}>
+              + Register Pet
+            </button>
           </div>
 
           <div className="pets-grid">
-            {pets.map((pet) => (
+            {filteredPets.map((pet) => (
               <div key={pet.id} className="pet-card">
                 <div className="pet-card-top">
                   <div className="pet-avatar-placeholder">
@@ -116,14 +243,129 @@ const StaffPetsProfile = () => {
                 </div>
 
                 <div className="pet-card-footer">
-                  <button className="btn-view-records">Medical Records</button>
-                  <button className="btn-edit-pet">Edit</button>
+                  <button
+                    className="btn-view-records"
+                    onClick={() =>
+                      navigate(`/vet-medical-records?petId=${pet.id}`)
+                    }
+                  >
+                    Medical Records
+                  </button>
+                  <button
+                    className="btn-edit-pet"
+                    onClick={() => openEdit(pet)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn-edit-pet"
+                    onClick={() => archiveToggle(pet)}
+                  >
+                    {pet.isArchived ? "Restore" : "Archive"}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      {modalMode && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={submitPet} className="user-modal-form">
+              <h3>{modalMode === "create" ? "Register Pet" : "Edit Pet"}</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Species</label>
+                  <input
+                    name="species"
+                    value={form.species}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Breed</label>
+                  <input name="breed" value={form.breed} onChange={onChange} />
+                </div>
+                <div className="form-group">
+                  <label>Age</label>
+                  <input
+                    type="number"
+                    name="age"
+                    value={form.age}
+                    onChange={onChange}
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Gender</label>
+                  <input
+                    name="gender"
+                    value={form.gender}
+                    onChange={onChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select name="status" value={form.status} onChange={onChange}>
+                    <option value="Healthy">Healthy</option>
+                    <option value="UnderTreatment">Under Treatment</option>
+                    <option value="Deceased">Deceased</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Owner</label>
+                <select
+                  name="ownerId"
+                  value={form.ownerId}
+                  onChange={onChange}
+                  required
+                  disabled={modalMode === "edit"}
+                >
+                  {owners.map((owner) => (
+                    <option key={owner.id} value={owner.id}>
+                      {owner.firstName || owner.username} {owner.lastName || ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Notes</label>
+                <input name="notes" value={form.notes} onChange={onChange} />
+              </div>
+              {error && <p className="modal-error">{error}</p>}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

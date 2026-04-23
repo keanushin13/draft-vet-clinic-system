@@ -7,5 +7,6 @@ router.get("/:id", protect, c.getPet);
 router.post("/", protect, c.createPet);
 router.put("/:id", protect, c.updatePet);
 router.delete("/:id", protect, c.deletePet);
+router.patch("/:id/restore", protect, c.restorePet);
 
 module.exports = router;

@@ -3,7 +3,9 @@ const prisma = require("../lib/prisma");
 // GET /api/inventory
 exports.getInventory = async (req, res) => {
   try {
+    const includeArchived = req.query.includeArchived === "true";
     const items = await prisma.inventoryItem.findMany({
+      where: includeArchived ? {} : { isArchived: false },
       orderBy: { name: "asc" },
     });
     res.json(items);
@@ -29,6 +31,7 @@ exports.createInventoryItem = async (req, res) => {
         unit,
         status,
         notes,
+        isArchived: false,
       },
     });
     res.status(201).json(item);
@@ -76,6 +79,46 @@ exports.updateStock = async (req, res) => {
       data: { stock: newStock, status },
     });
     res.json(item);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/inventory/:id
+exports.deleteInventoryItem = async (req, res) => {
+  try {
+    const existing = await prisma.inventoryItem.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return res.status(404).json({ message: "Item not found" });
+
+    await prisma.inventoryItem.update({
+      where: { id: req.params.id },
+      data: { isArchived: true },
+    });
+
+    res.json({ message: "Item archived" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// PATCH /api/inventory/:id/restore
+exports.restoreInventoryItem = async (req, res) => {
+  try {
+    const existing = await prisma.inventoryItem.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return res.status(404).json({ message: "Item not found" });
+
+    const restored = await prisma.inventoryItem.update({
+      where: { id: req.params.id },
+      data: { isArchived: false },
+    });
+
+    res.json(restored);
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });

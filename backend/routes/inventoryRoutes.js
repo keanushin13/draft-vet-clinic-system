@@ -21,5 +21,17 @@ router.patch(
   authorizeRoles("admin", "staff"),
   c.updateStock,
 );
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "staff"),
+  c.deleteInventoryItem,
+);
+router.patch(
+  "/:id/restore",
+  protect,
+  authorizeRoles("admin", "staff"),
+  c.restoreInventoryItem,
+);
 
 module.exports = router;

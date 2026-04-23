@@ -1,3 +1,72 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 600px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.user-modal-form .form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.user-modal-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.user-modal-form input,
+.user-modal-form select {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cancel-btn,
+.save-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.save-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-error {
+  color: #dc2626;
+  font-size: 13px;
+}
 .pets-mgmt-header {
   display: flex;
   justify-content: space-between;
@@ -11,7 +80,7 @@
   border-radius: 25px;
   border: 1px solid #c9eaf7;
   outline: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 .add-pet-btn {
@@ -34,11 +103,13 @@
   background: white;
   border-radius: 15px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s;
 }
 
-.pet-card:hover { transform: translateY(-5px); }
+.pet-card:hover {
+  transform: translateY(-5px);
+}
 
 .pet-card-top {
   display: flex;
@@ -61,8 +132,15 @@
   font-size: 20px;
 }
 
-.pet-title-info h3 { margin: 0; color: #255065; font-size: 16px; }
-.pet-title-info span { font-size: 13px; color: #888; }
+.pet-title-info h3 {
+  margin: 0;
+  color: #255065;
+  font-size: 16px;
+}
+.pet-title-info span {
+  font-size: 13px;
+  color: #888;
+}
 
 .pet-status-tag {
   position: absolute;
@@ -75,8 +153,14 @@
   text-transform: uppercase;
 }
 
-.pet-status-tag.healthy { background: #e8f5e9; color: #2e7d32; }
-.pet-status-tag.under-treatment { background: #fff3e0; color: #ef6c00; }
+.pet-status-tag.healthy {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.pet-status-tag.under-treatment {
+  background: #fff3e0;
+  color: #ef6c00;
+}
 
 .pet-card-body {
   border-top: 1px solid #f0f4f6;
@@ -91,8 +175,14 @@
   font-size: 13px;
 }
 
-.pet-info-row label { color: #999; }
-.pet-info-row p { margin: 0; color: #444; font-weight: 500; }
+.pet-info-row label {
+  color: #999;
+}
+.pet-info-row p {
+  margin: 0;
+  color: #444;
+  font-weight: 500;
+}
 
 .pet-card-footer {
   display: flex;
@@ -121,7 +211,10 @@
   font-size: 12px;
 }
 
-.btn-view-records:hover { background: #438fb5; color: white; }
+.btn-view-records:hover {
+  background: #438fb5;
+  color: white;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)

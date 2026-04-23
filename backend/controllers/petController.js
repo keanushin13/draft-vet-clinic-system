@@ -3,7 +3,7 @@ const prisma = require("../lib/prisma");
 // GET /api/pets
 exports.getPets = async (req, res) => {
   try {
-    const where = {};
+    const where = { isArchived: false };
     if (req.user.role === "pet_owner") where.ownerId = req.user.id;
 
     const pets = await prisma.pet.findMany({
@@ -77,6 +77,7 @@ exports.createPet = async (req, res) => {
         gender,
         status,
         notes,
+        isArchived: false,
         ownerId: resolvedOwnerId,
       },
     });
@@ -127,8 +128,32 @@ exports.deletePet = async (req, res) => {
     if (req.user.role === "pet_owner" && existing.ownerId !== req.user.id)
       return res.status(403).json({ message: "Forbidden" });
 
-    await prisma.pet.delete({ where: { id: req.params.id } });
-    res.json({ message: "Pet deleted" });
+    await prisma.pet.update({
+      where: { id: req.params.id },
+      data: { isArchived: true },
+    });
+    res.json({ message: "Pet archived" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// PATCH /api/pets/:id/restore
+exports.restorePet = async (req, res) => {
+  try {
+    const existing = await prisma.pet.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return res.status(404).json({ message: "Pet not found" });
+    if (req.user.role === "pet_owner" && existing.ownerId !== req.user.id)
+      return res.status(403).json({ message: "Forbidden" });
+
+    await prisma.pet.update({
+      where: { id: req.params.id },
+      data: { isArchived: false },
+    });
+    res.json({ message: "Pet restored" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });
