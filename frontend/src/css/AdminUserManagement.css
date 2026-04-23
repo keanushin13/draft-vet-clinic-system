@@ -4,6 +4,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   padding: 30px;
   min-height: 80vh;
+  width: 100%;
 }
 
 .table-header-actions {
@@ -19,7 +20,7 @@
   border-radius: 12px;
   border: 1px solid #e0e0e0;
   background: #f9f9f9;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   outline: none;
   transition: 0.3s;
 }
@@ -97,9 +98,18 @@
   font-weight: 600;
 }
 
-.role-badge.veterinarian { background: #e8f5e9; color: #2e7d32; }
-.role-badge.staff { background: #e3f2fd; color: #1565c0; }
-.role-badge.pet-owner { background: #f3e5f5; color: #7b1fa2; }
+.role-badge.veterinarian {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.role-badge.staff {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.role-badge.pet-owner {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
 
 .status-pill {
   padding: 4px 10px;
@@ -108,8 +118,14 @@
   font-weight: 600;
 }
 
-.status-pill.active { background: #d4edda; color: #155724; }
-.status-pill.inactive { background: #f8d7da; color: #721c24; }
+.status-pill.active {
+  background: #d4edda;
+  color: #155724;
+}
+.status-pill.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
 
 /* ACTIONS */
 .action-btns {
@@ -117,7 +133,8 @@
   gap: 10px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
@@ -127,11 +144,21 @@
   transition: 0.2s;
 }
 
-.edit-btn { background: #f1f1f1; color: #555; }
-.edit-btn:hover { background: #e0e0e0; }
+.edit-btn {
+  background: #f1f1f1;
+  color: #555;
+}
+.edit-btn:hover {
+  background: #e0e0e0;
+}
 
-.delete-btn { background: #fff5f5; color: #ff4d4d; }
-.delete-btn:hover { background: #ffeded; }
+.delete-btn {
+  background: #fff5f5;
+  color: #ff4d4d;
+}
+.delete-btn:hover {
+  background: #ffeded;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)
@@ -317,7 +344,9 @@
   transition: background 0.2s;
 }
 
-.cancel-btn:hover { background: #f3f4f6; }
+.cancel-btn:hover {
+  background: #f3f4f6;
+}
 
 .save-btn {
   padding: 10px 22px;
@@ -331,5 +360,10 @@
   transition: background 0.2s;
 }
 
-.save-btn:hover { background: #1d4ed8; }
-.save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.save-btn:hover {
+  background: #1d4ed8;
+}
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
