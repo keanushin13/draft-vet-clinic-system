@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerDashboard.css";
+import "../../../css/DashboardShared.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { getPetOwnerStats } from "../../../api/api";
@@ -36,7 +37,7 @@ const PetOwnerDashboard = () => {
     getPetOwnerStats()
       .then((r) => setStats(r.data))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -74,29 +75,14 @@ const PetOwnerDashboard = () => {
 
         <section className="content-body">
           <div className="dashboard-header-action">
-            <h3
-              style={{
-                fontFamily: "Poppins",
-                fontWeight: "600",
-                marginBottom: "15px",
-              }}
-            >
-              Getting started
-            </h3>
-            <p style={{ color: "#555", marginBottom: "25px" }}>
+            <h3 className="dashboard-section-title">Getting started</h3>
+            <p className="dashboard-section-description">
               Welcome to your PawCruz dashboard. Manage your pet's health and
               appointments here.
             </p>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-              gap: "16px",
-              marginTop: "16px",
-            }}
-          >
+          <div className="dashboard-content">
             {[
               { label: "My Pets", value: stats.totalPets },
               {
@@ -105,34 +91,9 @@ const PetOwnerDashboard = () => {
               },
               { label: "Unread Messages", value: stats.unreadMessages },
             ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  background: "white",
-                  padding: "20px",
-                  borderRadius: "12px",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "700",
-                    color: "#255065",
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div
-                  style={{
-                    color: "#666",
-                    fontSize: "0.85rem",
-                    marginTop: "4px",
-                  }}
-                >
-                  {s.label}
-                </div>
+              <div key={s.label} className="dashboard-stat-card">
+                <div className="dashboard-stat-value">{s.value}</div>
+                <div className="dashboard-stat-label">{s.label}</div>
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../css/StaffDashboard.css";
+import "../../../css/DashboardShared.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { getStaffStats } from "../../../api/api";
@@ -37,7 +38,7 @@ const StaffDashboard = () => {
     getStaffStats()
       .then((r) => setStats(r.data))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -76,63 +77,23 @@ const StaffDashboard = () => {
         {/* Empty Content Area - Ready for custom content */}
         <section className="content-body">
           <div className="dashboard-header-action">
-            <h3
-              style={{
-                fontFamily: "Poppins",
-                fontWeight: "600",
-                marginBottom: "15px",
-              }}
-            >
-              Staff Portal
-            </h3>
-            <p style={{ color: "#555", marginBottom: "25px" }}>
+            <h3 className="dashboard-section-title">Staff Portal</h3>
+            <p className="dashboard-section-description">
               Manage clinic operations, view pet profiles, and track activities
               from this central hub.
             </p>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-              gap: "16px",
-              marginTop: "16px",
-            }}
-          >
+          <div className="dashboard-content dashboard-content-wide">
             {[
               { label: "Total Appointments", value: stats.totalAppointments },
               { label: "Today's Appointments", value: stats.todayAppointments },
               { label: "Total Pets", value: stats.totalPets },
               { label: "Pending Payments", value: stats.pendingPayments },
             ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  background: "white",
-                  padding: "20px",
-                  borderRadius: "12px",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "700",
-                    color: "#255065",
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div
-                  style={{
-                    color: "#666",
-                    fontSize: "0.85rem",
-                    marginTop: "4px",
-                  }}
-                >
-                  {s.label}
-                </div>
+              <div key={s.label} className="dashboard-stat-card">
+                <div className="dashboard-stat-value">{s.value}</div>
+                <div className="dashboard-stat-label">{s.label}</div>
               </div>
             ))}
           </div>
