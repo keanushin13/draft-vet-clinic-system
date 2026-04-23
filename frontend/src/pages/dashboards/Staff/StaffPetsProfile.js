@@ -206,66 +206,77 @@ const StaffPetsProfile = () => {
             </button>
           </div>
 
-          <div className="pets-grid">
-            {filteredPets.map((pet) => (
-              <div key={pet.id} className="pet-card">
-                <div className="pet-card-top">
-                  <div className="pet-avatar-placeholder">
-                    {pet.name.charAt(0)}
-                  </div>
-                  <div className="pet-title-info">
-                    <h3>{pet.name}</h3>
-                    <span>{pet.breed}</span>
-                  </div>
-                  <span
-                    className={`pet-status-tag ${pet.status?.toLowerCase().replace(/ /g, "-")}`}
-                  >
-                    {pet.status}
-                  </span>
-                </div>
-
-                <div className="pet-card-body">
-                  <div className="pet-info-row">
-                    <label>Owner:</label>
-                    <p>
+          <div className="pets-table-card">
+            <table className="pets-table">
+              <thead>
+                <tr>
+                  <th>Pet Name</th>
+                  <th>Owner</th>
+                  <th>Breed</th>
+                  <th>Gender / Age</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPets.map((pet) => (
+                  <tr key={pet.id}>
+                    <td>
+                      <div className="pet-name-cell">
+                        <div className="pet-avatar-placeholder">
+                          {pet.name?.charAt(0) || "?"}
+                        </div>
+                        <span>{pet.name}</span>
+                      </div>
+                    </td>
+                    <td>
                       {pet.owner
                         ? `${pet.owner.firstName ?? ""} ${pet.owner.lastName ?? ""}`.trim() ||
                           pet.owner.username
                         : "—"}
-                    </p>
-                  </div>
-                  <div className="pet-info-row">
-                    <label>Gender / Age:</label>
-                    <p>
-                      {pet.gender}, {pet.age} yr(s)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pet-card-footer">
-                  <button
-                    className="btn-view-records"
-                    onClick={() =>
-                      navigate(`/vet-medical-records?petId=${pet.id}`)
-                    }
-                  >
-                    Medical Records
-                  </button>
-                  <button
-                    className="btn-edit-pet"
-                    onClick={() => openEdit(pet)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn-edit-pet"
-                    onClick={() => archiveToggle(pet)}
-                  >
-                    {pet.isArchived ? "Restore" : "Archive"}
-                  </button>
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td>{pet.breed || "—"}</td>
+                    <td>
+                      {pet.gender || "—"}
+                      {pet.age !== null && pet.age !== undefined
+                        ? ` / ${pet.age} yr(s)`
+                        : ""}
+                    </td>
+                    <td>
+                      <span
+                        className={`pet-status-tag ${pet.status?.toLowerCase().replace(/ /g, "-")}`}
+                      >
+                        {pet.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="pet-action-btns">
+                        <button
+                          className="btn-view-records"
+                          onClick={() =>
+                            navigate(`/vet-medical-records?petId=${pet.id}`)
+                          }
+                        >
+                          Records
+                        </button>
+                        <button
+                          className="btn-edit-pet"
+                          onClick={() => openEdit(pet)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn-remove-pet"
+                          onClick={() => archiveToggle(pet)}
+                        >
+                          {pet.isArchived ? "Restore" : "Archive"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </main>

@@ -244,7 +244,7 @@ const StaffUserManagement = () => {
                           Edit
                         </button>
                         <button
-                          className="btn-edit"
+                          className={u.isActive ? "btn-remove" : "btn-edit"}
                           onClick={() => toggleStatus(u)}
                         >
                           {u.isActive ? "Deactivate" : "Activate"}

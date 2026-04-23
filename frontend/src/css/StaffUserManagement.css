@@ -190,6 +190,91 @@
   border-color: #255065;
   color: #255065;
 }
+
+/* Screenshot-like table styling */
+.user-mgmt-header {
+  margin-bottom: 20px;
+}
+
+.user-search {
+  width: 380px;
+  border-radius: 14px;
+  border: 1px solid #d7dde4;
+  background: #fff;
+  font-size: 15px;
+}
+
+.add-user-btn {
+  background: #2a607d;
+  border-radius: 12px;
+  padding: 12px 22px;
+}
+
+.add-user-btn:hover {
+  background: #1f4f68;
+}
+
+.user-table-card {
+  background: #f4f5f7;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: none;
+}
+
+.user-table th {
+  color: #5fb3ca;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #dde3e8;
+}
+
+.user-table td {
+  border-bottom: 1px solid #e8edf2;
+  color: #2f3541;
+}
+
+.user-mini-avatar {
+  width: 40px;
+  height: 40px;
+  background: #dbe9ef;
+  color: #4d9dbd;
+  font-size: 16px;
+}
+
+.action-btns {
+  gap: 10px;
+}
+
+.btn-view,
+.btn-edit,
+.btn-remove {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+}
+
+.btn-view,
+.btn-edit {
+  background: #e4e6ea;
+  color: #505866;
+}
+
+.btn-remove {
+  background: #fbeef0;
+  color: #ef575a;
+}
+
+.btn-view:hover,
+.btn-edit:hover {
+  background: #d8dbe0;
+  color: #39414f;
+}
+
+.btn-remove:hover {
+  background: #f7dfe3;
+  color: #e13f42;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)

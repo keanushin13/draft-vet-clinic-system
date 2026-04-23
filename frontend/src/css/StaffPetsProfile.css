@@ -215,6 +215,113 @@
   background: #438fb5;
   color: white;
 }
+
+/* Screenshot-like pets table */
+.pet-search-bar input {
+  width: 380px;
+  border-radius: 14px;
+  border: 1px solid #d7dde4;
+  background: #fff;
+  font-size: 15px;
+}
+
+.add-pet-btn {
+  background: #2a607d;
+  border-radius: 12px;
+  padding: 12px 22px;
+}
+
+.add-pet-btn:hover {
+  background: #1f4f68;
+}
+
+.pets-table-card {
+  background: #f4f5f7;
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.pets-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pets-table th {
+  text-align: left;
+  padding: 15px;
+  color: #5fb3ca;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #dde3e8;
+}
+
+.pets-table td {
+  padding: 14px 15px;
+  border-bottom: 1px solid #e8edf2;
+  color: #2f3541;
+  vertical-align: middle;
+}
+
+.pet-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.pet-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  background: #dbe9ef;
+  color: #4d9dbd;
+  font-size: 16px;
+}
+
+.pet-status-tag {
+  position: static;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.pet-action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-view-records,
+.btn-edit-pet,
+.btn-remove-pet {
+  flex: 0;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-view-records,
+.btn-edit-pet {
+  background: #e4e6ea;
+  color: #505866;
+}
+
+.btn-remove-pet {
+  background: #fbeef0;
+  color: #ef575a;
+  cursor: pointer;
+}
+
+.btn-view-records:hover,
+.btn-edit-pet:hover {
+  background: #d8dbe0;
+  color: #39414f;
+}
+
+.btn-remove-pet:hover {
+  background: #f7dfe3;
+  color: #e13f42;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)

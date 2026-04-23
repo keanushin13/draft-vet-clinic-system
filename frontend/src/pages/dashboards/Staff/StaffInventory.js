@@ -242,19 +242,19 @@ const StaffInventory = () => {
                     </td>
                     <td>
                       <button
-                        className="stock-btn"
+                        className="stock-btn btn-neutral"
                         onClick={() => handleUpdateStock(item)}
                       >
                         Update Stock
                       </button>
                       <button
-                        className="stock-btn"
+                        className="stock-btn btn-edit"
                         onClick={() => openEdit(item)}
                       >
                         Edit
                       </button>
                       <button
-                        className="stock-btn"
+                        className="stock-btn btn-remove"
                         onClick={() => toggleArchive(item)}
                       >
                         {item.isArchived ? "Restore" : "Archive"}

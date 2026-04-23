@@ -191,6 +191,65 @@
   background: #438fb5;
   color: white;
 }
+
+/* Screenshot-like inventory table */
+.add-item-btn {
+  background: #2a607d;
+  border-radius: 12px;
+  padding: 12px 22px;
+}
+
+.add-item-btn:hover {
+  background: #1f4f68;
+}
+
+.inventory-card {
+  background: #f4f5f7;
+  border-radius: 24px;
+  box-shadow: none;
+}
+
+.inventory-table th {
+  color: #5fb3ca;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #dde3e8;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.inventory-table td {
+  border-bottom: 1px solid #e8edf2;
+}
+
+.stock-btn {
+  border: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.stock-btn.btn-neutral,
+.stock-btn.btn-edit {
+  background: #e4e6ea;
+  color: #505866;
+}
+
+.stock-btn.btn-remove {
+  background: #fbeef0;
+  color: #ef575a;
+}
+
+.stock-btn.btn-neutral:hover,
+.stock-btn.btn-edit:hover {
+  background: #d8dbe0;
+  color: #39414f;
+}
+
+.stock-btn.btn-remove:hover {
+  background: #f7dfe3;
+  color: #e13f42;
+}
 /* =====================
     RESPONSIVE - MOBILE
     (global-mobile.css handles sidebar toggle)
