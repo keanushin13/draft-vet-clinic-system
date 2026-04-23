@@ -4,6 +4,18 @@
   display: block;
 }
 
+.dashboard-home-content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.dashboard-home-content .dashboard-header-action {
+  margin-top: 0;
+  align-self: stretch;
+}
+
 .dashboard-section-title {
   font-family: "Poppins", sans-serif;
   font-weight: 600;

@@ -73,7 +73,7 @@ const PetOwnerDashboard = () => {
           </div>
         </header>
 
-        <section className="content-body">
+        <section className="content-body dashboard-home-content">
           <div className="dashboard-header-action">
             <h3 className="dashboard-section-title">Getting started</h3>
             <p className="dashboard-section-description">
