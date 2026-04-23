@@ -620,9 +620,10 @@ exports.deleteUser = async (req, res) => {
 // POST /api/users/update-password
 exports.updatePassword = async (req, res) => {
   try {
-    const { userId, currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !currentPassword || !newPassword) {
+    if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 

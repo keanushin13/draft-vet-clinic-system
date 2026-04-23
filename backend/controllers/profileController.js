@@ -76,7 +76,15 @@ exports.getMe = async (req, res) => {
 // PUT /api/users/me
 exports.updateMe = async (req, res) => {
   try {
-    const { firstName, lastName, phone, address, email, username } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      email,
+      username,
+      profileImage,
+    } = req.body;
 
     if (email && !validator.isEmail(email)) {
       return res.status(400).json({ message: "Invalid email" });
@@ -109,6 +117,7 @@ exports.updateMe = async (req, res) => {
         address,
         email,
         username,
+        profileImage,
       },
       select: {
         id: true,
