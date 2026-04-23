@@ -18,11 +18,39 @@ exports.getInventory = async (req, res) => {
 // POST /api/inventory
 exports.createInventoryItem = async (req, res) => {
   try {
-    const { name, category, stock, unit, status, notes } = req.body;
+    const {
+      name,
+      category,
+      stock,
+      unit,
+      status,
+      notes,
+      price,
+      expirationDate,
+    } = req.body;
     if (!name || !category || !unit)
       return res
         .status(400)
         .json({ message: "name, category, unit are required" });
+
+    const parsedPrice =
+      price === undefined || price === null || price === ""
+        ? null
+        : Number(price);
+    if (parsedPrice !== null && Number.isNaN(parsedPrice)) {
+      return res.status(400).json({ message: "price must be a valid number" });
+    }
+
+    const parsedExpirationDate =
+      !expirationDate || expirationDate === ""
+        ? null
+        : new Date(expirationDate);
+    if (parsedExpirationDate && Number.isNaN(parsedExpirationDate.getTime())) {
+      return res
+        .status(400)
+        .json({ message: "expirationDate must be a valid date" });
+    }
+
     const item = await prisma.inventoryItem.create({
       data: {
         name,
@@ -32,6 +60,8 @@ exports.createInventoryItem = async (req, res) => {
         status,
         notes,
         isArchived: false,
+        price: parsedPrice,
+        expirationDate: parsedExpirationDate,
       },
     });
     res.status(201).json(item);
@@ -44,7 +74,41 @@ exports.createInventoryItem = async (req, res) => {
 // PUT /api/inventory/:id
 exports.updateInventoryItem = async (req, res) => {
   try {
-    const { name, category, stock, unit, status, notes } = req.body;
+    const {
+      name,
+      category,
+      stock,
+      unit,
+      status,
+      notes,
+      price,
+      expirationDate,
+    } = req.body;
+
+    const parsedPrice =
+      price === undefined || price === null || price === ""
+        ? undefined
+        : Number(price);
+    if (parsedPrice !== undefined && Number.isNaN(parsedPrice)) {
+      return res.status(400).json({ message: "price must be a valid number" });
+    }
+
+    const parsedExpirationDate =
+      expirationDate === undefined
+        ? undefined
+        : expirationDate === "" || expirationDate === null
+          ? null
+          : new Date(expirationDate);
+    if (
+      parsedExpirationDate !== undefined &&
+      parsedExpirationDate !== null &&
+      Number.isNaN(parsedExpirationDate.getTime())
+    ) {
+      return res
+        .status(400)
+        .json({ message: "expirationDate must be a valid date" });
+    }
+
     const item = await prisma.inventoryItem.update({
       where: { id: req.params.id },
       data: {
@@ -54,6 +118,8 @@ exports.updateInventoryItem = async (req, res) => {
         unit,
         status,
         notes,
+        price: parsedPrice,
+        expirationDate: parsedExpirationDate,
       },
     });
     res.json(item);

@@ -40,6 +40,8 @@ const StaffInventory = () => {
     category: "Supplies",
     stock: 0,
     unit: "pcs",
+    price: "",
+    expirationDate: "",
     notes: "",
   });
 
@@ -71,6 +73,8 @@ const StaffInventory = () => {
       category: "Supplies",
       stock: 0,
       unit: "pcs",
+      price: "",
+      expirationDate: "",
       notes: "",
     });
     setShowModal(true);
@@ -84,6 +88,10 @@ const StaffInventory = () => {
       category: item.category,
       stock: item.stock,
       unit: item.unit,
+      price: item.price ?? "",
+      expirationDate: item.expirationDate
+        ? new Date(item.expirationDate).toISOString().slice(0, 10)
+        : "",
       notes: item.notes || "",
     });
     setShowModal(true);
@@ -105,7 +113,12 @@ const StaffInventory = () => {
     setSaving(true);
     setError("");
     try {
-      const payload = { ...form, stock: Number(form.stock) };
+      const payload = {
+        ...form,
+        stock: Number(form.stock),
+        price: form.price === "" ? null : Number(form.price),
+        expirationDate: form.expirationDate || null,
+      };
       if (editing) {
         await updateInventoryItem(editing.id, payload);
       } else {
@@ -194,6 +207,8 @@ const StaffInventory = () => {
                   <th>Item Name</th>
                   <th>Category</th>
                   <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Expiration Date</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -207,6 +222,16 @@ const StaffInventory = () => {
                     </td>
                     <td>
                       {item.stock} {item.unit}
+                    </td>
+                    <td>
+                      {item.price === null || item.price === undefined
+                        ? "-"
+                        : `$${Number(item.price).toFixed(2)}`}
+                    </td>
+                    <td>
+                      {item.expirationDate
+                        ? new Date(item.expirationDate).toLocaleDateString()
+                        : "-"}
                     </td>
                     <td>
                       <span
@@ -292,6 +317,28 @@ const StaffInventory = () => {
                     value={form.unit}
                     onChange={onChange}
                     required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="price"
+                    value={form.price}
+                    onChange={onChange}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Expiration Date</label>
+                  <input
+                    type="date"
+                    name="expirationDate"
+                    value={form.expirationDate}
+                    onChange={onChange}
                   />
                 </div>
                 <div className="form-group">

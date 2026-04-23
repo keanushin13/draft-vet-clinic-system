@@ -226,6 +226,8 @@ model InventoryItem {
   unit      String
   status    InventoryStatus   @default(InStock)
   isArchived Boolean          @default(false)
+  price     Decimal?          @db.Decimal(10, 2)
+  expirationDate DateTime?
   notes     String?
 
   createdAt DateTime          @default(now())

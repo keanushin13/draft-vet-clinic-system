@@ -32,7 +32,7 @@ const VetInventory = () => {
     getInventory()
       .then((r) => setItems(r.data))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -111,6 +111,10 @@ const VetInventory = () => {
                   <th style={{ padding: "15px", color: "#255065" }}>
                     Stock Level
                   </th>
+                  <th style={{ padding: "15px", color: "#255065" }}>Price</th>
+                  <th style={{ padding: "15px", color: "#255065" }}>
+                    Expiration
+                  </th>
                   <th style={{ padding: "15px", color: "#255065" }}>Status</th>
                 </tr>
               </thead>
@@ -125,6 +129,16 @@ const VetInventory = () => {
                     </td>
                     <td style={{ padding: "15px" }}>{item.category}</td>
                     <td style={{ padding: "15px" }}>{item.stock} units</td>
+                    <td style={{ padding: "15px" }}>
+                      {item.price === null || item.price === undefined
+                        ? "-"
+                        : `$${Number(item.price).toFixed(2)}`}
+                    </td>
+                    <td style={{ padding: "15px" }}>
+                      {item.expirationDate
+                        ? new Date(item.expirationDate).toLocaleDateString()
+                        : "-"}
+                    </td>
                     <td style={{ padding: "15px" }}>
                       <span
                         style={{
