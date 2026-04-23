@@ -45,6 +45,15 @@ exports.getAppointment = async (req, res) => {
     });
     if (!appt)
       return res.status(404).json({ message: "Appointment not found" });
+
+    if (req.user.role === "pet_owner" && appt.ownerId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (req.user.role === "veterinarian" && appt.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     res.json(appt);
   } catch (e) {
     console.error(e);
@@ -66,11 +75,14 @@ exports.createAppointment = async (req, res) => {
 
     const ownerId = req.user.role === "pet_owner" ? req.user.id : pet.ownerId;
 
+    const resolvedVetId =
+      req.user.role === "veterinarian" ? req.user.id : vetId || null;
+
     const appt = await prisma.appointment.create({
       data: {
         petId,
         ownerId,
-        vetId: vetId || null,
+        vetId: resolvedVetId,
         scheduledAt: new Date(scheduledAt),
         reason,
         notes,
@@ -97,12 +109,28 @@ exports.createAppointment = async (req, res) => {
 // PATCH /api/appointments/:id
 exports.updateAppointment = async (req, res) => {
   try {
+    const existing = await prisma.appointment.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, ownerId: true, vetId: true },
+    });
+    if (!existing)
+      return res.status(404).json({ message: "Appointment not found" });
+
+    if (req.user.role === "pet_owner" && existing.ownerId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (req.user.role === "veterinarian" && existing.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const { status, scheduledAt, reason, vetId, notes } = req.body;
     const data = {};
     if (status !== undefined) data.status = status;
     if (scheduledAt !== undefined) data.scheduledAt = new Date(scheduledAt);
     if (reason !== undefined) data.reason = reason;
-    if (vetId !== undefined) data.vetId = vetId;
+    if (vetId !== undefined && req.user.role !== "veterinarian")
+      data.vetId = vetId;
     if (notes !== undefined) data.notes = notes;
 
     const appt = await prisma.appointment.update({
@@ -130,6 +158,21 @@ exports.updateAppointment = async (req, res) => {
 // DELETE /api/appointments/:id
 exports.deleteAppointment = async (req, res) => {
   try {
+    const existing = await prisma.appointment.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, ownerId: true, vetId: true },
+    });
+    if (!existing)
+      return res.status(404).json({ message: "Appointment not found" });
+
+    if (req.user.role === "pet_owner" && existing.ownerId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (req.user.role === "veterinarian" && existing.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     await prisma.appointment.delete({ where: { id: req.params.id } });
     res.json({ message: "Appointment deleted" });
   } catch (e) {

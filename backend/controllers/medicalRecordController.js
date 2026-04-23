@@ -38,6 +38,21 @@ exports.getMedicalRecord = async (req, res) => {
       include,
     });
     if (!record) return res.status(404).json({ message: "Record not found" });
+
+    if (req.user.role === "veterinarian" && record.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (req.user.role === "pet_owner") {
+      const pet = await prisma.pet.findUnique({
+        where: { id: record.petId },
+        select: { ownerId: true },
+      });
+      if (!pet || pet.ownerId !== req.user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+    }
+
     res.json(record);
   } catch (e) {
     console.error(e);
@@ -87,6 +102,16 @@ exports.createMedicalRecord = async (req, res) => {
 // PUT /api/medical-records/:id
 exports.updateMedicalRecord = async (req, res) => {
   try {
+    const existing = await prisma.medicalRecord.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, vetId: true },
+    });
+    if (!existing) return res.status(404).json({ message: "Record not found" });
+
+    if (req.user.role === "veterinarian" && existing.vetId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const { diagnosis, treatment, prescription, notes, status, followUpDate } =
       req.body;
     const record = await prisma.medicalRecord.update({

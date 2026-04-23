@@ -3,17 +3,15 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/VetMedRec.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getMedicalRecords } from "../../../api/api";
+import {
+  createMedicalRecord,
+  getMedicalRecords,
+  getPets,
+  updateMedicalRecord,
+} from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import medicalIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import inventoryIcon from "../../../assets/payment_icon.png";
-import patientsIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
 
 const VetMedRec = () => {
@@ -22,17 +20,133 @@ const VetMedRec = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [records, setRecords] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    petId: "",
+    appointmentId: "",
+    diagnosis: "",
+    treatment: "",
+    prescription: "",
+    notes: "",
+    status: "Finalized",
+    followUpDate: "",
+  });
 
   useEffect(() => {
     if (!user || user.role !== "veterinarian") {
       navigate("/login");
       return;
     }
-    getMedicalRecords()
-      .then((r) => setRecords(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [recordRes, petRes] = await Promise.all([
+        getMedicalRecords(),
+        getPets(),
+      ]);
+      setRecords(recordRes.data || []);
+      setPets(petRes.data || []);
+    } catch {
+      setError("Failed to load medical records");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredRecords = records.filter((rec) => {
+    const q = search.toLowerCase();
+    const petName = rec.pet?.name?.toLowerCase() || "";
+    return (
+      petName.includes(q) ||
+      (rec.id || "").toLowerCase().includes(q) ||
+      (rec.diagnosis || "").toLowerCase().includes(q)
+    );
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      petId: pets[0]?.id || "",
+      appointmentId: "",
+      diagnosis: "",
+      treatment: "",
+      prescription: "",
+      notes: "",
+      status: "Finalized",
+      followUpDate: "",
+    });
+    setShowModal(true);
+    setError("");
+  };
+
+  const openEdit = (record) => {
+    setEditing(record);
+    setForm({
+      petId: record.petId,
+      appointmentId: record.appointmentId || "",
+      diagnosis: record.diagnosis || "",
+      treatment: record.treatment || "",
+      prescription: record.prescription || "",
+      notes: record.notes || "",
+      status: record.status || "Finalized",
+      followUpDate: record.followUpDate
+        ? new Date(record.followUpDate).toISOString().slice(0, 10)
+        : "",
+    });
+    setShowModal(true);
+    setError("");
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditing(null);
+    setSaving(false);
+  };
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const submitRecord = async (e) => {
+    e.preventDefault();
+    if (!form.petId || !form.diagnosis) {
+      setError("Pet and diagnosis are required");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        ...form,
+        appointmentId: form.appointmentId || null,
+        followUpDate: form.followUpDate || null,
+      };
+      if (editing) {
+        await updateMedicalRecord(editing.id, payload);
+      } else {
+        await createMedicalRecord(payload);
+      }
+      closeModal();
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save medical record");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -68,133 +182,174 @@ const VetMedRec = () => {
         </header>
 
         <section className="content-body">
-          <div className="dashboard-header-action">
-            <h3
-              style={{
-                fontFamily: "Poppins",
-                fontWeight: "600",
-                marginBottom: "15px",
-              }}
-            >
-              Patient History Management
-            </h3>
-            <p style={{ color: "#555", marginBottom: "25px" }}>
-              Search, view, and update the medical records for all clinic
-              patients.
-            </p>
-          </div>
-
-          <div
-            className="records-list-card"
-            style={{
-              background: "white",
-              padding: "25px",
-              borderRadius: "15px",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-            }}
-          >
-            <div
-              className="records-filters"
-              style={{ marginBottom: "20px", display: "flex", gap: "10px" }}
-            >
+          <div className="records-list-card">
+            <div className="records-filters">
               <input
                 type="text"
                 placeholder="Search by Patient ID or Name..."
-                style={{
-                  flex: 1,
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid #ddd",
-                }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-              <button
-                style={{
-                  backgroundColor: "#255065",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-              >
+              <button className="new-entry-btn" onClick={openCreate}>
                 New Entry
               </button>
             </div>
 
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "left",
-              }}
-            >
+            <table className="records-table">
               <thead>
-                <tr style={{ borderBottom: "2px solid #f0f0f0" }}>
-                  <th style={{ padding: "15px", color: "#63b6c5" }}>
-                    Record ID
-                  </th>
-                  <th style={{ padding: "15px", color: "#63b6c5" }}>Patient</th>
-                  <th style={{ padding: "15px", color: "#63b6c5" }}>Date</th>
-                  <th style={{ padding: "15px", color: "#63b6c5" }}>
-                    Diagnosis
-                  </th>
-                  <th style={{ padding: "15px", color: "#63b6c5" }}>Status</th>
+                <tr>
+                  <th>Record ID</th>
+                  <th>Patient</th>
+                  <th>Date</th>
+                  <th>Diagnosis</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {records.map((rec) => (
-                  <tr
-                    key={rec.id}
-                    style={{
-                      borderBottom: "1px solid #f9f9f9",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <td
-                      style={{
-                        padding: "15px",
-                        fontWeight: "500",
-                        color: "#255065",
-                      }}
-                    >
-                      REC-{String(rec.id).padStart(3, "0")}
+                {filteredRecords.map((rec) => (
+                  <tr key={rec.id}>
+                    <td className="record-id">
+                      REC-{rec.id.slice(-6).toUpperCase()}
                     </td>
-                    <td style={{ padding: "15px" }}>
+                    <td>
                       {rec.pet?.name} <br />
-                      <small style={{ color: "#888" }}>
-                        {rec.pet?.owner
-                          ? `${rec.pet.owner.firstName ?? ""} ${rec.pet.owner.lastName ?? ""}`.trim() ||
-                            rec.pet.owner.username
-                          : ""}
+                      <small className="species-meta">
+                        {rec.pet?.species || ""}
                       </small>
                     </td>
-                    <td style={{ padding: "15px" }}>
-                      {new Date(rec.createdAt).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: "15px" }}>{rec.diagnosis}</td>
-                    <td style={{ padding: "15px" }}>
+                    <td>{new Date(rec.createdAt).toLocaleDateString()}</td>
+                    <td>{rec.diagnosis}</td>
+                    <td>
                       <span
-                        style={{
-                          padding: "5px 12px",
-                          borderRadius: "20px",
-                          fontSize: "11px",
-                          fontWeight: "500",
-                          backgroundColor:
-                            rec.status === "Finalized" ? "#e0f2f1" : "#fff3e0",
-                          color:
-                            rec.status === "Finalized" ? "#00695c" : "#ef6c00",
-                        }}
+                        className={`status-pill ${rec.status?.toLowerCase()}`}
                       >
                         {rec.status}
                       </span>
+                    </td>
+                    <td>
+                      <button className="row-btn" onClick={() => openEdit(rec)}>
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {loading && (
+              <p className="list-feedback">Loading medical records...</p>
+            )}
+            {!loading && !filteredRecords.length && (
+              <p className="list-feedback">No medical records found.</p>
+            )}
+            {error && <p className="list-error">{error}</p>}
           </div>
         </section>
       </main>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <form className="user-modal-form" onSubmit={submitRecord}>
+              <h3>{editing ? "Edit Medical Record" : "New Medical Record"}</h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pet</label>
+                  <select
+                    name="petId"
+                    value={form.petId}
+                    onChange={onChange}
+                    required
+                    disabled={Boolean(editing)}
+                  >
+                    <option value="">Select pet</option>
+                    {pets.map((pet) => (
+                      <option key={pet.id} value={pet.id}>
+                        {pet.name} ({pet.species})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select name="status" value={form.status} onChange={onChange}>
+                    <option value="Finalized">Finalized</option>
+                    <option value="FollowUp">FollowUp</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Diagnosis</label>
+                <input
+                  name="diagnosis"
+                  value={form.diagnosis}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Treatment</label>
+                  <input
+                    name="treatment"
+                    value={form.treatment}
+                    onChange={onChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Prescription</label>
+                  <input
+                    name="prescription"
+                    value={form.prescription}
+                    onChange={onChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Appointment ID (optional)</label>
+                  <input
+                    name="appointmentId"
+                    value={form.appointmentId}
+                    onChange={onChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Follow-up Date</label>
+                  <input
+                    type="date"
+                    name="followUpDate"
+                    value={form.followUpDate}
+                    onChange={onChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea name="notes" value={form.notes} onChange={onChange} />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn" disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

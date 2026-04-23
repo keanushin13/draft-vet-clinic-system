@@ -103,6 +103,8 @@ export const restoreInventoryItem = (id) =>
 export const getMessageThreads = () => API.get("/messages/threads");
 export const getMessageThread = (userId) => API.get(`/messages/${userId}`);
 export const sendMessage = (data) => API.post("/messages", data);
+export const updateMessage = (id, data) => API.patch(`/messages/${id}`, data);
+export const deleteMessage = (id) => API.delete(`/messages/${id}`);
 export const markMessageRead = (id) => API.patch(`/messages/${id}/read`);
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────

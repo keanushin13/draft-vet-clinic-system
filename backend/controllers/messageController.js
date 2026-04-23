@@ -96,6 +96,64 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
+// PATCH /api/messages/:id
+exports.updateMessage = async (req, res) => {
+  try {
+    const { body } = req.body;
+    if (!body || !body.trim()) {
+      return res.status(400).json({ message: "Message body is required" });
+    }
+
+    const existing = await prisma.message.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, senderId: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (existing.senderId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const message = await prisma.message.update({
+      where: { id: req.params.id },
+      data: { body: body.trim() },
+      include: { sender: senderSelect },
+    });
+
+    res.json(message);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/messages/:id
+exports.deleteMessage = async (req, res) => {
+  try {
+    const existing = await prisma.message.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, senderId: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (existing.senderId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await prisma.message.delete({ where: { id: req.params.id } });
+    res.json({ message: "Message deleted" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // PATCH /api/messages/:id/read
 exports.markRead = async (req, res) => {
   try {
