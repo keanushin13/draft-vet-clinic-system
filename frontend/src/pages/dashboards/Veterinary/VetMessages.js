@@ -201,7 +201,9 @@ const VetMessages = () => {
                     </option>
                   ))}
                 </select>
-                <button onClick={startThreadWithSelectedContact}>Start Chat</button>
+                <button onClick={startThreadWithSelectedContact}>
+                  Start Chat
+                </button>
               </div>
             </div>
             <div className="chat-items">
@@ -340,7 +342,9 @@ const VetMessages = () => {
             ) : (
               <div className="empty-chat-state">
                 <img src={messageIcon} alt="Select Chat" />
-                <p>Select a conversation or choose a contact to start a new chat.</p>
+                <p>
+                  Select a conversation or choose a contact to start a new chat.
+                </p>
               </div>
             )}
           </div>
