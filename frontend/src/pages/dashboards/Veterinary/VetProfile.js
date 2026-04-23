@@ -1,5 +1,6 @@
-ï»¿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/VetProfile.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
@@ -219,9 +220,7 @@ const VetProfile = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div className="user-profile active">
-              <img src={avatarSource} alt="User" />
-            </div>
+            <TopbarUserMenu avatarSrc={avatarSource} avatarAlt="User" profilePath="/vet-profile" />
           </div>
         </header>
 
@@ -284,7 +283,7 @@ const VetProfile = () => {
                 </div>
                 <div className="info-row">
                   <label>Password</label>
-                  <span>â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</span>
+                  <span>••••••••••••</span>
                 </div>
                 <button
                   className="change-pass-btn"

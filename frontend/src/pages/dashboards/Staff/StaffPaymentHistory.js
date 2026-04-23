@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffPaymentHistory.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
@@ -198,12 +199,7 @@ const StaffPaymentHistory = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <div
-              className="user-profile"
-              onClick={() => navigate("/staff-profile")}
-            >
-              <img src={userIcon} alt="Profile" />
-            </div>
+            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
           </div>
         </header>
 

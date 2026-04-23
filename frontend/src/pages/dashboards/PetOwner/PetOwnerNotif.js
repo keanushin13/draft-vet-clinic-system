@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/PetOwnerNotif.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
@@ -71,12 +72,7 @@ const PetOwnerNotif = () => {
             <button className="notif-btn" style={{ opacity: "0.6" }}>
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div
-              className="user-profile"
-              onClick={() => navigate("/pet-owner-profile")}
-            >
-              <img src={userIcon} alt="User" />
-            </div>
+            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/pet-owner-profile" />
           </div>
         </header>
 

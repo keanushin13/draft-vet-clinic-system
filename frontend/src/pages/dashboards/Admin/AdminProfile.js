@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/AdminProfile.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
@@ -92,9 +93,7 @@ const AdminProfile = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div className="user-profile active-profile">
-              <img src={userIcon} alt="Admin Profile" />
-            </div>
+            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Admin Profile" profilePath="/admin-profile" />
           </div>
         </header>
 

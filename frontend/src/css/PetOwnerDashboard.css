@@ -110,6 +110,10 @@
   gap: 25px;
 }
 
+.user-profile-wrapper {
+  position: relative;
+}
+
 .notif-btn {
   background: none;
   border: none;
@@ -126,6 +130,43 @@
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.4);
   cursor: pointer;
+}
+
+.user-profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 150px;
+  background: #fff;
+  border: 1px solid #d9e3ea;
+  border-radius: 10px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+  padding: 6px;
+  z-index: 20;
+}
+
+.user-menu-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f3e4d;
+  cursor: pointer;
+}
+
+.user-menu-item:hover {
+  background: #f1f7fb;
+}
+
+.user-menu-item-danger {
+  color: #c62828;
+}
+
+.user-menu-item-danger:hover {
+  background: #fdecec;
 }
 
 /* CONTENT BODY */

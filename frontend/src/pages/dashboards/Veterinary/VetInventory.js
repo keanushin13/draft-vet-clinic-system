@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/VetInventory.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
@@ -59,12 +60,7 @@ const VetInventory = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div
-              className="user-profile"
-              onClick={() => navigate("/vet-profile")}
-            >
-              <img src={userIcon} alt="User" />
-            </div>
+            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
           </div>
         </header>
 

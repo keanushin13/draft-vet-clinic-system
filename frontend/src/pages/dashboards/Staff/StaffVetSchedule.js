@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -194,12 +195,7 @@ export default function StaffVetSchedule() {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <div
-              className="user-profile"
-              onClick={() => navigate("/staff-profile")}
-            >
-              <img src={userIcon} alt="User" />
-            </div>
+            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/staff-profile" />
           </div>
         </header>
 
