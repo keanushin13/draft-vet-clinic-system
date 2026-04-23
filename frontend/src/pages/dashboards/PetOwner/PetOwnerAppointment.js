@@ -3,17 +3,15 @@ import { useNavigate } from "react-router-dom";
 import "../../../css/PetOwnerAppointment.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getAppointments } from "../../../api/api";
+import {
+  createAppointment,
+  getAppointments,
+  getAvailableVets,
+  getPets,
+  getVetAvailableSlots,
+} from "../../../api/api";
 
-// ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import medicalIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import paymentIcon from "../../../assets/payment_icon.png";
-import petsIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
 
 const PetOwnerAppointment = () => {
@@ -22,17 +20,126 @@ const PetOwnerAppointment = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [appointments, setAppointments] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [vets, setVets] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    petId: "",
+    vetId: "",
+    date: "",
+    slot: "",
+    reason: "",
+    notes: "",
+  });
 
   useEffect(() => {
     if (!user || user.role !== "pet_owner") {
       navigate("/login");
       return;
     }
-    getAppointments()
-      .then((r) => setAppointments(r.data))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [apptRes, petRes, vetRes] = await Promise.all([
+        getAppointments(),
+        getPets(),
+        getAvailableVets(),
+      ]);
+      setAppointments(apptRes.data || []);
+      setPets(petRes.data || []);
+      const vetList = vetRes.data || [];
+      setVets(vetList);
+      setForm((prev) => ({
+        ...prev,
+        petId: prev.petId || petRes.data?.[0]?.id || "",
+        vetId: prev.vetId || vetList?.[0]?.id || "",
+      }));
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to load appointment data",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openBookingModal = () => {
+    setShowModal(true);
+    setError("");
+    setSlots([]);
+    setForm((prev) => ({
+      ...prev,
+      petId: prev.petId || pets[0]?.id || "",
+      vetId: prev.vetId || vets[0]?.id || "",
+      date: "",
+      slot: "",
+      reason: "",
+      notes: "",
+    }));
+  };
+
+  const fetchSlots = async (vetId, date) => {
+    if (!vetId || !date) {
+      setSlots([]);
+      return;
+    }
+    try {
+      const res = await getVetAvailableSlots(vetId, date);
+      setSlots(res.data.slots || []);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to fetch available slots",
+      );
+      setSlots([]);
+    }
+  };
+
+  const onFieldChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "vetId" || name === "date") {
+      const vetId = name === "vetId" ? value : form.vetId;
+      const date = name === "date" ? value : form.date;
+      setForm((prev) => ({ ...prev, slot: "" }));
+      fetchSlots(vetId, date);
+    }
+  };
+
+  const submitBooking = async (e) => {
+    e.preventDefault();
+    if (!form.petId || !form.vetId || !form.slot) {
+      setError("Please select pet, veterinarian, and time slot");
+      return;
+    }
+
+    setBooking(true);
+    setError("");
+    try {
+      await createAppointment({
+        petId: form.petId,
+        vetId: form.vetId,
+        scheduledAt: form.slot,
+        reason: form.reason,
+        notes: form.notes,
+      });
+      setShowModal(false);
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create appointment");
+    } finally {
+      setBooking(false);
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -80,20 +187,13 @@ const PetOwnerAppointment = () => {
             <h3 style={{ fontFamily: "Poppins", fontWeight: "600" }}>
               Your Scheduled Visits
             </h3>
-            <button
-              className="book-btn"
-              style={{
-                backgroundColor: "#438fb5",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
+            <button className="book-btn" onClick={openBookingModal}>
               + Book New Appointment
             </button>
           </div>
+
+          {loading && <p>Loading appointments...</p>}
+          {error && <p className="appointment-error">{error}</p>}
 
           {appointments.length === 0 ? (
             <div
@@ -141,8 +241,8 @@ const PetOwnerAppointment = () => {
                       borderRadius: "20px",
                       fontSize: "12px",
                       background:
-                        a.status === "confirmed" ? "#dcfce7" : "#fef9c3",
-                      color: a.status === "confirmed" ? "#166534" : "#854d0e",
+                        a.status === "Confirmed" ? "#dcfce7" : "#fef9c3",
+                      color: a.status === "Confirmed" ? "#166534" : "#854d0e",
                     }}
                   >
                     {a.status}
@@ -153,6 +253,121 @@ const PetOwnerAppointment = () => {
           )}
         </section>
       </main>
+
+      {showModal && (
+        <div className="po-modal-backdrop">
+          <div className="po-modal-card">
+            <h3>Book Appointment</h3>
+
+            <form onSubmit={submitBooking} className="po-booking-form">
+              <label>
+                Pet
+                <select
+                  name="petId"
+                  value={form.petId}
+                  onChange={onFieldChange}
+                  required
+                >
+                  {pets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Veterinarian
+                <select
+                  name="vetId"
+                  value={form.vetId}
+                  onChange={onFieldChange}
+                  required
+                >
+                  {vets.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {`${v.firstName || ""} ${v.lastName || ""}`.trim() ||
+                        v.username}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Date
+                <input
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={onFieldChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Available Time Slot
+                <select
+                  name="slot"
+                  value={form.slot}
+                  onChange={onFieldChange}
+                  required
+                >
+                  <option value="">Select a slot</option>
+                  {slots.map((s) => (
+                    <option key={s.startsAt} value={s.startsAt}>
+                      {new Date(s.startsAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Reason
+                <input
+                  type="text"
+                  name="reason"
+                  value={form.reason}
+                  onChange={onFieldChange}
+                  placeholder="Checkup, follow-up, vaccination"
+                />
+              </label>
+
+              <label>
+                Notes
+                <textarea
+                  name="notes"
+                  value={form.notes}
+                  onChange={onFieldChange}
+                  rows={3}
+                />
+              </label>
+
+              {error && <p className="appointment-error">{error}</p>}
+
+              <div className="po-modal-actions">
+                <button
+                  type="button"
+                  className="po-btn po-btn-ghost"
+                  onClick={() => setShowModal(false)}
+                  disabled={booking}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="po-btn po-btn-primary"
+                  disabled={booking}
+                >
+                  {booking ? "Booking..." : "Book Appointment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

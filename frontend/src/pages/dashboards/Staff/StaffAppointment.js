@@ -7,7 +7,9 @@ import {
   createAppointment,
   deleteAppointment,
   getAppointments,
+  getAvailableVets,
   getPets,
+  getVetAvailableSlots,
   updateAppointment,
 } from "../../../api/api";
 
@@ -23,6 +25,8 @@ const StaffAppointment = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [pets, setPets] = useState([]);
+  const [vets, setVets] = useState([]);
+  const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -31,11 +35,32 @@ const StaffAppointment = () => {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     petId: "",
-    scheduledAt: "",
+    vetId: "",
+    date: "",
+    slot: "",
     reason: "",
     notes: "",
     status: "Pending",
   });
+
+  const ensureCurrentSlotOption = (slotList, currentSlotIso) => {
+    if (!currentSlotIso) return slotList;
+    const exists = slotList.some((slot) => slot.startsAt === currentSlotIso);
+    if (exists) return slotList;
+
+    const merged = [
+      {
+        startsAt: currentSlotIso,
+        endsAt: currentSlotIso,
+        isCurrent: true,
+      },
+      ...slotList,
+    ];
+
+    return merged.sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+  };
 
   useEffect(() => {
     if (!user || user.role !== "staff") {
@@ -50,12 +75,14 @@ const StaffAppointment = () => {
     setLoading(true);
     setError("");
     try {
-      const [appointmentRes, petRes] = await Promise.all([
+      const [appointmentRes, petRes, vetRes] = await Promise.all([
         getAppointments(),
         getPets(),
+        getAvailableVets(),
       ]);
       setAppointments(appointmentRes.data || []);
       setPets(petRes.data || []);
+      setVets(vetRes.data || []);
     } catch {
       setError("Failed to load appointments");
     } finally {
@@ -63,10 +90,27 @@ const StaffAppointment = () => {
     }
   };
 
+  const fetchSlots = async (vetId, date, currentSlotIso = "") => {
+    if (!vetId || !date) {
+      setSlots([]);
+      return;
+    }
+    try {
+      const res = await getVetAvailableSlots(vetId, date);
+      setSlots(ensureCurrentSlotOption(res.data.slots || [], currentSlotIso));
+    } catch (err) {
+      setSlots([]);
+      setError(
+        err.response?.data?.message || "Failed to fetch available slots",
+      );
+    }
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setEditing(null);
     setSaving(false);
+    setSlots([]);
     setError("");
   };
 
@@ -74,7 +118,9 @@ const StaffAppointment = () => {
     setEditing(null);
     setForm({
       petId: pets[0]?.id || "",
-      scheduledAt: "",
+      vetId: vets[0]?.id || "",
+      date: "",
+      slot: "",
       reason: "",
       notes: "",
       status: "Pending",
@@ -83,28 +129,52 @@ const StaffAppointment = () => {
     setShowModal(true);
   };
 
-  const openEdit = (appointment) => {
+  const openEdit = async (appointment) => {
+    const currentSlotIso = new Date(appointment.scheduledAt).toISOString();
+    const currentDate = currentSlotIso.slice(0, 10);
+
     setEditing(appointment);
     setForm({
       petId: appointment.petId,
-      scheduledAt: new Date(appointment.scheduledAt).toISOString().slice(0, 16),
+      vetId: appointment.vetId || "",
+      date: currentDate,
+      slot: currentSlotIso,
       reason: appointment.reason || "",
       notes: appointment.notes || "",
       status: appointment.status || "Pending",
     });
     setError("");
     setShowModal(true);
+
+    await fetchSlots(appointment.vetId, currentDate, currentSlotIso);
   };
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "vetId" || name === "date") {
+      const nextVetId = name === "vetId" ? value : form.vetId;
+      const nextDate = name === "date" ? value : form.date;
+      setForm((prev) => ({ ...prev, slot: "" }));
+
+      let currentSlotIso = "";
+      if (editing && nextVetId === editing.vetId) {
+        const editingSlotIso = new Date(editing.scheduledAt).toISOString();
+        const editingDate = editingSlotIso.slice(0, 10);
+        if (nextDate === editingDate) {
+          currentSlotIso = editingSlotIso;
+        }
+      }
+
+      fetchSlots(nextVetId, nextDate, currentSlotIso);
+    }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!form.petId || !form.scheduledAt) {
-      setError("Pet and schedule are required");
+    if (!form.petId || !form.vetId || !form.slot) {
+      setError("Pet, veterinarian, date, and available slot are required");
       return;
     }
 
@@ -113,7 +183,8 @@ const StaffAppointment = () => {
     try {
       if (editing) {
         await updateAppointment(editing.id, {
-          scheduledAt: form.scheduledAt,
+          vetId: form.vetId,
+          scheduledAt: form.slot,
           reason: form.reason,
           notes: form.notes,
           status: form.status,
@@ -121,7 +192,8 @@ const StaffAppointment = () => {
       } else {
         await createAppointment({
           petId: form.petId,
-          scheduledAt: form.scheduledAt,
+          vetId: form.vetId,
+          scheduledAt: form.slot,
           reason: form.reason,
           notes: form.notes,
         });
@@ -383,6 +455,23 @@ const StaffAppointment = () => {
                   </select>
                 </div>
                 <div className="form-group">
+                  <label>Veterinarian</label>
+                  <select
+                    name="vetId"
+                    value={form.vetId}
+                    onChange={onChange}
+                    required
+                  >
+                    <option value="">Select veterinarian</option>
+                    {vets.map((vet) => (
+                      <option key={vet.id} value={vet.id}>
+                        {`${vet.firstName || ""} ${vet.lastName || ""}`.trim() ||
+                          vet.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label>Status</label>
                   <select
                     name="status"
@@ -397,15 +486,37 @@ const StaffAppointment = () => {
                   </select>
                 </div>
               </div>
-              <div className="form-group">
-                <label>Schedule</label>
-                <input
-                  type="datetime-local"
-                  name="scheduledAt"
-                  value={form.scheduledAt}
-                  onChange={onChange}
-                  required
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={form.date}
+                    onChange={onChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Available Slot</label>
+                  <select
+                    name="slot"
+                    value={form.slot}
+                    onChange={onChange}
+                    required
+                  >
+                    <option value="">Select time slot</option>
+                    {slots.map((slot) => (
+                      <option key={slot.startsAt} value={slot.startsAt}>
+                        {new Date(slot.startsAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        {slot.isCurrent ? " (current)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
                 <label>Reason</label>

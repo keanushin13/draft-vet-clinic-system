@@ -7,6 +7,7 @@ import {
   deleteMessage,
   getMessageThreads,
   getMessageThread,
+  getUsers,
   sendMessage,
   updateMessage,
 } from "../../../api/api";
@@ -22,6 +23,8 @@ const VetMessages = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [threads, setThreads] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [selectedContactId, setSelectedContactId] = useState("");
   const [activeThread, setActiveThread] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
@@ -36,6 +39,7 @@ const VetMessages = () => {
       return;
     }
     loadThreads();
+    loadContacts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -48,6 +52,19 @@ const VetMessages = () => {
     }
   };
 
+  const loadContacts = async () => {
+    try {
+      const r = await getUsers();
+      const list = (r.data || []).filter((u) => u.id !== user?.id);
+      setContacts(list);
+      if (!selectedContactId && list.length > 0) {
+        setSelectedContactId(list[0].id);
+      }
+    } catch {
+      setError("Failed to load contacts");
+    }
+  };
+
   const refreshActiveThread = async (partnerId) => {
     if (!partnerId) return;
     setLoading(true);
@@ -56,6 +73,13 @@ const VetMessages = () => {
       const r = await getMessageThread(partnerId);
       setMessages(r.data || []);
       await loadThreads();
+      const latestThreads = await getMessageThreads();
+      const matched = (latestThreads.data || []).find(
+        (t) => t.partner?.id === partnerId,
+      );
+      if (matched) {
+        setActiveThread(matched);
+      }
     } catch {
       setError("Failed to load thread");
     } finally {
@@ -67,7 +91,22 @@ const VetMessages = () => {
     const partnerId = thread.partner?.id;
     if (!partnerId) return;
     setActiveThread(thread);
+    setSelectedContactId(partnerId);
     refreshActiveThread(partnerId);
+  };
+
+  const startThreadWithSelectedContact = async () => {
+    const partner = contacts.find((c) => c.id === selectedContactId);
+    if (!partner) return;
+
+    setActiveThread({
+      partner,
+      unread: 0,
+      lastAt: null,
+      lastMessage: "",
+    });
+    setMessages([]);
+    await refreshActiveThread(partner.id);
   };
 
   const handleSend = async () => {
@@ -149,6 +188,21 @@ const VetMessages = () => {
           <div className="chat-list-pane">
             <div className="pane-header">
               <h3>Inbox</h3>
+              <div className="contact-start-row">
+                <select
+                  value={selectedContactId}
+                  onChange={(e) => setSelectedContactId(e.target.value)}
+                >
+                  {contacts.map((contact) => (
+                    <option key={contact.id} value={contact.id}>
+                      {contact.firstName
+                        ? `${contact.firstName} ${contact.lastName}`
+                        : contact.username}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={startThreadWithSelectedContact}>Start Chat</button>
+              </div>
             </div>
             <div className="chat-items">
               {threads.map((thread) => (
@@ -286,7 +340,7 @@ const VetMessages = () => {
             ) : (
               <div className="empty-chat-state">
                 <img src={messageIcon} alt="Select Chat" />
-                <p>Select a conversation to start messaging with pet owners.</p>
+                <p>Select a conversation or choose a contact to start a new chat.</p>
               </div>
             )}
           </div>

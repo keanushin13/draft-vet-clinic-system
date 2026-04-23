@@ -127,6 +127,30 @@
   font-weight: 600;
 }
 
+.contact-start-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.contact-start-row select {
+  flex: 1;
+  border: 1px solid #d1d9de;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+}
+
+.contact-start-row button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #255065;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .chat-items {
   flex: 1;
   overflow-y: auto;

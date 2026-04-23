@@ -83,6 +83,7 @@ app.use("/api/users", require("./routes/profileRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/pets", require("./routes/petRoutes"));
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/api/vet-schedules", require("./routes/vetScheduleRoutes"));
 app.use("/api/medical-records", require("./routes/medicalRecordRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/inventory", require("./routes/inventoryRoutes"));

@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const { validateSlotForAppointment } = require("../utils/availability");
 
 const appointmentInclude = {
   pet: { select: { id: true, name: true, species: true } },
@@ -78,6 +79,26 @@ exports.createAppointment = async (req, res) => {
     const resolvedVetId =
       req.user.role === "veterinarian" ? req.user.id : vetId || null;
 
+    if (!resolvedVetId) {
+      return res.status(400).json({ message: "vetId is required" });
+    }
+
+    const vet = await prisma.user.findUnique({
+      where: { id: resolvedVetId },
+      select: { id: true, role: true, isActive: true },
+    });
+    if (!vet || vet.role !== "veterinarian" || !vet.isActive) {
+      return res.status(400).json({ message: "Invalid veterinarian" });
+    }
+
+    const slotValidation = await validateSlotForAppointment({
+      vetId: resolvedVetId,
+      scheduledAt,
+    });
+    if (!slotValidation.ok) {
+      return res.status(400).json({ message: slotValidation.message });
+    }
+
     const appt = await prisma.appointment.create({
       data: {
         petId,
@@ -111,7 +132,7 @@ exports.updateAppointment = async (req, res) => {
   try {
     const existing = await prisma.appointment.findUnique({
       where: { id: req.params.id },
-      select: { id: true, ownerId: true, vetId: true },
+      select: { id: true, ownerId: true, vetId: true, scheduledAt: true },
     });
     if (!existing)
       return res.status(404).json({ message: "Appointment not found" });
@@ -129,9 +150,43 @@ exports.updateAppointment = async (req, res) => {
     if (status !== undefined) data.status = status;
     if (scheduledAt !== undefined) data.scheduledAt = new Date(scheduledAt);
     if (reason !== undefined) data.reason = reason;
-    if (vetId !== undefined && req.user.role !== "veterinarian")
+    if (vetId !== undefined && req.user.role !== "veterinarian") {
       data.vetId = vetId;
+    }
     if (notes !== undefined) data.notes = notes;
+
+    const nextVetId =
+      req.user.role === "veterinarian"
+        ? req.user.id
+        : data.vetId !== undefined
+          ? data.vetId
+          : existing.vetId;
+
+    const nextScheduledAt =
+      data.scheduledAt !== undefined ? data.scheduledAt : existing.scheduledAt;
+
+    if (!nextVetId) {
+      return res
+        .status(400)
+        .json({ message: "Appointment must have a veterinarian" });
+    }
+
+    const vet = await prisma.user.findUnique({
+      where: { id: nextVetId },
+      select: { id: true, role: true, isActive: true },
+    });
+    if (!vet || vet.role !== "veterinarian" || !vet.isActive) {
+      return res.status(400).json({ message: "Invalid veterinarian" });
+    }
+
+    const slotValidation = await validateSlotForAppointment({
+      vetId: nextVetId,
+      scheduledAt: nextScheduledAt,
+      excludeAppointmentId: existing.id,
+    });
+    if (!slotValidation.ok) {
+      return res.status(400).json({ message: slotValidation.message });
+    }
 
     const appt = await prisma.appointment.update({
       where: { id: req.params.id },

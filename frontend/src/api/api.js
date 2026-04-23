@@ -72,6 +72,21 @@ export const updateAppointment = (id, data) =>
   API.patch(`/appointments/${id}`, data);
 export const deleteAppointment = (id) => API.delete(`/appointments/${id}`);
 
+// ─── VET SCHEDULES / AVAILABILITY ───────────────────────────────────────────
+export const getAvailableVets = () => API.get("/vet-schedules/vets");
+export const getMyVetSchedule = () => API.get("/vet-schedules/me");
+export const updateMyVetSchedule = (weekly) =>
+  API.put("/vet-schedules/me", { weekly });
+export const getVetSchedule = (vetId) => API.get(`/vet-schedules/${vetId}`);
+export const updateVetSchedule = (vetId, weekly) =>
+  API.put(`/vet-schedules/${vetId}/weekly`, { weekly });
+export const createVetScheduleException = (vetId, data) =>
+  API.post(`/vet-schedules/${vetId}/exceptions`, data);
+export const deleteVetScheduleException = (id) =>
+  API.delete(`/vet-schedules/exceptions/${id}`);
+export const getVetAvailableSlots = (vetId, date) =>
+  API.get(`/vet-schedules/${vetId}/available-slots`, { params: { date } });
+
 // ─── MEDICAL RECORDS ──────────────────────────────────────────────────────────
 export const getMedicalRecords = (params) =>
   API.get("/medical-records", { params });

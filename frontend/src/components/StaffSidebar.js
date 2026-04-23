@@ -15,6 +15,11 @@ const NAV_ITEMS = [
   { label: "User Management", path: "/staff-users", icon: userManagementIcon },
   { label: "Pets Profile", path: "/staff-pets", icon: petsProfileIcon },
   { label: "Messages", path: "/staff-messages", icon: messageIcon },
+  {
+    label: "Vet Schedules",
+    path: "/staff-vet-schedules",
+    icon: appointmentIcon,
+  },
   { label: "Inventory", path: "/staff-inventory", icon: inventoryIcon },
   { label: "Payment History", path: "/staff-payments", icon: payHistoryIcon },
   { label: "Activity Log", path: "/staff-activity", icon: activityLogIcon },

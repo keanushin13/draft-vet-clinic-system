@@ -32,6 +32,7 @@ import StaffPaymentHistory from "./pages/dashboards/Staff/StaffPaymentHistory";
 import StaffPetsProfile from "./pages/dashboards/Staff/StaffPetsProfile";
 import StaffProfile from "./pages/dashboards/Staff/StaffProfile";
 import StaffUserManagement from "./pages/dashboards/Staff/StaffUserManagement";
+import StaffVetSchedule from "./pages/dashboards/Staff/StaffVetSchedule";
 
 // VETERINARIAN IMPORTS
 import VetCalendar from "./pages/dashboards/Veterinary/VetCalendar";
@@ -42,6 +43,7 @@ import VetMessages from "./pages/dashboards/Veterinary/VetMessages";
 import VetNotif from "./pages/dashboards/Veterinary/VetNotif";
 import VetPatients from "./pages/dashboards/Veterinary/VetPatients";
 import VetProfile from "./pages/dashboards/Veterinary/VetProfile";
+import VetSchedule from "./pages/dashboards/Veterinary/VetSchedule";
 
 // PET OWNER IMPORTS
 import PetOwnerAppointment from "./pages/dashboards/PetOwner/PetOwnerAppointment";
@@ -96,6 +98,7 @@ function App() {
         <Route path="/vet-inventory" element={<VetInventory />} />
         <Route path="/vet-notifications" element={<VetNotif />} />
         <Route path="/vet-profile" element={<VetProfile />} />
+        <Route path="/vet-schedule" element={<VetSchedule />} />
 
         {/* STAFF ROUTES */}
         <Route path="/staff" element={<StaffDashboard />} />
@@ -108,6 +111,7 @@ function App() {
         <Route path="/staff-activity" element={<StaffActivityLog />} />
         <Route path="/staff-notifications" element={<StaffNotif />} />
         <Route path="/staff-profile" element={<StaffProfile />} />
+        <Route path="/staff-vet-schedules" element={<StaffVetSchedule />} />
 
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<AdminDashboard />} />

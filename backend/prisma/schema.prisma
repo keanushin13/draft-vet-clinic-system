@@ -116,6 +116,8 @@ model User {
   receivedMessages         Message[]              @relation("MessageReceiver")
   notifications            Notification[]
   activityLogs             ActivityLog[]
+  vetWeeklySchedules       VetSchedule[]          @relation("VetWeeklySchedule")
+  vetScheduleExceptions    VetScheduleException[] @relation("VetScheduleException")
 }
 
 // ─── Pet ──────────────────────────────────────────────────────────────────────
@@ -166,6 +168,36 @@ model Appointment {
 
   medicalRecord MedicalRecord?
   payment       Payment?
+}
+
+// ─── Vet Availability ────────────────────────────────────────────────────────
+
+model VetSchedule {
+  id                  String   @id @default(cuid())
+  vetId               String
+  dayOfWeek           Int
+  startTime           String
+  endTime             String
+  slotDurationMinutes Int      @default(30)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  vet                 User     @relation("VetWeeklySchedule", fields: [vetId], references: [id])
+
+  @@unique([vetId, dayOfWeek])
+}
+
+model VetScheduleException {
+  id        String   @id @default(cuid())
+  vetId     String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vet       User     @relation("VetScheduleException", fields: [vetId], references: [id])
 }
 
 // ─── Medical Record ───────────────────────────────────────────────────────────

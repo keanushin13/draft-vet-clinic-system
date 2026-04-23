@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: "Calendar", path: "/vet-calendar", icon: appointmentIcon },
   { label: "Messages", path: "/vet-messages", icon: messageIcon },
   { label: "Medical Records", path: "/vet-medical-records", icon: medicalIcon },
+  { label: "Schedule", path: "/vet-schedule", icon: appointmentIcon },
   { label: "Inventory", path: "/vet-inventory", icon: inventoryIcon },
 ];
 
