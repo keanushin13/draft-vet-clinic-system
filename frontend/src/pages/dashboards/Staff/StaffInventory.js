@@ -12,6 +12,11 @@ import {
   deleteInventoryItem,
   restoreInventoryItem,
 } from "../../../api/api";
+import {
+  INVENTORY_CATEGORY_OPTIONS,
+  formatInventoryCategory,
+  normalizeInventoryCategory,
+} from "../../../constants/inventoryCategories";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -38,7 +43,7 @@ const StaffInventory = () => {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    category: "Supplies",
+    category: "Others",
     stock: 0,
     unit: "pcs",
     price: "",
@@ -71,7 +76,7 @@ const StaffInventory = () => {
     setError("");
     setForm({
       name: "",
-      category: "Supplies",
+      category: "Others",
       stock: 0,
       unit: "pcs",
       price: "",
@@ -86,7 +91,7 @@ const StaffInventory = () => {
     setError("");
     setForm({
       name: item.name,
-      category: item.category,
+      category: normalizeInventoryCategory(item.category),
       stock: item.stock,
       unit: item.unit,
       price: item.price ?? "",
@@ -175,7 +180,11 @@ const StaffInventory = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -214,7 +223,9 @@ const StaffInventory = () => {
                   <tr key={item.id}>
                     <td className="item-name-cell">{item.name}</td>
                     <td>
-                      <span className="cat-badge">{item.category}</span>
+                      <span className="cat-badge">
+                        {formatInventoryCategory(item.category)}
+                      </span>
                     </td>
                     <td>
                       {item.stock} {item.unit}
@@ -287,11 +298,11 @@ const StaffInventory = () => {
                     value={form.category}
                     onChange={onChange}
                   >
-                    <option value="Medication">Medication</option>
-                    <option value="Vaccine">Vaccine</option>
-                    <option value="Supplies">Supplies</option>
-                    <option value="Grooming">Grooming</option>
-                    <option value="Medical">Medical</option>
+                    {INVENTORY_CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">

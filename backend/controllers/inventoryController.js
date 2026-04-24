@@ -1,5 +1,24 @@
 const prisma = require("../lib/prisma");
 
+const ALLOWED_INVENTORY_CATEGORIES = new Set([
+  "Medication",
+  "Vaccine",
+  "Supplies",
+  "Grooming",
+  "Medical",
+  "Vaccines",
+  "TestKits",
+  "Antibiotics",
+  "Supplements",
+  "EyeDrops",
+  "EarDrops",
+  "AntiParasite",
+  "AntiInflammatory",
+  "FoodSupplements",
+  "ShampooAndSoap",
+  "Others",
+]);
+
 // GET /api/inventory
 exports.getInventory = async (req, res) => {
   try {
@@ -32,6 +51,10 @@ exports.createInventoryItem = async (req, res) => {
       return res
         .status(400)
         .json({ message: "name, category, unit are required" });
+
+    if (!ALLOWED_INVENTORY_CATEGORIES.has(category)) {
+      return res.status(400).json({ message: "Invalid inventory category" });
+    }
 
     const parsedPrice =
       price === undefined || price === null || price === ""
@@ -89,6 +112,15 @@ exports.updateInventoryItem = async (req, res) => {
       price === undefined || price === null || price === ""
         ? undefined
         : Number(price);
+
+    if (
+      category !== undefined &&
+      category !== null &&
+      !ALLOWED_INVENTORY_CATEGORIES.has(category)
+    ) {
+      return res.status(400).json({ message: "Invalid inventory category" });
+    }
+
     if (parsedPrice !== undefined && Number.isNaN(parsedPrice)) {
       return res.status(400).json({ message: "price must be a valid number" });
     }

@@ -51,6 +51,17 @@ enum InventoryCategory {
   Supplies
   Grooming
   Medical
+  Vaccines
+  TestKits
+  Antibiotics
+  Supplements
+  EyeDrops
+  EarDrops
+  AntiParasite
+  AntiInflammatory
+  FoodSupplements
+  ShampooAndSoap
+  Others
 }
 
 enum InventoryStatus {

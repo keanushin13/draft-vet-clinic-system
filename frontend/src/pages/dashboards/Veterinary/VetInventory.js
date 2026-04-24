@@ -5,6 +5,7 @@ import "../../../css/VetInventory.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { getInventory } from "../../../api/api";
+import { formatInventoryCategory } from "../../../constants/inventoryCategories";
 
 // ASSETS
 import appointmentIcon from "../../../assets/Appointment_Icon.png";
@@ -60,7 +61,11 @@ const VetInventory = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/vet-profile"
+            />
           </div>
         </header>
 
@@ -123,7 +128,9 @@ const VetInventory = () => {
                     <td style={{ padding: "15px", fontWeight: "500" }}>
                       {item.name}
                     </td>
-                    <td style={{ padding: "15px" }}>{item.category}</td>
+                    <td style={{ padding: "15px" }}>
+                      {formatInventoryCategory(item.category)}
+                    </td>
                     <td style={{ padding: "15px" }}>{item.stock} units</td>
                     <td style={{ padding: "15px" }}>
                       {item.price === null || item.price === undefined
