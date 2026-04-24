@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
-import "../../../css/PetOwnerAppointment.css";
+import "../../../css/StaffAppointment.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -27,6 +27,9 @@ const PetOwnerAppointment = () => {
   const [vets, setVets] = useState([]);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("calendar");
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [search, setSearch] = useState("");
   const [booking, setBooking] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -184,6 +187,43 @@ const PetOwnerAppointment = () => {
     }
   };
 
+  const filteredAppointments = appointments.filter((a) => {
+    const vetName =
+      `${a.vet?.firstName || ""} ${a.vet?.lastName || ""}`.trim() ||
+      a.vet?.username ||
+      "";
+    const query = search.toLowerCase();
+    return (
+      (a.pet?.name || "").toLowerCase().includes(query) ||
+      vetName.toLowerCase().includes(query) ||
+      (a.status || "").toLowerCase().includes(query)
+    );
+  });
+
+  const monthStart = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth(),
+    1,
+  );
+  const daysInMonth = new Date(
+    calendarDate.getFullYear(),
+    calendarDate.getMonth() + 1,
+    0,
+  ).getDate();
+  const firstWeekday = monthStart.getDay();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const monthLabel = calendarDate.toLocaleString([], {
+    month: "long",
+    year: "numeric",
+  });
+
+  const shiftMonth = (delta) => {
+    setCalendarDate(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1),
+    );
+  };
+
   return (
     <div className="dashboard-container">
       <PetOwnerSidebar isOpen={isOpen} onClose={close} />
@@ -208,165 +248,206 @@ const PetOwnerAppointment = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/pet-owner-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/pet-owner-profile"
+            />
           </div>
         </header>
 
         <section className="content-body">
-          <div
-            className="appointment-header-action"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-            }}
-          >
-            <h3 style={{ fontFamily: "Poppins", fontWeight: "600" }}>
-              Your Scheduled Visits
-            </h3>
-            <button className="book-btn" onClick={openBookingModal}>
-              + Book New Appointment
-            </button>
+          <div className="calendar-controls">
+            <div className="view-toggle">
+              <button
+                className={viewMode === "calendar" ? "active" : ""}
+                onClick={() => setViewMode("calendar")}
+              >
+                Calendar View
+              </button>
+              <button
+                className={viewMode === "list" ? "active" : ""}
+                onClick={() => setViewMode("list")}
+              >
+                List View
+              </button>
+            </div>
+            <div className="appointment-actions">
+              <input
+                type="text"
+                className="apt-search"
+                placeholder="Search pet, vet, or status"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="add-apt-btn" onClick={openBookingModal}>
+                + Book New Appointment
+              </button>
+            </div>
           </div>
 
-          {loading && <p>Loading appointments...</p>}
-          {error && <p className="appointment-error">{error}</p>}
+          {loading && (
+            <p className="list-placeholder">Loading appointments...</p>
+          )}
+          {!loading && error && <p className="modal-error">{error}</p>}
 
-          {appointments.length === 0 ? (
-            <div
-              className="dashboard-welcome-card"
-              style={{
-                background: "white",
-                padding: "30px",
-                borderRadius: "15px",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-              <p style={{ color: "#555" }}>
-                No appointments found. Start by booking your first visit!
-              </p>
-            </div>
-          ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
-              {appointments.map((a) => (
-                <div
-                  key={a.id}
-                  style={{
-                    background: "white",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <strong style={{ color: "#255065" }}>{a.pet?.name}</strong>
-                    <div style={{ color: "#666", fontSize: "0.85rem" }}>
-                      {new Date(a.scheduledAt).toLocaleString()}
+          {!loading && viewMode === "calendar" ? (
+            <div className="calendar-container">
+              <div className="calendar-month-header">
+                <h3>{monthLabel}</h3>
+                <div className="month-nav">
+                  <button onClick={() => shiftMonth(-1)}>&lt; Prev</button>
+                  <button onClick={() => shiftMonth(1)}>Next &gt;</button>
+                </div>
+              </div>
+              <div className="calendar-grid">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                  (day) => (
+                    <div key={day} className="weekday-label">
+                      {day}
                     </div>
-                    <div style={{ color: "#888", fontSize: "0.8rem" }}>
-                      {a.reason}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        marginTop: "8px",
-                      }}
-                    >
-                      <button
-                        onClick={() => openEditModal(a)}
-                        style={{
-                          border: "none",
-                          background: "#e4e6ea",
-                          color: "#505866",
-                          padding: "6px 10px",
-                          borderRadius: "7px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Reschedule
-                      </button>
-                      <button
-                        onClick={() => cancelAppointment(a)}
-                        style={{
-                          border: "none",
-                          background: "#fbeef0",
-                          color: "#ef575a",
-                          padding: "6px 10px",
-                          borderRadius: "7px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Cancel
-                      </button>
+                  ),
+                )}
+                {Array.from({ length: firstWeekday }).map((_, idx) => (
+                  <div key={`empty-${idx}`} className="calendar-day empty" />
+                ))}
+                {days.map((d) => (
+                  <div key={d} className="calendar-day">
+                    <span className="day-num">{d}</span>
+                    <div className="day-events">
+                      {filteredAppointments
+                        .filter((a) => {
+                          const scheduled = new Date(a.scheduledAt);
+                          return (
+                            scheduled.getFullYear() ===
+                              calendarDate.getFullYear() &&
+                            scheduled.getMonth() === calendarDate.getMonth() &&
+                            scheduled.getDate() === d
+                          );
+                        })
+                        .map((apt) => (
+                          <div
+                            key={apt.id}
+                            className={`event-item ${(apt.status || "").toLowerCase()}`}
+                            title={`${apt.pet?.name || "Pet"} - ${apt.status}`}
+                          >
+                            {new Date(apt.scheduledAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            {apt.pet?.name}
+                          </div>
+                        ))}
                     </div>
                   </div>
-                  <span
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "20px",
-                      fontSize: "12px",
-                      background:
-                        a.status === "Confirmed" ? "#dcfce7" : "#fef9c3",
-                      color: a.status === "Confirmed" ? "#166534" : "#854d0e",
-                    }}
-                  >
-                    {a.status}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          ) : (
+            <div className="list-view-container">
+              <table className="appointment-table">
+                <thead>
+                  <tr>
+                    <th>Pet</th>
+                    <th>Owner</th>
+                    <th>Date & Time</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppointments.map((a) => (
+                    <tr key={a.id}>
+                      <td>{a.pet?.name || "-"}</td>
+                      <td>
+                        {`${a.owner?.firstName || ""} ${a.owner?.lastName || ""}`.trim() ||
+                          a.owner?.username ||
+                          "-"}
+                      </td>
+                      <td>{new Date(a.scheduledAt).toLocaleString()}</td>
+                      <td>{a.reason || "-"}</td>
+                      <td>
+                        <span
+                          className={`apt-status ${(a.status || "").toLowerCase()}`}
+                        >
+                          {a.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-btns">
+                          <button
+                            className="btn-edit"
+                            onClick={() => openEditModal(a)}
+                          >
+                            Reschedule
+                          </button>
+                          <button
+                            className="btn-remove"
+                            onClick={() => cancelAppointment(a)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!loading && filteredAppointments.length === 0 && (
+            <p className="list-placeholder">
+              No appointments found. Start by booking your first visit!
+            </p>
           )}
         </section>
       </main>
 
       {showModal && (
-        <div className="po-modal-backdrop">
-          <div className="po-modal-card">
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>{editing ? "Update Appointment" : "Book Appointment"}</h3>
 
-            <form onSubmit={submitBooking} className="po-booking-form">
-              <label>
-                Pet
-                <select
-                  name="petId"
-                  value={form.petId}
-                  onChange={onFieldChange}
-                  required
-                >
-                  {pets.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <form onSubmit={submitBooking} className="user-modal-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pet</label>
+                  <select
+                    name="petId"
+                    value={form.petId}
+                    onChange={onFieldChange}
+                    required
+                  >
+                    {pets.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <label>
-                Veterinarian
-                <select
-                  name="vetId"
-                  value={form.vetId}
-                  onChange={onFieldChange}
-                  required
-                >
-                  {vets.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {`${v.firstName || ""} ${v.lastName || ""}`.trim() ||
-                        v.username}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div className="form-group">
+                  <label>Veterinarian</label>
+                  <select
+                    name="vetId"
+                    value={form.vetId}
+                    onChange={onFieldChange}
+                    required
+                  >
+                    {vets.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {`${v.firstName || ""} ${v.lastName || ""}`.trim() ||
+                          v.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-              <label>
-                Date
+              <div className="form-group">
+                <label>Date</label>
                 <input
                   type="date"
                   name="date"
@@ -374,10 +455,10 @@ const PetOwnerAppointment = () => {
                   onChange={onFieldChange}
                   required
                 />
-              </label>
+              </div>
 
-              <label>
-                Available Time Slot
+              <div className="form-group">
+                <label>Available Time Slot</label>
                 <select
                   name="slot"
                   value={form.slot}
@@ -394,10 +475,10 @@ const PetOwnerAppointment = () => {
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
 
-              <label>
-                Reason
+              <div className="form-group">
+                <label>Reason</label>
                 <input
                   type="text"
                   name="reason"
@@ -405,24 +486,24 @@ const PetOwnerAppointment = () => {
                   onChange={onFieldChange}
                   placeholder="Checkup, follow-up, vaccination"
                 />
-              </label>
+              </div>
 
-              <label>
-                Notes
+              <div className="form-group">
+                <label>Notes</label>
                 <textarea
                   name="notes"
                   value={form.notes}
                   onChange={onFieldChange}
                   rows={3}
                 />
-              </label>
+              </div>
 
-              {error && <p className="appointment-error">{error}</p>}
+              {error && <p className="modal-error">{error}</p>}
 
-              <div className="po-modal-actions">
+              <div className="modal-actions">
                 <button
                   type="button"
-                  className="po-btn po-btn-ghost"
+                  className="cancel-btn"
                   onClick={() => {
                     setShowModal(false);
                     setEditing(null);
@@ -431,11 +512,7 @@ const PetOwnerAppointment = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="po-btn po-btn-primary"
-                  disabled={booking}
-                >
+                <button type="submit" className="save-btn" disabled={booking}>
                   {booking
                     ? editing
                       ? "Updating..."

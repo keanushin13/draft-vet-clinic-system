@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
-import "../../../css/VetCalendar.css";
+import "../../../css/StaffAppointment.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -25,6 +25,7 @@ const VetCalendar = () => {
   const [pets, setPets] = useState([]);
   const [viewMode, setViewMode] = useState("calendar");
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -171,6 +172,15 @@ const VetCalendar = () => {
     );
   });
 
+  const filteredAppointments = monthAppointments.filter((a) => {
+    const query = search.toLowerCase();
+    return (
+      (a.pet?.name || "").toLowerCase().includes(query) ||
+      (a.reason || "").toLowerCase().includes(query) ||
+      (a.status || "").toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="dashboard-container">
       <VetSidebar isOpen={isOpen} onClose={close} />
@@ -195,7 +205,11 @@ const VetCalendar = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/vet-profile"
+            />
           </div>
         </header>
 
@@ -215,18 +229,26 @@ const VetCalendar = () => {
                 List View
               </button>
             </div>
-            <button className="add-apt-btn" onClick={openCreate}>
-              + Add Appointment
-            </button>
+            <div className="appointment-actions">
+              <input
+                type="text"
+                className="apt-search"
+                placeholder="Search pet, reason, or status"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="add-apt-btn" onClick={openCreate}>
+                + Add Appointment
+              </button>
+            </div>
           </div>
 
           {viewMode === "calendar" ? (
-            <div className="calendar-container-card">
-              <div className="calendar-header">
-                <h4>{monthLabel}</h4>
+            <div className="calendar-container">
+              <div className="calendar-month-header">
+                <h3>{monthLabel}</h3>
                 <div className="month-nav">
                   <button
-                    className="nav-btn"
                     onClick={() =>
                       setCalendarDate(
                         (prev) =>
@@ -234,10 +256,9 @@ const VetCalendar = () => {
                       )
                     }
                   >
-                    Prev
+                    &lt; Prev
                   </button>
                   <button
-                    className="nav-btn"
                     onClick={() =>
                       setCalendarDate(
                         (prev) =>
@@ -245,12 +266,12 @@ const VetCalendar = () => {
                       )
                     }
                   >
-                    Next
+                    Next &gt;
                   </button>
                 </div>
               </div>
 
-              <div className="calendar-grid-placeholder">
+              <div className="calendar-grid">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                   (day) => (
                     <div key={day} className="weekday-label">
@@ -259,59 +280,76 @@ const VetCalendar = () => {
                   ),
                 )}
                 {Array.from({ length: firstWeekday }).map((_, idx) => (
-                  <div key={`empty-${idx}`} className="day-cell empty" />
+                  <div key={`empty-${idx}`} className="calendar-day empty" />
                 ))}
                 {days.map((day) => {
-                  const dayApts = monthAppointments.filter(
+                  const dayApts = filteredAppointments.filter(
                     (a) => new Date(a.scheduledAt).getDate() === day,
                   );
                   return (
-                    <div key={day} className="day-cell">
-                      <div className="day-number">{day}</div>
-                      {dayApts.map((a) => (
-                        <button
-                          key={a.id}
-                          className="event-chip"
-                          onClick={() => openEdit(a)}
-                          title={`${a.pet?.name || "Pet"} - ${a.status}`}
-                        >
-                          {a.pet?.name}
-                        </button>
-                      ))}
+                    <div key={day} className="calendar-day">
+                      <span className="day-num">{day}</span>
+                      <div className="day-events">
+                        {dayApts.map((a) => (
+                          <div
+                            key={a.id}
+                            className={`event-item ${(a.status || "").toLowerCase()}`}
+                            title={`${a.pet?.name || "Pet"} - ${a.status}`}
+                          >
+                            {new Date(a.scheduledAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            {a.pet?.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
           ) : (
-            <div className="calendar-container-card">
+            <div className="list-view-container">
               <table className="appointment-table">
                 <thead>
                   <tr>
                     <th>Pet</th>
-                    <th>Scheduled At</th>
+                    <th>Owner</th>
+                    <th>Date & Time</th>
                     <th>Reason</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {monthAppointments.map((apt) => (
+                  {filteredAppointments.map((apt) => (
                     <tr key={apt.id}>
                       <td>{apt.pet?.name || "-"}</td>
+                      <td>
+                        {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                          apt.owner?.username ||
+                          "-"}
+                      </td>
                       <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
                       <td>{apt.reason || "-"}</td>
-                      <td>{apt.status}</td>
                       <td>
-                        <div className="row-actions">
+                        <span
+                          className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                        >
+                          {apt.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-btns">
                           <button
-                            className="row-btn"
+                            className="btn-edit"
                             onClick={() => openEdit(apt)}
                           >
                             Edit
                           </button>
                           <button
-                            className="row-btn row-btn-danger"
+                            className="btn-remove"
                             onClick={() => removeAppointment(apt)}
                           >
                             Delete
@@ -326,10 +364,10 @@ const VetCalendar = () => {
           )}
 
           {loading && <p className="list-feedback">Loading appointments...</p>}
-          {!loading && !monthAppointments.length && (
+          {!loading && !filteredAppointments.length && (
             <p className="list-feedback">No appointments in this month.</p>
           )}
-          {error && <p className="list-error">{error}</p>}
+          {error && <p className="modal-error">{error}</p>}
         </section>
       </main>
 
