@@ -17,6 +17,32 @@ const appointmentInclude = {
   },
 };
 
+const APPOINTMENT_STATUSES = new Set([
+  "Pending",
+  "Confirmed",
+  "Completed",
+  "Cancelled",
+]);
+
+const parseScheduledAt = (scheduledAt) => {
+  if (scheduledAt === undefined) return null;
+  const parsed = new Date(scheduledAt);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
+const logStaffActivity = async (req, action, target) => {
+  if (req.user.role !== "staff") return;
+  await prisma.activityLog.create({
+    data: {
+      staffId: req.user.id,
+      action,
+      target,
+      status: "Completed",
+    },
+  });
+};
+
 // GET /api/appointments
 exports.getAppointments = async (req, res) => {
   try {
@@ -24,6 +50,9 @@ exports.getAppointments = async (req, res) => {
     const { role, id } = req.user;
     if (role === "pet_owner") where.ownerId = id;
     else if (role === "veterinarian") where.vetId = id;
+    else if (role !== "staff" && role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const appointments = await prisma.appointment.findMany({
       where,
@@ -55,6 +84,12 @@ exports.getAppointment = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    if (
+      !["admin", "staff", "pet_owner", "veterinarian"].includes(req.user.role)
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     res.json(appt);
   } catch (e) {
     console.error(e);
@@ -80,6 +115,17 @@ exports.createAppointment = async (req, res) => {
         .json({ message: "You can only book appointments for your own pets" });
     }
 
+    if (
+      !["admin", "staff", "pet_owner", "veterinarian"].includes(req.user.role)
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const parsedScheduledAt = parseScheduledAt(scheduledAt);
+    if (!parsedScheduledAt) {
+      return res.status(400).json({ message: "Invalid scheduledAt" });
+    }
+
     const ownerId = req.user.role === "pet_owner" ? req.user.id : pet.ownerId;
 
     const resolvedVetId =
@@ -99,7 +145,7 @@ exports.createAppointment = async (req, res) => {
 
     const slotValidation = await validateSlotForAppointment({
       vetId: resolvedVetId,
-      scheduledAt,
+      scheduledAt: parsedScheduledAt,
     });
     if (!slotValidation.ok) {
       return res.status(400).json({ message: slotValidation.message });
@@ -110,21 +156,18 @@ exports.createAppointment = async (req, res) => {
         petId,
         ownerId,
         vetId: resolvedVetId,
-        scheduledAt: new Date(scheduledAt),
+        scheduledAt: parsedScheduledAt,
         reason,
         notes,
       },
       include: appointmentInclude,
     });
 
-    await prisma.activityLog.create({
-      data: {
-        staffId: req.user.id,
-        action: "Created appointment",
-        target: `Appointment ${appt.id}`,
-        status: "Completed",
-      },
-    });
+    await logStaffActivity(
+      req,
+      "Created appointment",
+      `Appointment ${appt.id}`,
+    );
 
     res.status(201).json(appt);
   } catch (e) {
@@ -151,10 +194,27 @@ exports.updateAppointment = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    if (
+      !["admin", "staff", "pet_owner", "veterinarian"].includes(req.user.role)
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const { status, scheduledAt, reason, vetId, notes } = req.body;
     const data = {};
-    if (status !== undefined) data.status = status;
-    if (scheduledAt !== undefined) data.scheduledAt = new Date(scheduledAt);
+    if (status !== undefined) {
+      if (!APPOINTMENT_STATUSES.has(status)) {
+        return res.status(400).json({ message: "Invalid appointment status" });
+      }
+      data.status = status;
+    }
+    if (scheduledAt !== undefined) {
+      const parsedScheduledAt = parseScheduledAt(scheduledAt);
+      if (!parsedScheduledAt) {
+        return res.status(400).json({ message: "Invalid scheduledAt" });
+      }
+      data.scheduledAt = parsedScheduledAt;
+    }
     if (reason !== undefined) data.reason = reason;
     if (vetId !== undefined && req.user.role !== "veterinarian") {
       data.vetId = vetId;
@@ -200,14 +260,11 @@ exports.updateAppointment = async (req, res) => {
       include: appointmentInclude,
     });
 
-    await prisma.activityLog.create({
-      data: {
-        staffId: req.user.id,
-        action: `Updated appointment status to ${status || "—"}`,
-        target: `Appointment ${appt.id}`,
-        status: "Completed",
-      },
-    });
+    const updateAction =
+      status !== undefined
+        ? `Updated appointment status to ${status}`
+        : "Updated appointment details";
+    await logStaffActivity(req, updateAction, `Appointment ${appt.id}`);
 
     res.json(appt);
   } catch (e) {
@@ -234,10 +291,21 @@ exports.deleteAppointment = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    if (
+      !["admin", "staff", "pet_owner", "veterinarian"].includes(req.user.role)
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     await prisma.appointment.update({
       where: { id: req.params.id },
       data: { status: "Cancelled" },
     });
+    await logStaffActivity(
+      req,
+      "Cancelled appointment",
+      `Appointment ${existing.id}`,
+    );
     res.json({ message: "Appointment cancelled" });
   } catch (e) {
     console.error(e);
