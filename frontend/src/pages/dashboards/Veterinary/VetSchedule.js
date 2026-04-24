@@ -4,7 +4,7 @@ import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
-  createVetScheduleException,
+  createMyVetScheduleException,
   deleteVetScheduleException,
   getMyVetSchedule,
   updateMyVetSchedule,
@@ -133,7 +133,7 @@ export default function VetSchedule() {
     setError("");
     setSuccess("");
     try {
-      await createVetScheduleException(user.id, {
+      await createMyVetScheduleException({
         startsAt: exceptionForm.startsAt,
         endsAt: exceptionForm.endsAt,
         reason: exceptionForm.reason,

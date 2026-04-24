@@ -8,7 +8,19 @@ exports.protect = (req, res, next) => {
   }
   const token = authHeader.split(" ")[1];
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const id = decoded.id || decoded.userId;
+    const role = decoded.role;
+
+    if (!id || !role) {
+      return res.status(401).json({ message: "Token payload invalid" });
+    }
+
+    req.user = {
+      ...decoded,
+      id,
+      role,
+    };
     next();
   } catch {
     return res.status(401).json({ message: "Token invalid or expired" });

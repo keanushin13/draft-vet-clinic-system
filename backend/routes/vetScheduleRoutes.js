@@ -18,6 +18,13 @@ router.put(
   c.replaceMyWeeklySchedule,
 );
 
+router.post(
+  "/me/exceptions",
+  protect,
+  authorizeRoles("veterinarian"),
+  c.createMyScheduleException,
+);
+
 router.get(
   "/:vetId/available-slots",
   protect,

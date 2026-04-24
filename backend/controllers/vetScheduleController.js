@@ -283,6 +283,17 @@ exports.createScheduleException = async (req, res) => {
   }
 };
 
+// POST /api/vet-schedules/me/exceptions
+exports.createMyScheduleException = async (req, res) => {
+  try {
+    req.params.vetId = req.user.id;
+    return exports.createScheduleException(req, res);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // DELETE /api/vet-schedules/exceptions/:id
 exports.deleteScheduleException = async (req, res) => {
   try {

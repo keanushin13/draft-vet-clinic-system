@@ -77,6 +77,8 @@ export const getAvailableVets = () => API.get("/vet-schedules/vets");
 export const getMyVetSchedule = () => API.get("/vet-schedules/me");
 export const updateMyVetSchedule = (weekly) =>
   API.put("/vet-schedules/me", { weekly });
+export const createMyVetScheduleException = (data) =>
+  API.post("/vet-schedules/me/exceptions", data);
 export const getVetSchedule = (vetId) => API.get(`/vet-schedules/${vetId}`);
 export const updateVetSchedule = (vetId, weekly) =>
   API.put(`/vet-schedules/${vetId}/weekly`, { weekly });
