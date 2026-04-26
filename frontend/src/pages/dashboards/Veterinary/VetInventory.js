@@ -22,6 +22,11 @@ const VetInventory = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
+  const pesoFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  });
 
   const [items, setItems] = useState([]);
 
@@ -135,7 +140,7 @@ const VetInventory = () => {
                     <td style={{ padding: "15px" }}>
                       {item.price === null || item.price === undefined
                         ? "-"
-                        : `$${Number(item.price).toFixed(2)}`}
+                        : pesoFormatter.format(Number(item.price))}
                     </td>
                     <td style={{ padding: "15px" }}>
                       {item.expirationDate
