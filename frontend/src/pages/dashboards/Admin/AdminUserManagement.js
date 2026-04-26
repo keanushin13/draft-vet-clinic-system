@@ -132,7 +132,11 @@ const AdminUserManagement = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Admin Profile" profilePath="/admin-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Admin Profile"
+              profilePath="/admin-profile"
+            />
           </div>
         </header>
 
@@ -190,16 +194,49 @@ const AdminUserManagement = () => {
                       <td>
                         <div className="action-btns">
                           <button
-                            className="edit-btn"
+                            className="edit-btn icon-btn"
                             onClick={() => openEdit(u)}
+                            title="Edit user"
+                            aria-label="Edit user"
                           >
-                            Edit
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
                           </button>
                           <button
-                            className="delete-btn"
+                            className="delete-btn icon-btn"
                             onClick={() => handleDelete(u.id)}
+                            title="Remove user"
+                            aria-label="Remove user"
                           >
-                            Remove
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           </button>
                         </div>
                       </td>

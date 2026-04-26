@@ -199,7 +199,11 @@ const StaffPaymentHistory = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -299,17 +303,76 @@ const StaffPaymentHistory = () => {
                     <td>
                       <div className="action-btns">
                         <button
-                          className="receipt-btn"
+                          className="receipt-btn icon-btn"
                           onClick={() => openEdit(p)}
                           disabled={p.isArchived}
+                          title="Edit payment"
+                          aria-label="Edit payment"
                         >
-                          Edit
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M4 20h4l10-10-4-4L4 16v4z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 6l4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
                         </button>
                         <button
-                          className="receipt-btn btn-muted"
+                          className="receipt-btn btn-muted icon-btn"
                           onClick={() => toggleArchive(p)}
+                          title={
+                            p.isArchived ? "Restore payment" : "Archive payment"
+                          }
+                          aria-label={
+                            p.isArchived ? "Restore payment" : "Archive payment"
+                          }
                         >
-                          {p.isArchived ? "Restore" : "Archive"}
+                          {p.isArchived ? (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M8 7H5l3-3m-3 3 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </td>

@@ -262,6 +262,12 @@
   vertical-align: middle;
 }
 
+.pets-table th:last-child,
+.pets-table td:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+
 .pet-name-cell {
   display: flex;
   align-items: center;
@@ -287,6 +293,8 @@
 .pet-action-btns {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .btn-view-records,
@@ -298,6 +306,47 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.btn-view-records {
+  min-width: 88px;
+}
+
+.btn-edit-pet {
+  min-width: 56px;
+}
+
+.btn-remove-pet {
+  min-width: 82px;
+}
+
+.btn-view-records.icon-btn,
+.btn-edit-pet.icon-btn,
+.btn-remove-pet.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view-records.icon-btn svg,
+.btn-edit-pet.icon-btn svg,
+.btn-remove-pet.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-view-records.icon-btn:focus-visible,
+.btn-edit-pet.icon-btn:focus-visible,
+.btn-remove-pet.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 
 .btn-view-records,

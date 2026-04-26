@@ -173,7 +173,11 @@ const VetMedRec = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/vet-profile"
+            />
           </div>
         </header>
 
@@ -224,8 +228,26 @@ const VetMedRec = () => {
                       </span>
                     </td>
                     <td>
-                      <button className="row-btn" onClick={() => openEdit(rec)}>
-                        Edit
+                      <button
+                        className="row-btn icon-btn"
+                        onClick={() => openEdit(rec)}
+                        title="Edit record"
+                        aria-label="Edit record"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M4 20h4l10-10-4-4L4 16v4z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M12 6l4 4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
                       </button>
                     </td>
                   </tr>

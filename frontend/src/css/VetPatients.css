@@ -196,6 +196,7 @@
 .row-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .row-btn {
@@ -210,6 +211,26 @@
 .row-btn-danger {
   background: #fbeef0;
   color: #ef575a;
+}
+
+.row-btn.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-btn.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.row-btn.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 
 .list-feedback {

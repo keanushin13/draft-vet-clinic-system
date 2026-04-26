@@ -235,16 +235,49 @@ const PetOwnerMyPets = () => {
                         <td>
                           <div className="action-btns">
                             <button
-                              className="edit-btn"
+                              className="edit-btn icon-btn"
                               onClick={() => openEdit(pet)}
+                              title="Edit pet"
+                              aria-label="Edit pet"
                             >
-                              Edit
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M4 20h4l10-10-4-4L4 16v4z"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M12 6l4 4"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
                             </button>
                             <button
-                              className="delete-btn"
+                              className="delete-btn icon-btn"
                               onClick={() => archivePet(pet)}
+                              title="Archive pet"
+                              aria-label="Archive pet"
                             >
-                              Delete
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
                             </button>
                           </div>
                         </td>

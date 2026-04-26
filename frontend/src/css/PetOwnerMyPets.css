@@ -337,6 +337,7 @@
 .action-btns {
   display: flex;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .edit-btn,
@@ -364,6 +365,29 @@
 }
 .delete-btn:hover {
   background: #ffeded;
+}
+
+.edit-btn.icon-btn,
+.delete-btn.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn.icon-btn svg,
+.delete-btn.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.edit-btn.icon-btn:focus-visible,
+.delete-btn.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 
 .pets-error {

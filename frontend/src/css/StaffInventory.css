@@ -222,11 +222,58 @@
   border-bottom: 1px solid #e8edf2;
 }
 
+.inventory-table th:last-child,
+.inventory-table td:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+
 .stock-btn {
   border: none;
   padding: 9px 12px;
   border-radius: 8px;
   font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.inventory-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.stock-btn.btn-neutral {
+  min-width: 122px;
+}
+
+.stock-btn.btn-edit {
+  min-width: 64px;
+}
+
+.stock-btn.btn-remove {
+  min-width: 90px;
+}
+
+.stock-btn.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stock-btn.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.stock-btn.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 
 .stock-btn.btn-neutral,

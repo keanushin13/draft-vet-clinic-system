@@ -343,16 +343,49 @@ const VetCalendar = () => {
                       <td>
                         <div className="action-btns">
                           <button
-                            className="btn-edit"
+                            className="btn-edit icon-btn"
                             onClick={() => openEdit(apt)}
+                            title="Edit appointment"
+                            aria-label="Edit appointment"
                           >
-                            Edit
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
                           </button>
                           <button
-                            className="btn-remove"
+                            className="btn-remove icon-btn"
                             onClick={() => removeAppointment(apt)}
+                            title="Delete appointment"
+                            aria-label="Delete appointment"
                           >
-                            Delete
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           </button>
                         </div>
                       </td>

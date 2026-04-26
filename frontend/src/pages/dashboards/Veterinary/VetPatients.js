@@ -180,7 +180,11 @@ const VetPatients = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/vet-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/vet-profile"
+            />
           </div>
         </header>
 
@@ -230,14 +234,50 @@ const VetPatients = () => {
                     </td>
                     <td>
                       <div className="row-actions">
-                        <button className="row-btn" onClick={() => openEdit(p)}>
-                          Edit
+                        <button
+                          className="row-btn icon-btn"
+                          onClick={() => openEdit(p)}
+                          title="Edit patient"
+                          aria-label="Edit patient"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M4 20h4l10-10-4-4L4 16v4z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 6l4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
                         </button>
                         <button
-                          className="row-btn row-btn-danger"
+                          className="row-btn row-btn-danger icon-btn"
                           onClick={() => archivePatient(p)}
+                          title="Archive patient"
+                          aria-label="Archive patient"
                         >
-                          Archive
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
                         </button>
                       </div>
                     </td>

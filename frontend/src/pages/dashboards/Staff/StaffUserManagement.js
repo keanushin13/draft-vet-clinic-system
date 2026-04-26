@@ -165,7 +165,11 @@ const StaffUserManagement = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -228,22 +232,101 @@ const StaffUserManagement = () => {
                     <td>
                       <div className="action-btns">
                         <button
-                          className="btn-view"
+                          className="btn-view icon-btn"
                           onClick={() => openView(u)}
+                          title="View user"
+                          aria-label="View user"
                         >
-                          View
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="3"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            />
+                          </svg>
                         </button>
                         <button
-                          className="btn-edit"
+                          className="btn-edit icon-btn"
                           onClick={() => openEdit(u)}
+                          title="Edit user"
+                          aria-label="Edit user"
                         >
-                          Edit
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M4 20h4l10-10-4-4L4 16v4z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 6l4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
                         </button>
                         <button
-                          className={u.isActive ? "btn-remove" : "btn-edit"}
+                          className={`${u.isActive ? "btn-remove" : "btn-edit"} icon-btn`}
                           onClick={() => toggleStatus(u)}
+                          title={
+                            u.isActive ? "Deactivate user" : "Activate user"
+                          }
+                          aria-label={
+                            u.isActive ? "Deactivate user" : "Activate user"
+                          }
                         >
-                          {u.isActive ? "Deactivate" : "Activate"}
+                          {u.isActive ? (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M8 7H5l3-3m-3 3 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </td>

@@ -253,24 +253,98 @@ const StaffInventory = () => {
                       </span>
                     </td>
                     <td>
-                      <button
-                        className="stock-btn btn-neutral"
-                        onClick={() => handleUpdateStock(item)}
-                      >
-                        Update Stock
-                      </button>
-                      <button
-                        className="stock-btn btn-edit"
-                        onClick={() => openEdit(item)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="stock-btn btn-remove"
-                        onClick={() => toggleArchive(item)}
-                      >
-                        {item.isArchived ? "Restore" : "Archive"}
-                      </button>
+                      <div className="inventory-action-btns">
+                        <button
+                          className="stock-btn btn-neutral icon-btn"
+                          onClick={() => handleUpdateStock(item)}
+                          title="Update stock"
+                          aria-label="Update stock"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M12 5v14M5 12h14"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="stock-btn btn-edit icon-btn"
+                          onClick={() => openEdit(item)}
+                          title="Edit item"
+                          aria-label="Edit item"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M4 20h4l10-10-4-4L4 16v4z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 6l4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="stock-btn btn-remove icon-btn"
+                          onClick={() => toggleArchive(item)}
+                          title={
+                            item.isArchived ? "Restore item" : "Archive item"
+                          }
+                          aria-label={
+                            item.isArchived ? "Restore item" : "Archive item"
+                          }
+                        >
+                          {item.isArchived ? (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M8 7H5l3-3m-3 3 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

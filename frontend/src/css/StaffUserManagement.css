@@ -243,6 +243,7 @@
 
 .action-btns {
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .btn-view,
@@ -274,6 +275,32 @@
 .btn-remove:hover {
   background: #f7dfe3;
   color: #e13f42;
+}
+
+.btn-view.icon-btn,
+.btn-edit.icon-btn,
+.btn-remove.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view.icon-btn svg,
+.btn-edit.icon-btn svg,
+.btn-remove.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-view.icon-btn:focus-visible,
+.btn-edit.icon-btn:focus-visible,
+.btn-remove.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 /* =====================
     RESPONSIVE - MOBILE

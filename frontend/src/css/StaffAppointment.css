@@ -221,6 +221,7 @@
 .action-btns {
   display: flex;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .btn-edit,
@@ -248,6 +249,29 @@
 
 .btn-remove:hover {
   background: #f7dfe3;
+}
+
+.btn-edit.icon-btn,
+.btn-remove.icon-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-edit.icon-btn svg,
+.btn-remove.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-edit.icon-btn:focus-visible,
+.btn-remove.icon-btn:focus-visible {
+  outline: 2px solid #2a607d;
+  outline-offset: 2px;
 }
 
 .list-placeholder {
