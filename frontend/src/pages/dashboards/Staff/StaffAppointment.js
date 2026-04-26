@@ -44,6 +44,16 @@ const StaffAppointment = () => {
     status: "Pending",
   });
 
+  const handleApiError = (err, fallbackMessage) => {
+    const statusCode = err?.response?.status;
+    if (statusCode === 401) {
+      setError("Session expired. Please log in again.");
+      navigate("/login");
+      return;
+    }
+    setError(err?.response?.data?.message || fallbackMessage);
+  };
+
   const ensureCurrentSlotOption = (slotList, currentSlotIso) => {
     if (!currentSlotIso) return slotList;
     const exists = slotList.some((slot) => slot.startsAt === currentSlotIso);
@@ -84,8 +94,8 @@ const StaffAppointment = () => {
       setAppointments(appointmentRes.data || []);
       setPets(petRes.data || []);
       setVets(vetRes.data || []);
-    } catch {
-      setError("Failed to load appointments");
+    } catch (err) {
+      handleApiError(err, "Failed to load appointments");
     } finally {
       setLoading(false);
     }
@@ -96,16 +106,29 @@ const StaffAppointment = () => {
       setSlots([]);
       return;
     }
+    setSlots([]);
+    setError("");
     try {
       const res = await getVetAvailableSlots(vetId, date);
       setSlots(ensureCurrentSlotOption(res.data.slots || [], currentSlotIso));
     } catch (err) {
       setSlots([]);
-      setError(
-        err.response?.data?.message || "Failed to fetch available slots",
-      );
+      handleApiError(err, "Failed to fetch available slots");
     }
   };
+
+  useEffect(() => {
+    if (!showModal) return;
+    let currentSlotIso = "";
+    if (editing && form.vetId === editing.vetId) {
+      const editingSlotIso = new Date(editing.scheduledAt).toISOString();
+      if (form.date === editingSlotIso.slice(0, 10)) {
+        currentSlotIso = editingSlotIso;
+      }
+    }
+    fetchSlots(form.vetId, form.date, currentSlotIso);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.vetId, form.date, showModal]);
 
   const closeModal = () => {
     setShowModal(false);
@@ -130,13 +153,13 @@ const StaffAppointment = () => {
     setShowModal(true);
   };
 
-  const openEdit = async (appointment) => {
+  const openEdit = (appointment) => {
     const currentSlotIso = new Date(appointment.scheduledAt).toISOString();
     const currentDate = currentSlotIso.slice(0, 10);
 
     setEditing(appointment);
     setForm({
-      petId: appointment.petId,
+      petId: appointment.petId || appointment.pet?.id || "",
       vetId: appointment.vetId || "",
       date: currentDate,
       slot: currentSlotIso,
@@ -146,30 +169,12 @@ const StaffAppointment = () => {
     });
     setError("");
     setShowModal(true);
-
-    await fetchSlots(appointment.vetId, currentDate, currentSlotIso);
   };
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "vetId" || name === "date") {
-      const nextVetId = name === "vetId" ? value : form.vetId;
-      const nextDate = name === "date" ? value : form.date;
-      setForm((prev) => ({ ...prev, slot: "" }));
-
-      let currentSlotIso = "";
-      if (editing && nextVetId === editing.vetId) {
-        const editingSlotIso = new Date(editing.scheduledAt).toISOString();
-        const editingDate = editingSlotIso.slice(0, 10);
-        if (nextDate === editingDate) {
-          currentSlotIso = editingSlotIso;
-        }
-      }
-
-      fetchSlots(nextVetId, nextDate, currentSlotIso);
-    }
+    const reset = name === "vetId" || name === "date" ? { slot: "" } : {};
+    setForm((prev) => ({ ...prev, [name]: value, ...reset }));
   };
 
   const onSubmit = async (e) => {
@@ -202,19 +207,19 @@ const StaffAppointment = () => {
       closeModal();
       await loadData();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save appointment");
+      handleApiError(err, "Failed to save appointment");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (appointment) => {
-    if (!window.confirm("Delete this appointment?")) return;
+    if (!window.confirm("Cancel this appointment?")) return;
     try {
       await deleteAppointment(appointment.id);
       await loadData();
-    } catch {
-      setError("Failed to delete appointment");
+    } catch (err) {
+      handleApiError(err, "Failed to cancel appointment");
     }
   };
 
@@ -250,10 +255,29 @@ const StaffAppointment = () => {
     );
   };
 
+  const onCalendarEventKeyDown = (e, appointment) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openEdit(appointment);
+    }
+  };
+
   const monthLabel = calendarDate.toLocaleString([], {
     month: "long",
     year: "numeric",
   });
+
+  const currentPetOption =
+    editing && form.petId && !pets.some((pet) => pet.id === form.petId)
+      ? {
+          id: form.petId,
+          name: editing.pet?.name || "Current pet",
+          species: editing.pet?.species || "Unknown",
+          isCurrent: true,
+        }
+      : null;
+
+  const petOptions = currentPetOption ? [currentPetOption, ...pets] : pets;
 
   return (
     <div className="dashboard-container">
@@ -278,7 +302,11 @@ const StaffAppointment = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -356,6 +384,11 @@ const StaffAppointment = () => {
                             key={apt.id}
                             className={`event-item ${(apt.status || "").toLowerCase()}`}
                             title={`${apt.pet?.name || "Pet"} - ${apt.status}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openEdit(apt)}
+                            onKeyDown={(e) => onCalendarEventKeyDown(e, apt)}
+                            aria-label={`Edit appointment for ${apt.pet?.name || "pet"} on ${new Date(apt.scheduledAt).toLocaleString()}`}
                           >
                             {new Date(apt.scheduledAt).toLocaleTimeString([], {
                               hour: "2-digit",
@@ -412,7 +445,7 @@ const StaffAppointment = () => {
                             className="btn-remove"
                             onClick={() => handleDelete(apt)}
                           >
-                            Delete
+                            Cancel
                           </button>
                         </div>
                       </td>
@@ -443,9 +476,10 @@ const StaffAppointment = () => {
                     required
                   >
                     <option value="">Select pet</option>
-                    {pets.map((pet) => (
+                    {petOptions.map((pet) => (
                       <option key={pet.id} value={pet.id}>
                         {pet.name} ({pet.species})
+                        {pet.isCurrent ? " (current)" : ""}
                       </option>
                     ))}
                   </select>
@@ -467,6 +501,8 @@ const StaffAppointment = () => {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
                   <label>Status</label>
                   <select
@@ -481,8 +517,6 @@ const StaffAppointment = () => {
                     <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
-              </div>
-              <div className="form-row">
                 <div className="form-group">
                   <label>Date</label>
                   <input

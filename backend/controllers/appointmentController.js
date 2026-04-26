@@ -24,6 +24,25 @@ const APPOINTMENT_STATUSES = new Set([
   "Cancelled",
 ]);
 
+const canSetStatus = (role, fromStatus, toStatus) => {
+  if (role === "admin" || role === "staff") return true;
+
+  if (role === "pet_owner") {
+    // Pet owners can only cancel appointments.
+    return toStatus === "Cancelled";
+  }
+
+  if (role === "veterinarian") {
+    // Vets can confirm or complete, and can still cancel when needed.
+    if (toStatus === "Confirmed" || toStatus === "Completed") {
+      return fromStatus !== "Cancelled";
+    }
+    return toStatus === "Cancelled";
+  }
+
+  return false;
+};
+
 const parseScheduledAt = (scheduledAt) => {
   if (scheduledAt === undefined) return null;
   const parsed = new Date(scheduledAt);
@@ -181,7 +200,13 @@ exports.updateAppointment = async (req, res) => {
   try {
     const existing = await prisma.appointment.findUnique({
       where: { id: req.params.id },
-      select: { id: true, ownerId: true, vetId: true, scheduledAt: true },
+      select: {
+        id: true,
+        ownerId: true,
+        vetId: true,
+        scheduledAt: true,
+        status: true,
+      },
     });
     if (!existing)
       return res.status(404).json({ message: "Appointment not found" });
@@ -206,20 +231,49 @@ exports.updateAppointment = async (req, res) => {
       if (!APPOINTMENT_STATUSES.has(status)) {
         return res.status(400).json({ message: "Invalid appointment status" });
       }
+      if (!canSetStatus(req.user.role, existing.status, status)) {
+        return res.status(403).json({
+          message: "You are not allowed to set this appointment status",
+        });
+      }
       data.status = status;
     }
     if (scheduledAt !== undefined) {
+      if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({
+          message: "Only staff or admin can reschedule appointments",
+        });
+      }
       const parsedScheduledAt = parseScheduledAt(scheduledAt);
       if (!parsedScheduledAt) {
         return res.status(400).json({ message: "Invalid scheduledAt" });
       }
       data.scheduledAt = parsedScheduledAt;
     }
-    if (reason !== undefined) data.reason = reason;
-    if (vetId !== undefined && req.user.role !== "veterinarian") {
+    if (reason !== undefined) {
+      if (!["admin", "staff", "veterinarian"].includes(req.user.role)) {
+        return res
+          .status(403)
+          .json({ message: "You are not allowed to update reason" });
+      }
+      data.reason = reason;
+    }
+    if (vetId !== undefined) {
+      if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({
+          message: "Only staff or admin can reassign veterinarian",
+        });
+      }
       data.vetId = vetId;
     }
-    if (notes !== undefined) data.notes = notes;
+    if (notes !== undefined) {
+      if (!["admin", "staff", "veterinarian"].includes(req.user.role)) {
+        return res
+          .status(403)
+          .json({ message: "You are not allowed to update notes" });
+      }
+      data.notes = notes;
+    }
 
     const nextVetId =
       req.user.role === "veterinarian"

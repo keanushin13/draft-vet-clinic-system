@@ -8,6 +8,18 @@ const {
 
 const allowedDurations = [15, 20, 30, 45, 60];
 
+const logStaffActivity = async (req, action, target) => {
+  if (req.user.role !== "staff") return;
+  await prisma.activityLog.create({
+    data: {
+      staffId: req.user.id,
+      action,
+      target,
+      status: "Completed",
+    },
+  });
+};
+
 const ensureVet = async (vetId) => {
   const vet = await prisma.user.findUnique({
     where: { id: vetId },
@@ -235,6 +247,12 @@ exports.replaceVetWeeklySchedule = async (req, res) => {
       orderBy: { dayOfWeek: "asc" },
     });
 
+    await logStaffActivity(
+      req,
+      "Updated veterinarian weekly schedule",
+      `Veterinarian ${vetId}`,
+    );
+
     res.json({ vet, weekly });
   } catch (e) {
     console.error(e);
@@ -276,6 +294,12 @@ exports.createScheduleException = async (req, res) => {
       },
     });
 
+    await logStaffActivity(
+      req,
+      "Created veterinarian schedule exception",
+      `Veterinarian ${vetId}`,
+    );
+
     res.status(201).json(exception);
   } catch (e) {
     console.error(e);
@@ -311,6 +335,11 @@ exports.deleteScheduleException = async (req, res) => {
     }
 
     await prisma.vetScheduleException.delete({ where: { id: exception.id } });
+    await logStaffActivity(
+      req,
+      "Deleted veterinarian schedule exception",
+      `Veterinarian ${exception.vetId}`,
+    );
     res.json({ message: "Exception deleted" });
   } catch (e) {
     console.error(e);
