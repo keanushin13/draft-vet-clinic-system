@@ -21,6 +21,11 @@ const PetOwnerPayHis = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const { isOpen, toggle, close } = useSidebar();
+  const phpFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  });
 
   const [payments, setPayments] = useState([]);
 
@@ -32,7 +37,7 @@ const PetOwnerPayHis = () => {
     getPayments()
       .then((r) => setPayments(r.data))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -59,7 +64,11 @@ const PetOwnerPayHis = () => {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/pet-owner-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/pet-owner-profile"
+            />
           </div>
         </header>
 
@@ -126,7 +135,7 @@ const PetOwnerPayHis = () => {
                   <div>
                     <strong style={{ color: "#255065" }}>{p.service}</strong>
                     <div style={{ color: "#666", fontSize: "0.85rem" }}>
-                      {p.pet?.name} •{" "}
+                      {p.pet?.name} -{" "}
                       {new Date(p.createdAt).toLocaleDateString()}
                     </div>
                     <div style={{ color: "#888", fontSize: "0.8rem" }}>
@@ -135,7 +144,7 @@ const PetOwnerPayHis = () => {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontWeight: "700", color: "#255065" }}>
-                      ?{Number(p.amount).toLocaleString()}
+                      {phpFormatter.format(Number(p.amount || 0))}
                     </div>
                     <span
                       style={{
