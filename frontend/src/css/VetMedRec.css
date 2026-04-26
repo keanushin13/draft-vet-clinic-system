@@ -155,6 +155,14 @@
   border: 1px solid #ddd;
 }
 
+.archived-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4f5968;
+  font-size: 13px;
+}
+
 .new-entry-btn {
   background-color: #255065;
   color: #fff;
@@ -214,6 +222,17 @@
   background: #e4e6ea;
   color: #505866;
   cursor: pointer;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.row-btn-danger {
+  background: #fbeef0;
+  color: #ef575a;
 }
 
 .row-btn.icon-btn {

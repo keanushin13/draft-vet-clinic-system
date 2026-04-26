@@ -6,8 +6,10 @@ import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
   createMedicalRecord,
+  deleteMedicalRecord,
   getMedicalRecords,
   getPets,
+  restoreMedicalRecord,
   updateMedicalRecord,
 } from "../../../api/api";
 
@@ -23,8 +25,10 @@ const VetMedRec = () => {
   const [records, setRecords] = useState([]);
   const [pets, setPets] = useState([]);
   const [search, setSearch] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -46,14 +50,14 @@ const VetMedRec = () => {
     }
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [includeArchived]);
 
   const loadData = async () => {
     setLoading(true);
     setError("");
     try {
       const [recordRes, petRes] = await Promise.all([
-        getMedicalRecords(),
+        getMedicalRecords({ includeArchived }),
         getPets(),
       ]);
       setRecords(recordRes.data || []);
@@ -75,6 +79,19 @@ const VetMedRec = () => {
     );
   });
 
+  const toggleArchive = async (record) => {
+    try {
+      if (record.isArchived) {
+        await restoreMedicalRecord(record.id);
+      } else {
+        await deleteMedicalRecord(record.id);
+      }
+      await loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update record status");
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm({
@@ -89,6 +106,7 @@ const VetMedRec = () => {
     });
     setShowModal(true);
     setError("");
+    setSuccess("");
   };
 
   const openEdit = (record) => {
@@ -107,6 +125,7 @@ const VetMedRec = () => {
     });
     setShowModal(true);
     setError("");
+    setSuccess("");
   };
 
   const closeModal = () => {
@@ -129,16 +148,24 @@ const VetMedRec = () => {
 
     setSaving(true);
     setError("");
+    setSuccess("");
     try {
       const payload = {
         ...form,
-        appointmentId: form.appointmentId || null,
         followUpDate: form.followUpDate || null,
       };
       if (editing) {
         await updateMedicalRecord(editing.id, payload);
+        setSuccess("Medical record updated successfully.");
       } else {
-        await createMedicalRecord(payload);
+        const response = await createMedicalRecord(payload);
+        if (response?.data?.autoLinkedAppointment) {
+          setSuccess(
+            `Medical record created. Auto-linked to appointment ${response.data.linkedAppointmentId}.`,
+          );
+        } else {
+          setSuccess("Medical record created successfully.");
+        }
       }
       closeModal();
       await loadData();
@@ -190,6 +217,14 @@ const VetMedRec = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              <label className="archived-filter-toggle">
+                <input
+                  type="checkbox"
+                  checked={includeArchived}
+                  onChange={(e) => setIncludeArchived(e.target.checked)}
+                />
+                Show archived
+              </label>
               <button className="new-entry-btn" onClick={openCreate}>
                 New Entry
               </button>
@@ -228,27 +263,79 @@ const VetMedRec = () => {
                       </span>
                     </td>
                     <td>
-                      <button
-                        className="row-btn icon-btn"
-                        onClick={() => openEdit(rec)}
-                        title="Edit record"
-                        aria-label="Edit record"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path
-                            d="M4 20h4l10-10-4-4L4 16v4z"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M12 6l4 4"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </button>
+                      <div className="row-actions">
+                        <button
+                          className="row-btn icon-btn"
+                          onClick={() => openEdit(rec)}
+                          title="Edit record"
+                          aria-label="Edit record"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M4 20h4l10-10-4-4L4 16v4z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 6l4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="row-btn row-btn-danger icon-btn"
+                          onClick={() => toggleArchive(rec)}
+                          title={
+                            rec.isArchived ? "Restore record" : "Archive record"
+                          }
+                          aria-label={
+                            rec.isArchived ? "Restore record" : "Archive record"
+                          }
+                        >
+                          {rec.isArchived ? (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M8 7H5l3-3m-3 3 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -257,6 +344,11 @@ const VetMedRec = () => {
 
             {loading && (
               <p className="list-feedback">Loading medical records...</p>
+            )}
+            {!loading && success && (
+              <p className="list-feedback" style={{ color: "#166534" }}>
+                {success}
+              </p>
             )}
             {!loading && !filteredRecords.length && (
               <p className="list-feedback">No medical records found.</p>

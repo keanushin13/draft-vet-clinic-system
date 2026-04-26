@@ -221,9 +221,11 @@ model MedicalRecord {
   notes         String?
   status        MedicalRecordStatus @default(Finalized)
   followUpDate  DateTime?
+  isArchived    Boolean             @default(false)
+  archivedAt    DateTime?
 
-  appointmentId String              @unique
-  appointment   Appointment         @relation(fields: [appointmentId], references: [id])
+  appointmentId String?             @unique
+  appointment   Appointment?        @relation(fields: [appointmentId], references: [id])
 
   petId         String
   pet           Pet                 @relation(fields: [petId], references: [id])
