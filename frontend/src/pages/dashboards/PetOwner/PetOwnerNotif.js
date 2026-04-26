@@ -11,14 +11,7 @@ import {
 } from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import medicalIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import paymentIcon from "../../../assets/payment_icon.png";
-import petsIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
 
 const PetOwnerNotif = () => {
@@ -36,7 +29,7 @@ const PetOwnerNotif = () => {
     getNotifications()
       .then((r) => setNotifications(r.data))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMarkAll = async () => {
@@ -72,7 +65,11 @@ const PetOwnerNotif = () => {
             <button className="notif-btn" style={{ opacity: "0.6" }}>
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/pet-owner-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/pet-owner-profile"
+            />
           </div>
         </header>
 

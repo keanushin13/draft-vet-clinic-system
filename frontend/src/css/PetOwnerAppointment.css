@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Quicksand:wght@600;700&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Quicksand:wght@600;700&display=swap");
 
 * {
   margin: 0;
@@ -8,7 +8,7 @@
 
 .dashboard-container {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   width: 100%;
   font-family: "Poppins", sans-serif;
   overflow: hidden;
@@ -16,7 +16,7 @@
 
 .sidebar {
   width: 280px;
-  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(180deg, #438fb5 0%, #255065 100%);
   color: white;
   display: flex;
@@ -313,3 +313,4 @@
     padding: 12px !important;
   }
 }
+

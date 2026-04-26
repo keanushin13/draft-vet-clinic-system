@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Quicksand:wght@700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Quicksand:wght@700&display=swap");
 
 /* ===== MODAL OVERLAY ===== */
 .modal-overlay {
@@ -12,7 +12,9 @@
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== MODAL BOX ===== */
@@ -20,11 +22,16 @@
   background: #ffffff;
   width: 420px;
   max-width: 90%;
+  max-height: min(90vh, 90dvh);
   padding: 40px;
   border-radius: 24px;
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   animation: modalPopUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== CLOSE 'X' BUTTON ===== */
@@ -60,6 +67,11 @@
   line-height: 1.6;
   margin-bottom: 20px;
   text-align: center;
+}
+
+.modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== SHARED INPUTS ===== */
@@ -162,5 +174,17 @@
 }
 
 @media (max-width: 480px) {
-  .modal-box, .otp-box { width: 92% !important; padding: 20px 16px !important; }
+  .modal-overlay {
+    align-items: flex-start;
+    padding-top: 24px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-box,
+  .otp-box {
+    width: 92% !important;
+    margin-top: 20px;
+    padding: 20px 16px !important;
+    max-height: calc(100dvh - 56px);
+  }
 }

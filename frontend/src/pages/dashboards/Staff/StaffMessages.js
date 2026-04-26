@@ -12,17 +12,8 @@ import {
 } from "../../../api/api";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import inventoryIcon from "../../../assets/Inventory_Icon.png";
-import activityLogIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import payHistoryIcon from "../../../assets/payment_icon.png";
-import petsProfileIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
-import userManagementIcon from "../../../assets/UserManagement_Icon.png";
 
 const StaffMessages = () => {
   const navigate = useNavigate();
@@ -120,7 +111,11 @@ const StaffMessages = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 

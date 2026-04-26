@@ -89,6 +89,32 @@
   color: #255065;
 }
 
+@media (max-width: 1024px) {
+  .shared-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .shared-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .stat-info h4 {
+    font-size: 1.125rem;
+  }
+}
+
 .stat-card.blue {
   border-left: 5px solid #438fb5;
 }

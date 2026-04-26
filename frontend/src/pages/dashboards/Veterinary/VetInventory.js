@@ -8,14 +8,7 @@ import { getInventory } from "../../../api/api";
 import { formatInventoryCategory } from "../../../constants/inventoryCategories";
 
 // ASSETS
-import appointmentIcon from "../../../assets/Appointment_Icon.png";
 import bellIcon from "../../../assets/Bell_Icon.png";
-import dashboardIcon from "../../../assets/Dashboard_Icon.png";
-import medicalIcon from "../../../assets/Medical_Icon.png";
-import messageIcon from "../../../assets/Message_Icon.png";
-import pawLogo from "../../../assets/paw.png";
-import inventoryIcon from "../../../assets/payment_icon.png";
-import patientsIcon from "../../../assets/Pets_Icon.png";
 import userIcon from "../../../assets/Profile.png";
 
 const VetInventory = () => {

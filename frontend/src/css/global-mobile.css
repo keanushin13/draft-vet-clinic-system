@@ -25,12 +25,25 @@ body {
   padding: 0;
   -webkit-text-size-adjust: 100%;
   /* prevent iOS font boosting */
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+#root {
+  min-height: 100dvh;
 }
 
 /* Fix 100vh on mobile browsers (address bar shifts) */
 .dashboard-container,
 .page-wrapper {
   min-height: 100dvh;
+}
+
+/* Ensure default dashboard shells can stretch on all role pages */
+.dashboard-container,
+.main-area,
+.content-body {
+  min-height: 0;
 }
 
 /* Sidebar overlay backdrop — shown on mobile when sidebar is open */
@@ -98,6 +111,7 @@ a,
     transform: translateX(-100%);
     transition: transform 0.28s ease;
     overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .sidebar.open {
@@ -110,6 +124,7 @@ a,
   }
 
   /* Main content takes full width */
+  .main-area,
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
@@ -119,7 +134,21 @@ a,
   .top-bar,
   .topbar {
     height: var(--topbar-height) !important;
-    padding: 0 16px !important;
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+    gap: 8px !important;
+  }
+
+  .top-bar-right {
+    gap: 10px !important;
+  }
+
+  .top-bar h2,
+  .topbar h2 {
+    font-size: clamp(1rem, 4vw, 1.25rem) !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* Stack 2-column grids to 1 column */
@@ -133,9 +162,69 @@ a,
   .table-wrapper,
   .user-table-wrapper,
   .inventory-table-wrapper,
-  .payment-table-wrapper {
+  .payment-table-wrapper,
+  .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    scroll-margin-top: var(--topbar-height);
+    scroll-margin-bottom: 20px;
+  }
+
+  .modal-overlay {
+    padding-left: max(8px, env(safe-area-inset-left)) !important;
+    padding-right: max(8px, env(safe-area-inset-right)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  .table-header-actions,
+  .patients-actions,
+  .records-filters,
+  .inventory-header,
+  .user-mgmt-header,
+  .pets-mgmt-header,
+  .table-header,
+  .notif-header-actions,
+  .notif-header-flex,
+  .log-header-flex,
+  .appointment-actions,
+  .calendar-month-header {
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+  }
+
+  .table-header-actions > *,
+  .patients-actions > *,
+  .records-filters > *,
+  .inventory-header > *,
+  .user-mgmt-header > *,
+  .pets-mgmt-header > *,
+  .table-header > *,
+  .notif-header-actions > *,
+  .notif-header-flex > *,
+  .log-header-flex > *,
+  .appointment-actions > *,
+  .calendar-month-header > * {
+    width: 100%;
+  }
+
+  .row-actions,
+  .action-btns {
+    gap: 6px;
+  }
+
+  .content-body.no-scroll {
+    min-height: calc(100dvh - var(--topbar-height));
+    height: auto !important;
+    overflow: auto !important;
+  }
+
+  .chat-input-area {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
 
   /* Full-width search inputs */
@@ -145,6 +234,27 @@ a,
   .filter-bar input {
     width: 100% !important;
     max-width: 100% !important;
+  }
+}
+
+/* Tablet landscape & small tablet tuning */
+@media (max-width: 1024px) {
+  .content-body,
+  .main-content,
+  .page-content {
+    padding: 20px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .content-body,
+  .main-content,
+  .page-content {
+    padding: 14px !important;
+  }
+
+  table {
+    min-width: 460px;
   }
 }
 
@@ -163,5 +273,16 @@ a,
   .content-area,
   .page-content {
     padding: 12px !important;
+  }
+
+  .chat-input-area {
+    padding: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-box {
+    max-height: 82dvh !important;
   }
 }

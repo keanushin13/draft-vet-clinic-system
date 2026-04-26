@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Quicksand:wght@400;600&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Quicksand:wght@400;600&display=swap");
 
 /* =====================
     RESET + GLOBAL
@@ -24,7 +24,7 @@ body {
 .login-container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 90px);
+  height: calc(100dvh - 90px);
   overflow: hidden;
 }
 
@@ -335,3 +335,4 @@ input:focus {
     width: 100%;
   }
 }
+
