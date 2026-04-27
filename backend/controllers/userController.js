@@ -745,7 +745,15 @@ exports.updateMe = async (req, res) => {
 // GET /api/users
 exports.getUsers = async (req, res) => {
   try {
+    const { role } = req.query;
+
+    const where = {};
+    if (role) {
+      where.role = role;
+    }
+
     const users = await prisma.user.findMany({
+      where,
       select: {
         id: true,
         username: true,
@@ -755,8 +763,12 @@ exports.getUsers = async (req, res) => {
         lastName: true,
         phone: true,
         address: true,
+        isActive: true,
         isVerified: true,
         createdAt: true,
+        _count: {
+          select: { pets: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
