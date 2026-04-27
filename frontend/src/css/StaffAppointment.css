@@ -109,6 +109,10 @@
   border-bottom: 1px solid #eee;
 }
 
+.weekday-short {
+  display: none;
+}
+
 .calendar-day {
   min-height: 110px;
   padding: 8px;
@@ -448,5 +452,13 @@
 
   .content-body {
     padding: 12px !important;
+  }
+
+  .weekday-full {
+    display: none;
+  }
+
+  .weekday-short {
+    display: inline;
   }
 }

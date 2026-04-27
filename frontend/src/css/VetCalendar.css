@@ -213,6 +213,10 @@
   padding-bottom: 8px;
 }
 
+.weekday-short {
+  display: none;
+}
+
 .day-cell {
   min-height: 86px;
   border: 1px solid #edf2f7;
@@ -454,6 +458,14 @@
 
   .content-body {
     padding: 12px !important;
+  }
+
+  .weekday-full {
+    display: none;
+  }
+
+  .weekday-short {
+    display: inline;
   }
 }
 

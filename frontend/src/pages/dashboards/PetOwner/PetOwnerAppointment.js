@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
-import "../../../css/StaffAppointment.css";
+import "../../../css/PetOwnerAppointment.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -71,9 +71,7 @@ const PetOwnerAppointment = () => {
         vetId: prev.vetId || vetList?.[0]?.id || "",
       }));
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to load appointment data",
-      );
+      setError(err.response?.data?.message || "Failed to load appointments");
     } finally {
       setLoading(false);
     }
@@ -301,13 +299,22 @@ const PetOwnerAppointment = () => {
                 </div>
               </div>
               <div className="calendar-grid">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                  (day) => (
-                    <div key={day} className="weekday-label">
-                      {day}
-                    </div>
-                  ),
-                )}
+                {[
+                  { full: "Sun", short: "S" },
+                  { full: "Mon", short: "M" },
+                  { full: "Tue", short: "T" },
+                  { full: "Wed", short: "W" },
+                  { full: "Thu", short: "T" },
+                  { full: "Fri", short: "F" },
+                  { full: "Sat", short: "S" },
+                ].map((day) => (
+                  <div key={day.full} className="weekday-label">
+                    <span className="weekday-full">{day.full}</span>
+                    <span className="weekday-short" aria-hidden="true">
+                      {day.short}
+                    </span>
+                  </div>
+                ))}
                 {Array.from({ length: firstWeekday }).map((_, idx) => (
                   <div key={`empty-${idx}`} className="calendar-day empty" />
                 ))}
