@@ -4,7 +4,11 @@ const prisma = require("../lib/prisma");
 exports.getPets = async (req, res) => {
   try {
     const where = { isArchived: false };
-    if (req.user.role === "pet_owner") where.ownerId = req.user.id;
+    if (req.user.role === "pet_owner") {
+      where.ownerId = req.user.id;
+    } else if (req.query.ownerId) {
+      where.ownerId = req.query.ownerId;
+    }
 
     const pets = await prisma.pet.findMany({
       where,

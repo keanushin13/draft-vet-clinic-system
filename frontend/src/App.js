@@ -22,6 +22,7 @@ import AdminMessages from "./pages/dashboards/Admin/AdminMessages";
 import AdminNotif from "./pages/dashboards/Admin/AdminNotif";
 import AdminProfile from "./pages/dashboards/Admin/AdminProfile";
 import AdminUserManagement from "./pages/dashboards/Admin/AdminUserManagement";
+import AdminOwnerPets from "./pages/dashboards/Admin/AdminOwnerPets";
 
 // STAFF IMPORTS
 import StaffActivityLog from "./pages/dashboards/Staff/StaffActivityLog";
@@ -33,6 +34,7 @@ import StaffPaymentHistory from "./pages/dashboards/Staff/StaffPaymentHistory";
 import StaffPetsProfile from "./pages/dashboards/Staff/StaffPetsProfile";
 import StaffProfile from "./pages/dashboards/Staff/StaffProfile";
 import StaffUserManagement from "./pages/dashboards/Staff/StaffUserManagement";
+import StaffOwnerPets from "./pages/dashboards/Staff/StaffOwnerPets";
 import StaffVetSchedule from "./pages/dashboards/Staff/StaffVetSchedule";
 
 // VETERINARIAN IMPORTS
@@ -105,6 +107,7 @@ function App() {
         <Route path="/staff" element={<StaffDashboard />} />
         <Route path="/staff-appointments" element={<StaffAppointment />} />
         <Route path="/staff-users" element={<StaffUserManagement />} />
+        <Route path="/staff-users/:id/pets" element={<StaffOwnerPets />} />
         <Route path="/staff-pets" element={<StaffPetsProfile />} />
         <Route path="/staff-messages" element={<StaffMessages />} />
         <Route path="/staff-inventory" element={<StaffInventory />} />
@@ -117,6 +120,7 @@ function App() {
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin-users" element={<AdminUserManagement />} />
+        <Route path="/admin-users/:id/pets" element={<AdminOwnerPets />} />
         <Route path="/admin-messages" element={<AdminMessages />} />
         <Route path="/admin-notifications" element={<AdminNotif />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
