@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffAppointment.css";
+import "../../../css/responsive-tables.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -320,36 +321,124 @@ const VetCalendar = () => {
             </div>
           ) : (
             <div className="list-view-container">
-              <table className="appointment-table">
-                <thead>
-                  <tr>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Date & Time</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAppointments.map((apt) => (
-                    <tr key={apt.id}>
-                      <td>{apt.pet?.name || "-"}</td>
-                      <td>
-                        {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
-                          apt.owner?.username ||
-                          "-"}
-                      </td>
-                      <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
-                      <td>{apt.reason || "-"}</td>
-                      <td>
-                        <span
-                          className={`apt-status ${(apt.status || "").toLowerCase()}`}
-                        >
-                          {apt.status}
+              <div className="table-desktop">
+                <table className="appointment-table">
+                  <thead>
+                    <tr>
+                      <th>Pet</th>
+                      <th>Owner</th>
+                      <th>Date & Time</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((apt) => (
+                      <tr key={apt.id}>
+                        <td>{apt.pet?.name || "-"}</td>
+                        <td>
+                          {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                            apt.owner?.username ||
+                            "-"}
+                        </td>
+                        <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
+                        <td>{apt.reason || "-"}</td>
+                        <td>
+                          <span
+                            className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                          >
+                            {apt.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-btns">
+                            <button
+                              className="btn-edit icon-btn"
+                              onClick={() => openEdit(apt)}
+                              title="Edit appointment"
+                              aria-label="Edit appointment"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M4 20h4l10-10-4-4L4 16v4z"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M12 6l4 4"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              className="btn-remove icon-btn"
+                              onClick={() => removeAppointment(apt)}
+                              title="Delete appointment"
+                              aria-label="Delete appointment"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="table-mobile table-cards-list">
+                {filteredAppointments.map((apt) => (
+                  <div className="record-card" key={apt.id}>
+                    <div className="record-card-header">
+                      <div className="record-card-title">
+                        <div className="record-card-id">
+                          {apt.pet?.name || "-"}
+                        </div>
+                        <div className="record-card-patient">
+                          {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                            apt.owner?.username ||
+                            "-"}
+                        </div>
+                      </div>
+                      <span
+                        className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                      >
+                        {apt.status}
+                      </span>
+                    </div>
+                    <div className="record-card-body">
+                      <div className="record-card-row">
+                        <span className="record-card-label">Date & Time</span>
+                        <span>
+                          {new Date(apt.scheduledAt).toLocaleString()}
                         </span>
-                      </td>
-                      <td>
+                      </div>
+                      <div className="record-card-row">
+                        <span className="record-card-label">Reason</span>
+                        <span>{apt.reason || "-"}</span>
+                      </div>
+                      <div className="record-card-row">
+                        <span className="record-card-label">Actions</span>
                         <div className="action-btns">
                           <button
                             className="btn-edit icon-btn"
@@ -397,11 +486,11 @@ const VetCalendar = () => {
                             </svg>
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

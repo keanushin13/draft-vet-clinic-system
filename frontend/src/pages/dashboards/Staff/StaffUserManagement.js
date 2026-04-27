@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffUserManagement.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -180,47 +181,220 @@ const StaffUserManagement = () => {
             </button>
           </div>
 
-          <div className="user-table-card">
-            <table className="user-table">
-              <thead>
-                <tr>
-                  <th>Client Name</th>
-                  <th>Contact Info</th>
-                  <th>Registered Pets</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((u) => (
-                  <tr key={u.id}>
-                    <td>
-                      <div className="user-info-cell">
-                        <div className="user-mini-avatar">
-                          {(u.firstName || u.username).charAt(0)}
+          <>
+            <div className="user-table-card table-desktop">
+              <table className="user-table">
+                <thead>
+                  <tr>
+                    <th>Client Name</th>
+                    <th>Contact Info</th>
+                    <th>Registered Pets</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((u) => (
+                    <tr key={u.id}>
+                      <td>
+                        <div className="user-info-cell">
+                          <div className="user-mini-avatar">
+                            {(u.firstName || u.username).charAt(0)}
+                          </div>
+                          <strong>
+                            {u.firstName
+                              ? `${u.firstName} ${u.lastName}`
+                              : u.username}
+                          </strong>
                         </div>
-                        <strong>
-                          {u.firstName
-                            ? `${u.firstName} ${u.lastName}`
-                            : u.username}
-                        </strong>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="contact-info-cell">
-                        <span>{u.email}</span>
-                        <small>{u.phone || "—"}</small>
-                      </div>
-                    </td>
-                    <td>{u._count?.pets ?? 0} Pet(s)</td>
-                    <td>
+                      </td>
+                      <td>
+                        <div className="contact-info-cell">
+                          <span>{u.email}</span>
+                          <small>{u.phone || "—"}</small>
+                        </div>
+                      </td>
+                      <td>{u._count?.pets ?? 0} Pet(s)</td>
+                      <td>
+                        <span
+                          className={`user-status ${u.isActive ? "active" : "suspended"}`}
+                        >
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-btns">
+                          <button
+                            className="btn-view icon-btn"
+                            onClick={() =>
+                              navigate(`/staff-users/${u.id}/pets`, {
+                                state: { owner: u },
+                              })
+                            }
+                            title="View pets"
+                            aria-label="View pets"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 2C8 2 5 5.5 5 9c0 2.5 1.5 4.5 3 6l4 5 4-5c1.5-1.5 3-3.5 3-6 0-3.5-3-7-7-7z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <circle
+                                cx="12"
+                                cy="9"
+                                r="2"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="btn-view icon-btn"
+                            onClick={() => openView(u)}
+                            title="View user"
+                            aria-label="View user"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="btn-edit icon-btn"
+                            onClick={() => openEdit(u)}
+                            title="Edit user"
+                            aria-label="Edit user"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className={`${u.isActive ? "btn-remove" : "btn-edit"} icon-btn`}
+                            onClick={() => toggleStatus(u)}
+                            title={
+                              u.isActive ? "Deactivate user" : "Activate user"
+                            }
+                            aria-label={
+                              u.isActive ? "Deactivate user" : "Activate user"
+                            }
+                          >
+                            {u.isActive ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M8 7H5l3-3m-3 3 3 3"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-mobile table-cards-list">
+              {filteredUsers.map((u) => (
+                <div className="user-card" key={u.id}>
+                  <div className="user-card-header">
+                    <div className="user-card-avatar">
+                      {(u.firstName || u.username).charAt(0)}
+                    </div>
+                    <div className="user-card-name">
+                      {u.firstName
+                        ? `${u.firstName} ${u.lastName}`
+                        : u.username}
+                    </div>
+                  </div>
+                  <div className="user-card-body">
+                    <div className="user-card-row">
+                      <span className="user-card-label">Contact</span>
+                      <span>{u.email}</span>
+                    </div>
+                    <div className="user-card-row">
+                      <span className="user-card-label">Phone</span>
+                      <span>{u.phone || "—"}</span>
+                    </div>
+                    <div className="user-card-row">
+                      <span className="user-card-label">Pets</span>
+                      <span>{u._count?.pets ?? 0} Pet(s)</span>
+                    </div>
+                    <div className="user-card-row">
+                      <span className="user-card-label">Status</span>
                       <span
                         className={`user-status ${u.isActive ? "active" : "suspended"}`}
                       >
                         {u.isActive ? "Active" : "Inactive"}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    <div className="user-card-row">
+                      <span className="user-card-label">Actions</span>
                       <div className="action-btns">
                         <button
                           className="btn-view icon-btn"
@@ -350,12 +524,12 @@ const StaffUserManagement = () => {
                           )}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         </section>
       </main>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffAppointment.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -413,36 +414,91 @@ const StaffAppointment = () => {
             </div>
           ) : (
             <div className="list-view-container">
-              <table className="appointment-table">
-                <thead>
-                  <tr>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Date & Time</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAppointments.map((apt) => (
-                    <tr key={apt.id}>
-                      <td>{apt.pet?.name || "-"}</td>
-                      <td>
-                        {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
-                          apt.owner?.username ||
-                          "-"}
-                      </td>
-                      <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
-                      <td>{apt.reason || "-"}</td>
-                      <td>
-                        <span
-                          className={`apt-status ${(apt.status || "").toLowerCase()}`}
-                        >
-                          {apt.status}
+              <div className="table-desktop">
+                <table className="appointment-table">
+                  <thead>
+                    <tr>
+                      <th>Pet</th>
+                      <th>Owner</th>
+                      <th>Date & Time</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((apt) => (
+                      <tr key={apt.id}>
+                        <td>{apt.pet?.name || "-"}</td>
+                        <td>
+                          {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                            apt.owner?.username ||
+                            "-"}
+                        </td>
+                        <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
+                        <td>{apt.reason || "-"}</td>
+                        <td>
+                          <span
+                            className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                          >
+                            {apt.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-btns">
+                            <button
+                              className="btn-edit"
+                              onClick={() => openEdit(apt)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn-remove"
+                              onClick={() => handleDelete(apt)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="table-mobile table-cards-list">
+                {filteredAppointments.map((apt) => (
+                  <div className="record-card" key={apt.id}>
+                    <div className="record-card-header">
+                      <div className="record-card-title">
+                        <div className="record-card-id">
+                          {apt.pet?.name || "-"}
+                        </div>
+                        <div className="record-card-patient">
+                          {`${apt.owner?.firstName || ""} ${apt.owner?.lastName || ""}`.trim() ||
+                            apt.owner?.username ||
+                            "-"}
+                        </div>
+                      </div>
+                      <span
+                        className={`apt-status ${(apt.status || "").toLowerCase()}`}
+                      >
+                        {apt.status}
+                      </span>
+                    </div>
+                    <div className="record-card-body">
+                      <div className="record-card-row">
+                        <span className="record-card-label">Date & Time</span>
+                        <span>
+                          {new Date(apt.scheduledAt).toLocaleString()}
                         </span>
-                      </td>
-                      <td>
+                      </div>
+                      <div className="record-card-row">
+                        <span className="record-card-label">Reason</span>
+                        <span>{apt.reason || "-"}</span>
+                      </div>
+                      <div className="record-card-row">
+                        <span className="record-card-label">Actions</span>
                         <div className="action-btns">
                           <button
                             className="btn-edit"
@@ -457,11 +513,12 @@ const StaffAppointment = () => {
                             Cancel
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {!filteredAppointments.length && (
                 <p className="list-placeholder">No appointments found.</p>
               )}

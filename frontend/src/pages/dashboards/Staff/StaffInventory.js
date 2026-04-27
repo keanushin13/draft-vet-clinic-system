@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffInventory.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -201,49 +202,193 @@ const StaffInventory = () => {
             </button>
           </div>
 
-          <div className="inventory-card">
-            <table className="inventory-table">
-              <thead>
-                <tr>
-                  <th>Item Name</th>
-                  <th>Category</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Expiration Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="item-name-cell">{item.name}</td>
-                    <td>
-                      <span className="cat-badge">
+          <>
+            <div className="inventory-card table-desktop">
+              <table className="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Expiration Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id}>
+                      <td className="item-name-cell">{item.name}</td>
+                      <td>
+                        <span className="cat-badge">
+                          {formatInventoryCategory(item.category)}
+                        </span>
+                      </td>
+                      <td>
+                        {item.stock} {item.unit}
+                      </td>
+                      <td>
+                        {item.price === null || item.price === undefined
+                          ? "-"
+                          : pesoFormatter.format(Number(item.price))}
+                      </td>
+                      <td>
+                        {item.expirationDate
+                          ? new Date(item.expirationDate).toLocaleDateString()
+                          : "-"}
+                      </td>
+                      <td>
+                        <span
+                          className={`stock-status ${item.status?.toLowerCase().replace(/\s+/g, "-")}`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="inventory-action-btns">
+                          <button
+                            className="stock-btn btn-neutral icon-btn"
+                            onClick={() => handleUpdateStock(item)}
+                            title="Update stock"
+                            aria-label="Update stock"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 5v14M5 12h14"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="stock-btn btn-edit icon-btn"
+                            onClick={() => openEdit(item)}
+                            title="Edit item"
+                            aria-label="Edit item"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="stock-btn btn-remove icon-btn"
+                            onClick={() => toggleArchive(item)}
+                            title={
+                              item.isArchived ? "Restore item" : "Archive item"
+                            }
+                            aria-label={
+                              item.isArchived ? "Restore item" : "Archive item"
+                            }
+                          >
+                            {item.isArchived ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M8 7H5l3-3m-3 3 3 3"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-mobile table-cards-list">
+              {items.map((item) => (
+                <div className="inventory-card" key={item.id}>
+                  <div className="inventory-card-header">
+                    <div className="inventory-card-title">
+                      <div className="inventory-card-name">{item.name}</div>
+                      <span className="inventory-card-category">
                         {formatInventoryCategory(item.category)}
                       </span>
-                    </td>
-                    <td>
-                      {item.stock} {item.unit}
-                    </td>
-                    <td>
-                      {item.price === null || item.price === undefined
-                        ? "-"
-                        : pesoFormatter.format(Number(item.price))}
-                    </td>
-                    <td>
-                      {item.expirationDate
-                        ? new Date(item.expirationDate).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td>
+                    </div>
+                  </div>
+                  <div className="inventory-card-body">
+                    <div className="inventory-card-row">
+                      <span className="inventory-card-label">Quantity</span>
+                      <span>
+                        {item.stock} {item.unit}
+                      </span>
+                    </div>
+                    <div className="inventory-card-row">
+                      <span className="inventory-card-label">Price</span>
+                      <span>
+                        {item.price === null || item.price === undefined
+                          ? "-"
+                          : pesoFormatter.format(Number(item.price))}
+                      </span>
+                    </div>
+                    <div className="inventory-card-row">
+                      <span className="inventory-card-label">Expiration</span>
+                      <span>
+                        {item.expirationDate
+                          ? new Date(item.expirationDate).toLocaleDateString()
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="inventory-card-row">
+                      <span className="inventory-card-label">Status</span>
                       <span
                         className={`stock-status ${item.status?.toLowerCase().replace(/\s+/g, "-")}`}
                       >
                         {item.status}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    <div className="inventory-card-row">
+                      <span className="inventory-card-label">Actions</span>
                       <div className="inventory-action-btns">
                         <button
                           className="stock-btn btn-neutral icon-btn"
@@ -336,12 +481,12 @@ const StaffInventory = () => {
                           )}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
           {error && <p className="modal-error">{error}</p>}
         </section>
       </main>

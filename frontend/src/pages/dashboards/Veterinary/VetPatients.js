@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/VetPatients.css";
+import "../../../css/responsive-tables.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { createPet, deletePet, getPets, updatePet } from "../../../api/api";
@@ -202,37 +203,129 @@ const VetPatients = () => {
           </div>
 
           <div className="patients-list-card">
-            <table className="patients-table">
-              <thead>
-                <tr>
-                  <th>Pet Name</th>
-                  <th>Species</th>
-                  <th>Breed</th>
-                  <th>Owner</th>
-                  <th>Last Visit</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPatients.map((p) => (
-                  <tr key={p.id}>
-                    <td style={{ fontWeight: "600", color: "#255065" }}>
-                      {p.name}
-                    </td>
-                    <td>{p.species}</td>
-                    <td>{p.breed}</td>
-                    <td>
-                      {p.owner
-                        ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
-                          p.owner.username
-                        : "-"}
-                    </td>
-                    <td>
-                      {p.updatedAt
-                        ? new Date(p.updatedAt).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td>
+            <div className="table-desktop">
+              <table className="patients-table">
+                <thead>
+                  <tr>
+                    <th>Pet Name</th>
+                    <th>Species</th>
+                    <th>Breed</th>
+                    <th>Owner</th>
+                    <th>Last Visit</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPatients.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ fontWeight: "600", color: "#255065" }}>
+                        {p.name}
+                      </td>
+                      <td>{p.species}</td>
+                      <td>{p.breed}</td>
+                      <td>
+                        {p.owner
+                          ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                            p.owner.username
+                          : "-"}
+                      </td>
+                      <td>
+                        {p.updatedAt
+                          ? new Date(p.updatedAt).toLocaleDateString()
+                          : "-"}
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            className="row-btn icon-btn"
+                            onClick={() => openEdit(p)}
+                            title="Edit patient"
+                            aria-label="Edit patient"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="row-btn row-btn-danger icon-btn"
+                            onClick={() => archivePatient(p)}
+                            title="Archive patient"
+                            aria-label="Archive patient"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-mobile table-cards-list">
+              {filteredPatients.map((p) => (
+                <div className="pets-card" key={p.id}>
+                  <div className="pets-card-header">
+                    <div className="pets-card-avatar">
+                      {p.name?.charAt(0) || "?"}
+                    </div>
+                    <div className="pets-card-name">{p.name}</div>
+                  </div>
+                  <div className="pets-card-body">
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Species</span>
+                      <span>{p.species}</span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Breed</span>
+                      <span>{p.breed}</span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Owner</span>
+                      <span>
+                        {p.owner
+                          ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                            p.owner.username
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Last Visit</span>
+                      <span>
+                        {p.updatedAt
+                          ? new Date(p.updatedAt).toLocaleDateString()
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Actions</span>
                       <div className="row-actions">
                         <button
                           className="row-btn icon-btn"
@@ -280,11 +373,11 @@ const VetPatients = () => {
                           </svg>
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
             {loading && <p className="list-feedback">Loading patients...</p>}
             {!loading && !filteredPatients.length && (
               <p className="list-feedback">No patients found.</p>

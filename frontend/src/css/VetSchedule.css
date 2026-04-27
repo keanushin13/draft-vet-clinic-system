@@ -142,6 +142,63 @@
   color: #4f6b7b;
 }
 
+.schedule-day-card {
+  background: #f9fbfc;
+  border: 1px solid #d8e3ea;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.schedule-day-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.schedule-day-card-header h4 {
+  margin: 0;
+  color: #1f495f;
+  font-size: 0.95rem;
+}
+
+.schedule-day-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #355666;
+}
+
+.schedule-day-card-body {
+  display: grid;
+  gap: 10px;
+}
+
+.schedule-day-card-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #355666;
+  font-size: 0.88rem;
+}
+
+.schedule-day-card-body input,
+.schedule-day-card-body select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #c9d6df;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .schedule-page {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .schedule-form-grid {
     grid-template-columns: 1fr;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffPaymentHistory.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -254,53 +255,189 @@ const StaffPaymentHistory = () => {
               </div>
             </div>
 
-            <table className="payment-table">
-              <thead>
-                <tr>
-                  <th>Txn ID</th>
-                  <th>Pet Owner</th>
-                  <th>Service</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((p) => (
-                  <tr key={p.id}>
-                    <td className="txn-id">
-                      TXN-{p.id.slice(-6).toUpperCase()}
-                    </td>
-                    <td>
-                      <div className="owner-info">
-                        <strong>
-                          {p.owner
-                            ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
-                              p.owner.username
-                            : "—"}
-                        </strong>
-                        <span>{p.pet?.name}</span>
+            <div className="table-desktop">
+              <table className="payment-table">
+                <thead>
+                  <tr>
+                    <th>Txn ID</th>
+                    <th>Pet Owner</th>
+                    <th>Service</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="txn-id">
+                        TXN-{p.id.slice(-6).toUpperCase()}
+                      </td>
+                      <td>
+                        <div className="owner-info">
+                          <strong>
+                            {p.owner
+                              ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                                p.owner.username
+                              : "—"}
+                          </strong>
+                          <span>{p.pet?.name}</span>
+                        </div>
+                      </td>
+                      <td>{p.service}</td>
+                      <td className="amount-cell">
+                        ₱{Number(p.amount).toLocaleString()}
+                      </td>
+                      <td>{new Date(p.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span
+                          className={`payment-status ${p.status?.toLowerCase()}`}
+                        >
+                          {p.status}
+                        </span>
+                        {p.isArchived && (
+                          <span className="payment-status archived">
+                            Archived
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="action-btns">
+                          <button
+                            className="receipt-btn icon-btn"
+                            onClick={() => openEdit(p)}
+                            disabled={p.isArchived}
+                            title="Edit payment"
+                            aria-label="Edit payment"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="receipt-btn btn-muted icon-btn"
+                            onClick={() => toggleArchive(p)}
+                            title={
+                              p.isArchived
+                                ? "Restore payment"
+                                : "Archive payment"
+                            }
+                            aria-label={
+                              p.isArchived
+                                ? "Restore payment"
+                                : "Archive payment"
+                            }
+                          >
+                            {p.isArchived ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M8 7H5l3-3m-3 3 3 3"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-mobile table-cards-list">
+              {filteredPayments.map((p) => (
+                <div className="payment-card" key={p.id}>
+                  <div className="payment-card-header">
+                    <div className="payment-card-title">
+                      <div className="payment-card-id">
+                        TXN-{p.id.slice(-6).toUpperCase()}
                       </div>
-                    </td>
-                    <td>{p.service}</td>
-                    <td className="amount-cell">
+                      <div className="payment-card-owner">
+                        {p.owner
+                          ? `${p.owner.firstName ?? ""} ${p.owner.lastName ?? ""}`.trim() ||
+                            p.owner.username
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="payment-card-amount">
                       ₱{Number(p.amount).toLocaleString()}
-                    </td>
-                    <td>{new Date(p.createdAt).toLocaleDateString()}</td>
-                    <td>
+                    </div>
+                  </div>
+                  <div className="payment-card-body">
+                    <div className="payment-card-row">
+                      <span className="payment-card-label">Pet</span>
+                      <span>{p.pet?.name || "—"}</span>
+                    </div>
+                    <div className="payment-card-row">
+                      <span className="payment-card-label">Service</span>
+                      <span>{p.service}</span>
+                    </div>
+                    <div className="payment-card-row">
+                      <span className="payment-card-label">Date</span>
+                      <span>{new Date(p.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="payment-card-row">
+                      <span className="payment-card-label">Status</span>
                       <span
                         className={`payment-status ${p.status?.toLowerCase()}`}
                       >
                         {p.status}
                       </span>
-                      {p.isArchived && (
+                    </div>
+                    {p.isArchived && (
+                      <div className="payment-card-row">
+                        <span className="payment-card-label">Archive</span>
                         <span className="payment-status archived">
                           Archived
                         </span>
-                      )}
-                    </td>
-                    <td>
+                      </div>
+                    )}
+                    <div className="payment-card-row">
+                      <span className="payment-card-label">Actions</span>
                       <div className="action-btns">
                         <button
                           className="receipt-btn icon-btn"
@@ -375,11 +512,11 @@ const StaffPaymentHistory = () => {
                           )}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
             {!filteredPayments.length && (
               <p className="list-placeholder">No payments found.</p>
             )}

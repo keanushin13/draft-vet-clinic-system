@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffActivityLog.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { getActivityLogs } from "../../../api/api";
@@ -70,7 +71,11 @@ const StaffActivityLog = () => {
             >
               <img src={bellIcon} alt="Notif" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="Profile" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="Profile"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -98,57 +103,118 @@ const StaffActivityLog = () => {
               </div>
             </div>
 
-            <div className="log-table-card">
-              <table className="activity-table">
-                <thead>
-                  <tr>
-                    <th>Staff Name</th>
-                    <th>Action performed</th>
-                    <th>Target Details</th>
-                    <th>Timestamp</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!loading &&
-                    activities.map((log) => (
-                      <tr key={log.id}>
-                        <td className="staff-cell">
-                          <div className="staff-avatar">
-                            {(
-                              log.staff?.firstName ||
-                              log.staff?.username ||
-                              "?"
-                            ).charAt(0)}
-                          </div>
+            {/* Desktop table & Mobile cards */}
+            <>
+              <div className="log-table-card table-desktop">
+                <table className="activity-table">
+                  <thead>
+                    <tr>
+                      <th>Staff Name</th>
+                      <th>Action performed</th>
+                      <th>Target Details</th>
+                      <th>Timestamp</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!loading &&
+                      activities.map((log) => (
+                        <tr key={log.id}>
+                          <td className="staff-cell">
+                            <div className="staff-avatar">
+                              {(
+                                log.staff?.firstName ||
+                                log.staff?.username ||
+                                "?"
+                              ).charAt(0)}
+                            </div>
+                            {log.staff?.firstName
+                              ? `${log.staff.firstName} ${log.staff.lastName}`
+                              : log.staff?.username}
+                          </td>
+                          <td className="action-text">{log.action}</td>
+                          <td>{log.target}</td>
+                          <td className="time-text">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </td>
+                          <td>
+                            <span
+                              className={`status-pill ${log.status?.toLowerCase()}`}
+                            >
+                              {log.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                {loading && (
+                  <p className="list-placeholder">Loading activity logs...</p>
+                )}
+                {!loading && !activities.length && (
+                  <p className="list-placeholder">No activity logs found.</p>
+                )}
+                {error && <p className="modal-error">{error}</p>}
+              </div>
+
+              <div className="table-mobile table-cards-list">
+                {loading ? (
+                  <p style={{ textAlign: "center", color: "#888" }}>
+                    Loading activity logs...
+                  </p>
+                ) : activities.length === 0 ? (
+                  <p style={{ textAlign: "center", color: "#888" }}>
+                    No activity logs found.
+                  </p>
+                ) : (
+                  activities.map((log) => (
+                    <div className="activity-card" key={log.id}>
+                      <div className="activity-card-header">
+                        <div className="activity-card-avatar">
+                          {(
+                            log.staff?.firstName ||
+                            log.staff?.username ||
+                            "?"
+                          ).charAt(0)}
+                        </div>
+                        <div className="activity-card-name">
                           {log.staff?.firstName
                             ? `${log.staff.firstName} ${log.staff.lastName}`
                             : log.staff?.username}
-                        </td>
-                        <td className="action-text">{log.action}</td>
-                        <td>{log.target}</td>
-                        <td className="time-text">
-                          {new Date(log.createdAt).toLocaleString()}
-                        </td>
-                        <td>
+                        </div>
+                      </div>
+                      <div className="activity-card-body">
+                        <div className="activity-card-row">
+                          <span className="activity-card-label">Action</span>
+                          <span className="activity-card-action">
+                            {log.action}
+                          </span>
+                        </div>
+                        <div className="activity-card-row">
+                          <span className="activity-card-label">Target</span>
+                          <span>{log.target}</span>
+                        </div>
+                        <div className="activity-card-row">
+                          <span className="activity-card-label">Timestamp</span>
+                          <span>
+                            {new Date(log.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="activity-card-row">
+                          <span className="activity-card-label">Status</span>
                           <span
                             className={`status-pill ${log.status?.toLowerCase()}`}
                           >
                             {log.status}
                           </span>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-              {loading && (
-                <p className="list-placeholder">Loading activity logs...</p>
-              )}
-              {!loading && !activities.length && (
-                <p className="list-placeholder">No activity logs found.</p>
-              )}
-              {error && <p className="modal-error">{error}</p>}
-            </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {error && <p className="modal-error">{error}</p>}
+              </div>
+            </>
           </div>
         </section>
       </main>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/StaffPetsProfile.css";
+import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -197,50 +198,203 @@ const StaffPetsProfile = () => {
             </button>
           </div>
 
-          <div className="pets-table-card">
-            <table className="pets-table">
-              <thead>
-                <tr>
-                  <th>Pet Name</th>
-                  <th>Owner</th>
-                  <th>Breed</th>
-                  <th>Gender / Age</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPets.map((pet) => (
-                  <tr key={pet.id}>
-                    <td>
-                      <div className="pet-name-cell">
-                        <div className="pet-avatar-placeholder">
-                          {pet.name?.charAt(0) || "?"}
+          {/* Desktop table & Mobile cards */}
+          <>
+            {/* Desktop Table */}
+            <div className="pets-table-card table-desktop">
+              <table className="pets-table">
+                <thead>
+                  <tr>
+                    <th>Pet Name</th>
+                    <th>Owner</th>
+                    <th>Breed</th>
+                    <th>Gender / Age</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPets.map((pet) => (
+                    <tr key={pet.id}>
+                      <td>
+                        <div className="pet-name-cell">
+                          <div className="pet-avatar-placeholder">
+                            {pet.name?.charAt(0) || "?"}
+                          </div>
+                          <span>{pet.name}</span>
                         </div>
-                        <span>{pet.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      {pet.owner
-                        ? `${pet.owner.firstName ?? ""} ${pet.owner.lastName ?? ""}`.trim() ||
-                          pet.owner.username
-                        : "—"}
-                    </td>
-                    <td>{pet.breed || "—"}</td>
-                    <td>
-                      {pet.gender || "—"}
-                      {pet.age !== null && pet.age !== undefined
-                        ? ` / ${pet.age} yr(s)`
-                        : ""}
-                    </td>
-                    <td>
+                      </td>
+                      <td>
+                        {pet.owner
+                          ? `${pet.owner.firstName ?? ""} ${pet.owner.lastName ?? ""}`.trim() ||
+                            pet.owner.username
+                          : "—"}
+                      </td>
+                      <td>{pet.breed || "—"}</td>
+                      <td>
+                        {pet.gender || "—"}
+                        {pet.age !== null && pet.age !== undefined
+                          ? ` / ${pet.age} yr(s)`
+                          : ""}
+                      </td>
+                      <td>
+                        <span
+                          className={`pet-status-tag ${pet.status?.toLowerCase().replace(/ /g, "-")}`}
+                        >
+                          {pet.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="pet-action-btns">
+                          <button
+                            className="btn-view-records icon-btn"
+                            onClick={() =>
+                              navigate(`/vet-medical-records?petId=${pet.id}`)
+                            }
+                            title="View records"
+                            aria-label="View records"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M7 4h8l4 4v12H7z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M15 4v4h4M10 12h6M10 16h6"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="btn-edit-pet icon-btn"
+                            onClick={() => openEdit(pet)}
+                            title="Edit pet"
+                            aria-label="Edit pet"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="btn-remove-pet icon-btn"
+                            onClick={() => archiveToggle(pet)}
+                            title={
+                              pet.isArchived ? "Restore pet" : "Archive pet"
+                            }
+                            aria-label={
+                              pet.isArchived ? "Restore pet" : "Archive pet"
+                            }
+                          >
+                            {pet.isArchived ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M8 7H5l3-3m-3 3 3 3"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="table-mobile table-cards-list">
+              {filteredPets.map((pet) => (
+                <div className="pets-card" key={pet.id}>
+                  <div className="pets-card-header">
+                    <div className="pets-card-avatar">
+                      {pet.name?.charAt(0) || "?"}
+                    </div>
+                    <div className="pets-card-name">{pet.name}</div>
+                  </div>
+                  <div className="pets-card-body">
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Owner</span>
+                      <span>
+                        {pet.owner
+                          ? `${pet.owner.firstName ?? ""} ${pet.owner.lastName ?? ""}`.trim() ||
+                            pet.owner.username
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Breed</span>
+                      <span>{pet.breed || "—"}</span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Gender / Age</span>
+                      <span>
+                        {pet.gender || "—"}
+                        {pet.age !== null && pet.age !== undefined
+                          ? ` / ${pet.age} yr(s)`
+                          : ""}
+                      </span>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Status</span>
                       <span
                         className={`pet-status-tag ${pet.status?.toLowerCase().replace(/ /g, "-")}`}
                       >
                         {pet.status}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    <div className="pets-card-row">
+                      <span className="pets-card-label">Actions</span>
                       <div className="pet-action-btns">
                         <button
                           className="btn-view-records icon-btn"
@@ -339,12 +493,12 @@ const StaffPetsProfile = () => {
                           )}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         </section>
       </main>
 

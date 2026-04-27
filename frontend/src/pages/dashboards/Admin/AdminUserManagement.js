@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/AdminUserManagement.css";
+import "../../../css/responsive-tables.css";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import { getUsers, createUser, updateUser, deleteUser } from "../../../api/api";
@@ -156,42 +157,163 @@ const AdminUserManagement = () => {
               </button>
             </div>
 
-            <div className="user-table-wrapper">
-              <table className="user-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((u) => (
-                    <tr key={u.id}>
-                      <td className="user-name-cell">
-                        <div className="user-avatar-small">
-                          {(u.firstName || u.username || "?").charAt(0)}
-                        </div>
-                        <span>
-                          {u.firstName
-                            ? `${u.firstName} ${u.lastName || ""}`.trim()
-                            : u.username}
-                        </span>
-                      </td>
-                      <td>{u.email}</td>
-                      <td>
+            <>
+              <div className="user-table-wrapper table-desktop">
+                <table className="user-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((u) => (
+                      <tr key={u.id}>
+                        <td className="user-name-cell">
+                          <div className="user-avatar-small">
+                            {(u.firstName || u.username || "?").charAt(0)}
+                          </div>
+                          <span>
+                            {u.firstName
+                              ? `${u.firstName} ${u.lastName || ""}`.trim()
+                              : u.username}
+                          </span>
+                        </td>
+                        <td>{u.email}</td>
+                        <td>
+                          <span className={`role-badge ${u.role}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${u.isVerified ? "active" : "inactive"}`}
+                          >
+                            {u.isVerified ? "Active" : "Unverified"}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-btns">
+                            {u.role === "pet_owner" && (
+                              <button
+                                className="edit-btn icon-btn"
+                                onClick={() =>
+                                  navigate(`/admin-users/${u.id}/pets`, {
+                                    state: { owner: u },
+                                  })
+                                }
+                                title="View pets"
+                                aria-label="View pets"
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M12 2C8 2 5 5.5 5 9c0 2.5 1.5 4.5 3 6l4 5 4-5c1.5-1.5 3-3.5 3-6 0-3.5-3-7-7-7z"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinejoin="round"
+                                  />
+                                  <circle
+                                    cx="12"
+                                    cy="9"
+                                    r="2"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              className="edit-btn icon-btn"
+                              onClick={() => openEdit(u)}
+                              title="Edit user"
+                              aria-label="Edit user"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M4 20h4l10-10-4-4L4 16v4z"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M12 6l4 4"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              className="delete-btn icon-btn"
+                              onClick={() => handleDelete(u.id)}
+                              title="Remove user"
+                              aria-label="Remove user"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="table-mobile table-cards-list">
+                {filtered.map((u) => (
+                  <div className="user-card" key={u.id}>
+                    <div className="user-card-header">
+                      <div className="user-card-avatar">
+                        {(u.firstName || u.username || "?").charAt(0)}
+                      </div>
+                      <div className="user-card-name">
+                        {u.firstName
+                          ? `${u.firstName} ${u.lastName || ""}`.trim()
+                          : u.username}
+                      </div>
+                    </div>
+                    <div className="user-card-body">
+                      <div className="user-card-row">
+                        <span className="user-card-label">Email</span>
+                        <span>{u.email}</span>
+                      </div>
+                      <div className="user-card-row">
+                        <span className="user-card-label">Role</span>
                         <span className={`role-badge ${u.role}`}>{u.role}</span>
-                      </td>
-                      <td>
+                      </div>
+                      <div className="user-card-row">
+                        <span className="user-card-label">Status</span>
                         <span
                           className={`status-pill ${u.isVerified ? "active" : "inactive"}`}
                         >
                           {u.isVerified ? "Active" : "Unverified"}
                         </span>
-                      </td>
-                      <td>
+                      </div>
+                      <div className="user-card-row">
+                        <span className="user-card-label">Actions</span>
                         <div className="action-btns">
                           {u.role === "pet_owner" && (
                             <button
@@ -271,12 +393,12 @@ const AdminUserManagement = () => {
                             </svg>
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           </div>
         </section>
       </main>

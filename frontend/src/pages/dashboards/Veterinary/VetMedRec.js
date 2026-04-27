@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/VetMedRec.css";
+import "../../../css/responsive-tables.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
 import {
@@ -230,39 +231,157 @@ const VetMedRec = () => {
               </button>
             </div>
 
-            <table className="records-table">
-              <thead>
-                <tr>
-                  <th>Record ID</th>
-                  <th>Patient</th>
-                  <th>Date</th>
-                  <th>Diagnosis</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.map((rec) => (
-                  <tr key={rec.id}>
-                    <td className="record-id">
-                      REC-{rec.id.slice(-6).toUpperCase()}
-                    </td>
-                    <td>
-                      {rec.pet?.name} <br />
-                      <small className="species-meta">
-                        {rec.pet?.species || ""}
-                      </small>
-                    </td>
-                    <td>{new Date(rec.createdAt).toLocaleDateString()}</td>
-                    <td>{rec.diagnosis}</td>
-                    <td>
-                      <span
-                        className={`status-pill ${rec.status?.toLowerCase()}`}
-                      >
-                        {rec.status}
+            <div className="table-desktop">
+              <table className="records-table">
+                <thead>
+                  <tr>
+                    <th>Record ID</th>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Diagnosis</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRecords.map((rec) => (
+                    <tr key={rec.id}>
+                      <td className="record-id">
+                        REC-{rec.id.slice(-6).toUpperCase()}
+                      </td>
+                      <td>
+                        {rec.pet?.name} <br />
+                        <small className="species-meta">
+                          {rec.pet?.species || ""}
+                        </small>
+                      </td>
+                      <td>{new Date(rec.createdAt).toLocaleDateString()}</td>
+                      <td>{rec.diagnosis}</td>
+                      <td>
+                        <span
+                          className={`status-pill ${rec.status?.toLowerCase()}`}
+                        >
+                          {rec.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            className="row-btn icon-btn"
+                            onClick={() => openEdit(rec)}
+                            title="Edit record"
+                            aria-label="Edit record"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 20h4l10-10-4-4L4 16v4z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 6l4 4"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            className="row-btn row-btn-danger icon-btn"
+                            onClick={() => toggleArchive(rec)}
+                            title={
+                              rec.isArchived
+                                ? "Restore record"
+                                : "Archive record"
+                            }
+                            aria-label={
+                              rec.isArchived
+                                ? "Restore record"
+                                : "Archive record"
+                            }
+                          >
+                            {rec.isArchived ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M8 7H5l3-3m-3 3 3 3"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M5 7h8a5 5 0 1 1 0 10h-2"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-mobile table-cards-list">
+              {filteredRecords.map((rec) => (
+                <div className="record-card" key={rec.id}>
+                  <div className="record-card-header">
+                    <div className="record-card-title">
+                      <div className="record-card-id">
+                        REC-{rec.id.slice(-6).toUpperCase()}
+                      </div>
+                      <div className="record-card-patient">
+                        {rec.pet?.name} ({rec.pet?.species || "N/A"})
+                      </div>
+                    </div>
+                    <span
+                      className={`status-pill ${rec.status?.toLowerCase()}`}
+                    >
+                      {rec.status}
+                    </span>
+                  </div>
+                  <div className="record-card-body">
+                    <div className="record-card-row">
+                      <span className="record-card-label">Date</span>
+                      <span>
+                        {new Date(rec.createdAt).toLocaleDateString()}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    <div className="record-card-row">
+                      <span className="record-card-label">Diagnosis</span>
+                      <span className="record-card-diagnosis">
+                        {rec.diagnosis}
+                      </span>
+                    </div>
+                    <div className="record-card-row">
+                      <span className="record-card-label">Actions</span>
                       <div className="row-actions">
                         <button
                           className="row-btn icon-btn"
@@ -336,11 +455,11 @@ const VetMedRec = () => {
                           )}
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {loading && (
               <p className="list-feedback">Loading medical records...</p>

@@ -168,14 +168,51 @@ a,
     grid-template-columns: 1fr !important;
   }
 
-  /* Make tables horizontally scrollable */
+  /* Make all tables horizontally scrollable on mobile */
   .table-wrapper,
   .user-table-wrapper,
   .inventory-table-wrapper,
   .payment-table-wrapper,
-  .table-container {
+  .table-container,
+  .owner-pets-table-card,
+  .user-table-card,
+  .pets-table-card,
+  .appointment-table-card,
+  .activity-table-card,
+  .payment-table-card,
+  .inventory-table-card,
+  .schedule-table-card,
+  .records-table-card,
+  .patients-table-card,
+  .user-management-card {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure all tables have minimum width for horizontal scroll on mobile */
+  table,
+  .owner-pets-table,
+  .user-table,
+  .pets-table,
+  .appointment-table,
+  .activity-table,
+  .payment-table,
+  .inventory-table,
+  .schedule-table,
+  .records-table,
+  .patients-table {
+    min-width: 480px;
+  }
+
+  /* Desktop-only table containers hide on mobile; mobile cards show */
+  .op-desktop-only,
+  .desktop-only {
+    display: none !important;
+  }
+
+  .op-mobile-only,
+  .mobile-only {
+    display: flex !important;
   }
 
   input:focus,
@@ -225,6 +262,76 @@ a,
   .row-actions,
   .action-btns {
     gap: 6px;
+  }
+
+  /* ── Generic mobile card list styles ── */
+  .cards-list,
+  .op-cards-list,
+  .mobile-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pet-card,
+  .op-pet-card,
+  .user-card,
+  .appointment-card,
+  .record-card,
+  .item-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pet-card-header,
+  .op-pet-card-header,
+  .user-card-header,
+  .appointment-card-header,
+  .record-card-header,
+  .item-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .pet-card-body,
+  .op-pet-card-body,
+  .user-card-body,
+  .appointment-card-body,
+  .record-card-body,
+  .item-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pet-card-row,
+  .op-pet-card-row,
+  .user-card-row,
+  .appointment-card-row,
+  .record-card-row,
+  .item-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #374151;
+  }
+
+  .card-label,
+  .op-card-label,
+  .pet-card-label {
+    font-weight: 600;
+    color: #6b7280;
+    flex-shrink: 0;
+    min-width: 80px;
   }
 
   .content-body.no-scroll {

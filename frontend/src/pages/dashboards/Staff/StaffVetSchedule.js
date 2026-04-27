@@ -11,6 +11,7 @@ import {
   updateVetSchedule,
 } from "../../../api/api";
 import "../../../css/VetSchedule.css";
+import "../../../css/responsive-tables.css";
 
 import bellIcon from "../../../assets/Bell_Icon.png";
 import userIcon from "../../../assets/Profile.png";
@@ -195,7 +196,11 @@ export default function StaffVetSchedule() {
             >
               <img src={bellIcon} alt="Notifications" />
             </button>
-            <TopbarUserMenu avatarSrc={userIcon} avatarAlt="User" profilePath="/staff-profile" />
+            <TopbarUserMenu
+              avatarSrc={userIcon}
+              avatarAlt="User"
+              profilePath="/staff-profile"
+            />
           </div>
         </header>
 
@@ -239,22 +244,90 @@ export default function StaffVetSchedule() {
             {error ? <p className="schedule-error">{error}</p> : null}
             {success ? <p className="schedule-success">{success}</p> : null}
 
-            <div className="schedule-table-wrap">
-              <table className="schedule-table">
-                <thead>
-                  <tr>
-                    <th>Day</th>
-                    <th>Active</th>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Slot (min)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weekly.map((d) => (
-                    <tr key={d.dayOfWeek}>
-                      <td>{dayLabels[d.dayOfWeek]}</td>
-                      <td>
+            <>
+              <div className="schedule-table-wrap table-desktop">
+                <table className="schedule-table">
+                  <thead>
+                    <tr>
+                      <th>Day</th>
+                      <th>Active</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Slot (min)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weekly.map((d) => (
+                      <tr key={d.dayOfWeek}>
+                        <td>{dayLabels[d.dayOfWeek]}</td>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(d.isActive)}
+                            onChange={(e) =>
+                              updateDay(
+                                d.dayOfWeek,
+                                "isActive",
+                                e.target.checked,
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="time"
+                            value={d.startTime}
+                            disabled={!d.isActive}
+                            onChange={(e) =>
+                              updateDay(
+                                d.dayOfWeek,
+                                "startTime",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="time"
+                            value={d.endTime}
+                            disabled={!d.isActive}
+                            onChange={(e) =>
+                              updateDay(d.dayOfWeek, "endTime", e.target.value)
+                            }
+                          />
+                        </td>
+                        <td>
+                          <select
+                            value={d.slotDurationMinutes}
+                            disabled={!d.isActive}
+                            onChange={(e) =>
+                              updateDay(
+                                d.dayOfWeek,
+                                "slotDurationMinutes",
+                                e.target.value,
+                              )
+                            }
+                          >
+                            {[15, 20, 30, 45, 60].map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="table-mobile table-cards-list">
+                {weekly.map((d) => (
+                  <div className="schedule-day-card" key={d.dayOfWeek}>
+                    <div className="schedule-day-card-header">
+                      <h4>{dayLabels[d.dayOfWeek]}</h4>
+                      <label className="schedule-day-active">
                         <input
                           type="checkbox"
                           checked={Boolean(d.isActive)}
@@ -262,8 +335,12 @@ export default function StaffVetSchedule() {
                             updateDay(d.dayOfWeek, "isActive", e.target.checked)
                           }
                         />
-                      </td>
-                      <td>
+                        <span>{d.isActive ? "Active" : "Inactive"}</span>
+                      </label>
+                    </div>
+                    <div className="schedule-day-card-body">
+                      <label>
+                        Start
                         <input
                           type="time"
                           value={d.startTime}
@@ -272,8 +349,9 @@ export default function StaffVetSchedule() {
                             updateDay(d.dayOfWeek, "startTime", e.target.value)
                           }
                         />
-                      </td>
-                      <td>
+                      </label>
+                      <label>
+                        End
                         <input
                           type="time"
                           value={d.endTime}
@@ -282,8 +360,9 @@ export default function StaffVetSchedule() {
                             updateDay(d.dayOfWeek, "endTime", e.target.value)
                           }
                         />
-                      </td>
-                      <td>
+                      </label>
+                      <label>
+                        Slot (min)
                         <select
                           value={d.slotDurationMinutes}
                           disabled={!d.isActive}
@@ -301,12 +380,12 @@ export default function StaffVetSchedule() {
                             </option>
                           ))}
                         </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           </div>
 
           <div className="schedule-card">
