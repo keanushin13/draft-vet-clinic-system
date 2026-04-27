@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { initCSRF } from "./api/api";
+import BottomNavigation from "./components/BottomNavigation";
 
 // DEV
 import DevNav from "./pages/DevNav";
@@ -120,6 +121,7 @@ function App() {
         <Route path="/admin-notifications" element={<AdminNotif />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
       </Routes>
+      <BottomNavigation />
     </BrowserRouter>
   );
 }
