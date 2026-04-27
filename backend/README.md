@@ -6,16 +6,17 @@ Node.js + Express REST API for the PawCruz veterinary clinic management system. 
 
 ## Tech Stack
 
-| Layer          | Technology                           |
-| -------------- | ------------------------------------ |
-| Runtime        | Node.js                              |
-| Framework      | Express 4                            |
-| ORM            | Prisma 7                             |
-| Database       | Supabase (PostgreSQL)                |
-| Driver Adapter | `@prisma/adapter-pg`                 |
-| Auth           | Custom JWT-less flow (OTP via email) |
-| Email          | Nodemailer                           |
-| Security       | Helmet, xss-clean, csurf, bcryptjs   |
+| Layer          | Technology                         |
+| -------------- | ---------------------------------- |
+| Runtime        | Node.js                            |
+| Framework      | Express 4                          |
+| ORM            | Prisma 7                           |
+| Database       | Supabase (PostgreSQL)              |
+| Driver Adapter | `@prisma/adapter-pg`               |
+| Auth           | JWT + OTP via Email                |
+| Email          | Nodemailer                         |
+| Security       | Helmet, xss-clean, csurf, bcryptjs |
+| Hosting        | Render.com (production)            |
 
 ---
 
@@ -148,3 +149,75 @@ All routes are prefixed with `/api/users`.
 - XSS sanitization on all request bodies
 - Security headers via `helmet`
 - Tokens (email verify, reset, unlock) expire after 5 minutes and are single-use
+
+---
+
+## API Routes
+
+All routes prefixed with `/api`.
+
+### Core Endpoints
+
+| Endpoint           | Description                            |
+| ------------------ | -------------------------------------- |
+| `/users`           | Authentication & user management       |
+| `/pets`            | Pet CRUD operations                    |
+| `/appointments`    | Appointment booking & management       |
+| `/vet-schedules`   | Veterinarian availability & scheduling |
+| `/medical-records` | Pet medical history & records          |
+| `/payments`        | Payment processing & history           |
+| `/inventory`       | Inventory management & stock tracking  |
+| `/messages`        | Direct messaging between users         |
+| `/notifications`   | Push notifications & system alerts     |
+| `/activity-logs`   | System activity tracking & audit logs  |
+| `/stats`           | Dashboard statistics & analytics       |
+
+---
+
+## CORS Configuration (Important for Mobile)
+
+API allows requests from:
+
+- ✅ `http://localhost:3000` (React Web)
+- ✅ `http://localhost:8081` (Expo Web)
+- ✅ `http://localhost` & `https://localhost` (Capacitor Mobile App)
+- ✅ Custom `CLIENT_URL` from `.env`
+
+**Mobile Note**: Capacitor uses `https://localhost` origin. See `server.js` allowedOrigins.
+
+---
+
+## Deploy to Render.com
+
+### Steps
+
+1. Create New Web Service on Render.com
+2. Connect GitHub repository
+3. Set Build: `npm install && npx prisma generate`
+4. Set Start: `npm run start`
+5. Add environment variables
+6. Deploy — auto-deploys on git push
+
+**Current Production**: `https://vet-clinic-system-api.onrender.com/api`
+
+---
+
+## Troubleshooting
+
+### CORS Error on Mobile
+
+- Ensure `https://localhost` in `server.js` allowedOrigins
+- Rebuild Android: `npm run build:android`
+- Verify frontend `.env` API_URL
+
+### Database Connection Failed
+
+- Check `DATABASE_URL` and `DIRECT_URL` in `.env`
+- Test with `npx prisma studio`
+
+### Port Already in Use
+
+```bash
+# Windows: netstat -ano | findstr :5000
+# Mac/Linux: lsof -i :5000
+```
