@@ -87,6 +87,12 @@ const NAV_BY_ROLE = {
       path: "/vet-profile",
       icon: profileIcon,
     },
+    // {
+    //   key: "schedule",
+    //   label: "Schedule",
+    //   path: "/vet-schedule",
+    //   icon: appointmentIcon,
+    // },
   ],
   pet_owner: [
     {
