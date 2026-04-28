@@ -190,31 +190,33 @@ const VetCalendar = () => {
 
   // Group appointments by status
   const groupedAppointments = filteredAppointments.reduce((acc, apt) => {
-    const status = apt.status || 'Pending';
+    const status = apt.status || "Pending";
     if (!acc[status]) acc[status] = [];
     acc[status].push(apt);
     return acc;
   }, {});
 
   // Define status order for consistent display
-  const statusOrder = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
-  const sortedStatuses = statusOrder.filter(s => groupedAppointments[s]?.length > 0);
+  const statusOrder = ["Pending", "Confirmed", "Completed", "Cancelled"];
+  const sortedStatuses = statusOrder.filter(
+    (s) => groupedAppointments[s]?.length > 0,
+  );
 
   // Toggle status section collapse
   const toggleStatus = (status) => {
-    setExpandedStatus(prev => ({
+    setExpandedStatus((prev) => ({
       ...prev,
-      [status]: !prev[status]
+      [status]: !prev[status],
     }));
   };
 
   // Get status styling
   const getStatusConfig = (status) => {
     const configs = {
-      Pending: { icon: '🟡', color: '#ff9800' },
-      Confirmed: { icon: '🟢', color: '#4caf50' },
-      Completed: { icon: '✓', color: '#2196f3' },
-      Cancelled: { icon: '✕', color: '#f44336' }
+      Pending: { icon: "🟡", color: "#ff9800" },
+      Confirmed: { icon: "🟢", color: "#4caf50" },
+      Completed: { icon: "✓", color: "#2196f3" },
+      Cancelled: { icon: "✕", color: "#f44336" },
     };
     return configs[status] || configs.Pending;
   };
@@ -361,11 +363,11 @@ const VetCalendar = () => {
               {sortedStatuses.length === 0 ? (
                 <p className="list-feedback">No appointments in this month.</p>
               ) : (
-                sortedStatuses.map(status => {
+                sortedStatuses.map((status) => {
                   const config = getStatusConfig(status);
                   const statusApts = groupedAppointments[status];
                   const isExpanded = expandedStatus[status];
-                  
+
                   return (
                     <div key={status} className="status-group">
                       {/* Status Group Header */}
@@ -377,10 +379,12 @@ const VetCalendar = () => {
                         <span className="status-header-left">
                           <span className="status-icon">{config.icon}</span>
                           <span className="status-title">{status}</span>
-                          <span className="status-count">{statusApts.length}</span>
+                          <span className="status-count">
+                            {statusApts.length}
+                          </span>
                         </span>
                         <span className="status-toggle-icon">
-                          {isExpanded ? '▼' : '▶'}
+                          {isExpanded ? "▼" : "▶"}
                         </span>
                       </button>
 
@@ -397,7 +401,9 @@ const VetCalendar = () => {
                                       apt.owner?.username ||
                                       "-"}
                                   </td>
-                                  <td>{new Date(apt.scheduledAt).toLocaleString()}</td>
+                                  <td>
+                                    {new Date(apt.scheduledAt).toLocaleString()}
+                                  </td>
                                   <td>{apt.reason || "-"}</td>
                                   <td>
                                     <span
@@ -486,17 +492,23 @@ const VetCalendar = () => {
                               </div>
                               <div className="record-card-body">
                                 <div className="record-card-row">
-                                  <span className="record-card-label">Date & Time</span>
+                                  <span className="record-card-label">
+                                    Date & Time
+                                  </span>
                                   <span>
                                     {new Date(apt.scheduledAt).toLocaleString()}
                                   </span>
                                 </div>
                                 <div className="record-card-row">
-                                  <span className="record-card-label">Reason</span>
+                                  <span className="record-card-label">
+                                    Reason
+                                  </span>
                                   <span>{apt.reason || "-"}</span>
                                 </div>
                                 <div className="record-card-row">
-                                  <span className="record-card-label">Actions</span>
+                                  <span className="record-card-label">
+                                    Actions
+                                  </span>
                                   <div className="action-btns">
                                     <button
                                       className="btn-edit icon-btn"
@@ -555,7 +567,7 @@ const VetCalendar = () => {
                 })
               )}
             </div>
-          )}}
+          )}
 
           {loading && <p className="list-feedback">Loading appointments...</p>}
           {!loading && !filteredAppointments.length && (
