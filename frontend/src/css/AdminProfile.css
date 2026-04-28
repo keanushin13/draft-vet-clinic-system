@@ -349,6 +349,7 @@
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  margin-bottom: 0;
 }
 .user-modal-form input:focus {
   border-color: #2563eb;
@@ -444,6 +445,7 @@
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  margin-bottom: 0;
 }
 .user-modal-form input:focus {
   border-color: #2563eb;
