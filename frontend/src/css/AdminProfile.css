@@ -216,6 +216,15 @@
     margin-top: var(--topbar-height) !important;
   }
 
+  .profile-layout {
+    overflow-y: auto !important;
+    align-items: auto !important;
+  }
+
+  .profile-card {
+    overflow-y: auto !important;
+  }
+
   /* Stats grid: 2 columns on tablet, 1 on phone */
   .admin-stats-grid,
   .stats-grid {
