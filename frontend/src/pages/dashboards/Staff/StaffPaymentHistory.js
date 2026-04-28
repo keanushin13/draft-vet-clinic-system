@@ -28,6 +28,7 @@ const StaffPaymentHistory = () => {
   const [payments, setPayments] = useState([]);
   const [pets, setPets] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [linkedAppointmentIds, setLinkedAppointmentIds] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -66,18 +67,31 @@ const StaffPaymentHistory = () => {
   const loadData = async (includeArchived = false) => {
     setError("");
     try {
-      const [paymentRes, petRes, appointmentRes] = await Promise.all([
-        getPayments({ includeArchived }),
-        getPets(),
-        getAppointments(),
-      ]);
+      const [paymentRes, petRes, appointmentRes, allPaymentRes] =
+        await Promise.all([
+          getPayments({ includeArchived }),
+          getPets(),
+          getAppointments(),
+          getPayments({ includeArchived: true }),
+        ]);
       setPayments(paymentRes.data || []);
+      setLinkedAppointmentIds(
+        (allPaymentRes.data || [])
+          .map((payment) => payment.appointment?.id)
+          .filter(Boolean),
+      );
       setPets(petRes.data || []);
       setAppointments(appointmentRes.data || []);
     } catch {
       setError("Failed to load payments");
     }
   };
+
+  const availableAppointments = appointments.filter(
+    (appointment) =>
+      !linkedAppointmentIds.includes(appointment.id) &&
+      String(appointment.status || "").toLowerCase() !== "cancelled",
+  );
 
   const totalRevenue = payments
     .filter((p) => !p.isArchived && p.status === "Paid")
@@ -110,7 +124,7 @@ const StaffPaymentHistory = () => {
   }, {});
 
   // Define status order for consistent display
-  const statusOrder = ["Paid", "Pending", "Refunded"];
+  const statusOrder = ["Pending", "Paid", "Refunded"];
   const sortedStatuses = statusOrder.filter(
     (s) => groupedPayments[s]?.length > 0,
   );
@@ -136,6 +150,19 @@ const StaffPaymentHistory = () => {
   const getPetDisplayById = (petId) => {
     const pet = pets.find((p) => p.id === petId);
     return pet ? `${pet.name} (${pet.species})` : "Unknown Pet";
+  };
+
+  const getDisplayedAutoTotal = () => {
+    if (!billingSummary) return 0;
+    const enteredAmount = Number(form.amount);
+    if (
+      form.amount !== "" &&
+      Number.isFinite(enteredAmount) &&
+      enteredAmount >= 0
+    ) {
+      return enteredAmount;
+    }
+    return Number(billingSummary.total || 0);
   };
 
   const formatAppointmentOption = (appointment) => {
@@ -378,14 +405,14 @@ const StaffPaymentHistory = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <label className="archived-toggle">
+                {/* <label className="archived-toggle">
                   <input
                     type="checkbox"
                     checked={showArchived}
                     onChange={(e) => setShowArchived(e.target.checked)}
                   />
                   Show archived
-                </label>
+                </label> */}
                 <button className="add-payment-btn" onClick={openCreate}>
                   + Add Payment
                 </button>
@@ -758,7 +785,7 @@ const StaffPaymentHistory = () => {
                     onChange={onChange}
                   >
                     <option value="">Select appointment</option>
-                    {appointments.map((appointment) => (
+                    {availableAppointments.map((appointment) => (
                       <option key={appointment.id} value={appointment.id}>
                         {formatAppointmentOption(appointment)}
                       </option>
@@ -798,7 +825,7 @@ const StaffPaymentHistory = () => {
                         </p>
                         <p>
                           Auto Total: ₱
-                          {Number(billingSummary.total || 0).toLocaleString()}
+                          {getDisplayedAutoTotal().toLocaleString()}
                         </p>
                       </>
                     ) : (

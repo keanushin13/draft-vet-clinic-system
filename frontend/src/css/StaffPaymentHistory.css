@@ -50,6 +50,7 @@
   border: 1px solid #ddd;
   width: 300px;
   font-family: "Poppins", sans-serif;
+  margin-bottom: 0;
 }
 
 .payment-table {
