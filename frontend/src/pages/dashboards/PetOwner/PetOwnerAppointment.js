@@ -207,31 +207,33 @@ const PetOwnerAppointment = () => {
 
   // Group appointments by status
   const groupedAppointments = filteredAppointments.reduce((acc, apt) => {
-    const status = apt.status || 'Pending';
+    const status = apt.status || "Pending";
     if (!acc[status]) acc[status] = [];
     acc[status].push(apt);
     return acc;
   }, {});
 
   // Define status order for consistent display
-  const statusOrder = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
-  const sortedStatuses = statusOrder.filter(s => groupedAppointments[s]?.length > 0);
+  const statusOrder = ["Pending", "Confirmed", "Completed", "Cancelled"];
+  const sortedStatuses = statusOrder.filter(
+    (s) => groupedAppointments[s]?.length > 0,
+  );
 
   // Toggle status section collapse
   const toggleStatus = (status) => {
-    setExpandedStatus(prev => ({
+    setExpandedStatus((prev) => ({
       ...prev,
-      [status]: !prev[status]
+      [status]: !prev[status],
     }));
   };
 
   // Get status styling
   const getStatusConfig = (status) => {
     const configs = {
-      Pending: { icon: '🟡', color: '#ff9800' },
-      Confirmed: { icon: '🟢', color: '#4caf50' },
-      Completed: { icon: '✓', color: '#2196f3' },
-      Cancelled: { icon: '✕', color: '#f44336' }
+      Pending: { icon: "🟡", color: "#ff9800" },
+      Confirmed: { icon: "🟢", color: "#4caf50" },
+      Completed: { icon: "✓", color: "#2196f3" },
+      Cancelled: { icon: "✕", color: "#f44336" },
     };
     return configs[status] || configs.Pending;
   };
@@ -391,13 +393,15 @@ const PetOwnerAppointment = () => {
           ) : (
             <div className="list-view-container">
               {sortedStatuses.length === 0 ? (
-                <p className="list-placeholder">No appointments found. Start by booking your first visit!</p>
+                <p className="list-placeholder">
+                  No appointments found. Start by booking your first visit!
+                </p>
               ) : (
-                sortedStatuses.map(status => {
+                sortedStatuses.map((status) => {
                   const config = getStatusConfig(status);
                   const statusApts = groupedAppointments[status];
                   const isExpanded = expandedStatus[status];
-                  
+
                   return (
                     <div key={status} className="status-group">
                       {/* Status Group Header */}
@@ -409,10 +413,12 @@ const PetOwnerAppointment = () => {
                         <span className="status-header-left">
                           <span className="status-icon">{config.icon}</span>
                           <span className="status-title">{status}</span>
-                          <span className="status-count">{statusApts.length}</span>
+                          <span className="status-count">
+                            {statusApts.length}
+                          </span>
                         </span>
                         <span className="status-toggle-icon">
-                          {isExpanded ? '▼' : '▶'}
+                          {isExpanded ? "▼" : "▶"}
                         </span>
                       </button>
 
@@ -424,7 +430,8 @@ const PetOwnerAppointment = () => {
                               <div className="apt-card-header">
                                 <div className="apt-card-pet">
                                   <div className="apt-card-avatar">
-                                    {a.pet?.name?.charAt(0).toUpperCase() || "P"}
+                                    {a.pet?.name?.charAt(0).toUpperCase() ||
+                                      "P"}
                                   </div>
                                   <span className="apt-card-pet-name">
                                     {a.pet?.name || "Pet"}
@@ -448,14 +455,18 @@ const PetOwnerAppointment = () => {
                                 </div>
 
                                 <div className="apt-card-row">
-                                  <span className="apt-card-label">Date & Time:</span>
+                                  <span className="apt-card-label">
+                                    Date & Time:
+                                  </span>
                                   <span className="apt-card-value">
                                     {new Date(a.scheduledAt).toLocaleString()}
                                   </span>
                                 </div>
 
                                 <div className="apt-card-row">
-                                  <span className="apt-card-label">Reason:</span>
+                                  <span className="apt-card-label">
+                                    Reason:
+                                  </span>
                                   <span className="apt-card-value">
                                     {a.reason || "-"}
                                   </span>
@@ -463,8 +474,12 @@ const PetOwnerAppointment = () => {
 
                                 {a.notes && (
                                   <div className="apt-card-row">
-                                    <span className="apt-card-label">Notes:</span>
-                                    <span className="apt-card-value">{a.notes}</span>
+                                    <span className="apt-card-label">
+                                      Notes:
+                                    </span>
+                                    <span className="apt-card-value">
+                                      {a.notes}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -476,7 +491,11 @@ const PetOwnerAppointment = () => {
                                   title="Reschedule appointment"
                                   aria-label="Reschedule appointment"
                                 >
-                                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    aria-hidden="true"
+                                  >
                                     <path
                                       d="M4 20h4l10-10-4-4L4 16v4z"
                                       stroke="currentColor"
@@ -497,7 +516,11 @@ const PetOwnerAppointment = () => {
                                   title="Cancel appointment"
                                   aria-label="Cancel appointment"
                                 >
-                                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    aria-hidden="true"
+                                  >
                                     <path
                                       d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
                                       stroke="currentColor"
@@ -517,7 +540,7 @@ const PetOwnerAppointment = () => {
                 })
               )}
             </div>
-          )}}
+          )}
 
           {!loading && filteredAppointments.length === 0 && (
             <p className="list-placeholder">
