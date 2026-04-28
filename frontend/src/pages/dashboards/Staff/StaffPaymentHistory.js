@@ -141,7 +141,7 @@ const StaffPaymentHistory = () => {
   const openEdit = (payment) => {
     setEditing(payment);
     setForm({
-      petId: payment.petId,
+      petId: payment.petId || payment.pet?.id || "",
       service: payment.service || "",
       amount: String(payment.amount ?? ""),
       method: payment.method || "Cash",
@@ -626,20 +626,32 @@ const StaffPaymentHistory = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Pet</label>
-                  <select
-                    name="petId"
-                    value={form.petId}
-                    onChange={onChange}
-                    required
-                    disabled={Boolean(editing)}
-                  >
-                    <option value="">Select pet</option>
-                    {pets.map((pet) => (
-                      <option key={pet.id} value={pet.id}>
-                        {pet.name} ({pet.species})
-                      </option>
-                    ))}
-                  </select>
+                  {editing ? (
+                    <input
+                      type="text"
+                      value={
+                        pets.find((p) => p.id === form.petId)
+                          ? `${pets.find((p) => p.id === form.petId)?.name} (${pets.find((p) => p.id === form.petId)?.species})`
+                          : "Unknown Pet"
+                      }
+                      readOnly
+                      style={{ backgroundColor: "#f5f5f5", cursor: "default" }}
+                    />
+                  ) : (
+                    <select
+                      name="petId"
+                      value={form.petId}
+                      onChange={onChange}
+                      required
+                    >
+                      <option value="">Select pet</option>
+                      {pets.map((pet) => (
+                        <option key={pet.id} value={pet.id}>
+                          {pet.name} ({pet.species})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Service</label>
