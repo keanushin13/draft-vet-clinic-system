@@ -31,13 +31,17 @@ const getDayBounds = (dateInput) => {
     return null;
   }
 
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
+  // Normalise to a YYYY-MM-DD string so we are always working with
+  // the calendar date the caller intended, regardless of server TZ.
+  const dateStr =
+    typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateInput)
+      ? dateInput.slice(0, 10)
+      : date.toISOString().slice(0, 10);
 
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayStart = new Date(`${dateStr}T00:00:00.000+08:00`);
+  const dayEnd = new Date(`${dateStr}T23:59:59.999+08:00`);
 
-  return { dayStart, dayEnd };
+  return { dayStart, dayEnd, dateStr };
 };
 
 const getVetWeeklySchedule = async (vetId) => {
@@ -107,8 +111,9 @@ const computeDaySlots = async ({
     return { error: "Invalid date" };
   }
 
-  const { dayStart, dayEnd } = bounds;
-  const weekday = dayStart.getDay();
+  const { dayStart, dayEnd, dateStr } = bounds;
+  // Derive weekday from the date string to avoid UTC-offset skew
+  const weekday = new Date(`${dateStr}T12:00:00.000+08:00`).getDay();
 
   const scheduleRow = await prisma.vetSchedule.findUnique({
     where: {
@@ -155,11 +160,12 @@ const computeDaySlots = async ({
     cursor + slotDuration <= endMin;
     cursor += slotDuration
   ) {
-    const slotStart = new Date(dayStart);
-    slotStart.setMinutes(cursor);
+    const hh = String(Math.floor(cursor / 60)).padStart(2, "0");
+    const mm = String(cursor % 60).padStart(2, "0");
+    const slotStart = new Date(`${dateStr}T${hh}:${mm}:00.000+08:00`);
 
     const slotEnd = new Date(slotStart);
-    slotEnd.setMinutes(slotStart.getMinutes() + slotDuration);
+    slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
 
     const blockedByException = exceptions.some((e) =>
       overlap(slotStart, slotEnd, new Date(e.startsAt), new Date(e.endsAt)),
