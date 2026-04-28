@@ -115,9 +115,9 @@ const NAV_BY_ROLE = {
     },
     {
       key: "account",
-      label: "Account",
-      path: "/pet-owner-profile",
-      icon: profileIcon,
+      label: "Payments",
+      path: "/pet-owner-payments",
+      icon: payHistoryIcon,
     },
   ],
 };
