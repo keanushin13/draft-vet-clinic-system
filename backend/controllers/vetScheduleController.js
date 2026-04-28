@@ -62,7 +62,7 @@ const normalizeWeeklyInput = (body) => {
 
     const isActive = row.isActive !== false;
     const startTime = row.startTime || "09:00";
-    const endTime = row.endTime || "17:00";
+    const endTime = row.endTime || "19:00";
 
     const startMin = minutesFromTimeString(startTime);
     const endMin = minutesFromTimeString(endTime);
