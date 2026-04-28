@@ -141,7 +141,12 @@ function isDashboardPath(pathname) {
 
 function isActivePath(pathname, itemPath) {
   if (pathname === itemPath) return true;
-  if (itemPath === "/admin" || itemPath === "/staff" || itemPath === "/vet") {
+  if (
+    itemPath === "/admin" ||
+    itemPath === "/staff" ||
+    itemPath === "/vet" ||
+    itemPath === "/pet-owner"
+  ) {
     return false;
   }
   return (

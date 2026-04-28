@@ -353,88 +353,99 @@ const PetOwnerAppointment = () => {
             </div>
           ) : (
             <div className="list-view-container">
-              <table className="appointment-table">
-                <thead>
-                  <tr>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Date & Time</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAppointments.map((a) => (
-                    <tr key={a.id}>
-                      <td>{a.pet?.name || "-"}</td>
-                      <td>
-                        {`${a.owner?.firstName || ""} ${a.owner?.lastName || ""}`.trim() ||
-                          a.owner?.username ||
-                          "-"}
-                      </td>
-                      <td>{new Date(a.scheduledAt).toLocaleString()}</td>
-                      <td>{a.reason || "-"}</td>
-                      <td>
-                        <span
-                          className={`apt-status ${(a.status || "").toLowerCase()}`}
-                        >
-                          {a.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-btns">
-                          <button
-                            className="btn-edit icon-btn"
-                            onClick={() => openEditModal(a)}
-                            title="Reschedule appointment"
-                            aria-label="Reschedule appointment"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              aria-hidden="true"
-                            >
-                              <path
-                                d="M4 20h4l10-10-4-4L4 16v4z"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M12 6l4 4"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            className="btn-remove icon-btn"
-                            onClick={() => cancelAppointment(a)}
-                            title="Cancel appointment"
-                            aria-label="Cancel appointment"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              aria-hidden="true"
-                            >
-                              <path
-                                d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </button>
+              <div className="appointments-card-grid">
+                {filteredAppointments.map((a) => (
+                  <div key={a.id} className="appointment-card">
+                    <div className="apt-card-header">
+                      <div className="apt-card-pet">
+                        <div className="apt-card-avatar">
+                          {a.pet?.name?.charAt(0).toUpperCase() || "P"}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span className="apt-card-pet-name">
+                          {a.pet?.name || "Pet"}
+                        </span>
+                      </div>
+                      <span
+                        className={`apt-status ${(a.status || "").toLowerCase()}`}
+                      >
+                        {a.status}
+                      </span>
+                    </div>
+
+                    <div className="apt-card-body">
+                      <div className="apt-card-row">
+                        <span className="apt-card-label">Vet:</span>
+                        <span className="apt-card-value">
+                          {`${a.vet?.firstName || ""} ${a.vet?.lastName || ""}`.trim() ||
+                            a.vet?.username ||
+                            "-"}
+                        </span>
+                      </div>
+
+                      <div className="apt-card-row">
+                        <span className="apt-card-label">Date & Time:</span>
+                        <span className="apt-card-value">
+                          {new Date(a.scheduledAt).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="apt-card-row">
+                        <span className="apt-card-label">Reason:</span>
+                        <span className="apt-card-value">
+                          {a.reason || "-"}
+                        </span>
+                      </div>
+
+                      {a.notes && (
+                        <div className="apt-card-row">
+                          <span className="apt-card-label">Notes:</span>
+                          <span className="apt-card-value">{a.notes}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="apt-card-actions">
+                      <button
+                        className="btn-edit icon-btn"
+                        onClick={() => openEditModal(a)}
+                        title="Reschedule appointment"
+                        aria-label="Reschedule appointment"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M4 20h4l10-10-4-4L4 16v4z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M12 6l4 4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="btn-remove icon-btn"
+                        onClick={() => cancelAppointment(a)}
+                        title="Cancel appointment"
+                        aria-label="Cancel appointment"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M5 7h14M9 7V5h6v2m-8 0 1 12h8l1-12"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
