@@ -554,7 +554,18 @@ const VetCalendar = () => {
 
               <div className="form-group">
                 <label>Reason</label>
-                <input name="reason" value={form.reason} onChange={onChange} />
+                <select name="reason" value={form.reason} onChange={onChange}>
+                  <option value="">Select a reason</option>
+                  <option value="Checkup">Checkup</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Vaccination">Vaccination</option>
+                  <option value="Dental cleaning">Dental cleaning</option>
+                  <option value="Surgery">Surgery</option>
+                  <option value="Medication refill">Medication refill</option>
+                  <option value="Others">
+                    Others, please specify on Notes
+                  </option>
+                </select>
               </div>
 
               <div className="form-group">
