@@ -14,6 +14,32 @@ const include = {
   appointment: { select: { id: true, scheduledAt: true } },
 };
 
+const getGlobalCheckupRate = () => {
+  const raw =
+    process.env.GLOBAL_CHECKUP_RATE || process.env.CHECKUP_RATE || "500";
+  const parsed = Number(raw);
+  if (Number.isNaN(parsed) || parsed < 0) return 500;
+  return parsed;
+};
+
+const getAppointmentComputedTotal = async (appointmentId) => {
+  const checkupRate = getGlobalCheckupRate();
+  const usages = await prisma.appointmentInventoryUsage.findMany({
+    where: { appointmentId },
+    select: { lineTotal: true },
+  });
+  const inventorySubtotal = usages.reduce(
+    (sum, usage) => sum + Number(usage.lineTotal || 0),
+    0,
+  );
+
+  return {
+    checkupRate,
+    inventorySubtotal,
+    total: checkupRate + inventorySubtotal,
+  };
+};
+
 // GET /api/payments
 exports.getPayments = async (req, res) => {
   try {
@@ -71,31 +97,97 @@ exports.createPayment = async (req, res) => {
       appointmentId,
       service,
       amount,
+      adjustmentReason,
       method,
       status,
       reference,
       notes,
     } = req.body;
-    if (!petId || !service || !amount)
-      return res
-        .status(400)
-        .json({ message: "petId, service, amount are required" });
 
-    const pet = await prisma.pet.findUnique({
-      where: { id: petId },
-      select: { ownerId: true },
-    });
-    if (!pet) return res.status(404).json({ message: "Pet not found" });
+    let resolvedPetId = petId;
+    let resolvedOwnerId = ownerId;
+    let resolvedService = service;
+    let resolvedAmount = amount;
 
-    const resolvedOwnerId = ownerId || pet.ownerId;
+    if (appointmentId) {
+      const appointment = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        select: {
+          id: true,
+          petId: true,
+          ownerId: true,
+          reason: true,
+          payment: { select: { id: true } },
+        },
+      });
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      if (appointment.payment) {
+        return res.status(409).json({
+          message: "This appointment already has a linked payment",
+        });
+      }
+
+      resolvedPetId = appointment.petId;
+      resolvedOwnerId = appointment.ownerId;
+      resolvedService = service || appointment.reason || "Veterinary Checkup";
+
+      const computed = await getAppointmentComputedTotal(appointmentId);
+      const hasManualAmount =
+        amount !== undefined && amount !== null && String(amount) !== "";
+      if (!hasManualAmount) {
+        resolvedAmount = computed.total;
+      } else {
+        const manualAmount = Number(amount);
+        if (Number.isNaN(manualAmount)) {
+          return res.status(400).json({ message: "amount must be a number" });
+        }
+        if (
+          Math.abs(manualAmount - computed.total) > 0.009 &&
+          !adjustmentReason
+        ) {
+          return res.status(400).json({
+            message:
+              "adjustmentReason is required when overriding auto-computed total",
+          });
+        }
+        resolvedAmount = manualAmount;
+      }
+    } else {
+      if (!petId || !service || amount === undefined || String(amount) === "") {
+        return res
+          .status(400)
+          .json({ message: "petId, service, amount are required" });
+      }
+
+      const pet = await prisma.pet.findUnique({
+        where: { id: petId },
+        select: { ownerId: true },
+      });
+      if (!pet) return res.status(404).json({ message: "Pet not found" });
+      resolvedOwnerId = ownerId || pet.ownerId;
+      resolvedAmount = Number(amount);
+    }
+
+    if (!resolvedPetId || !resolvedService) {
+      return res.status(400).json({
+        message: "Unable to resolve pet and service for payment",
+      });
+    }
+
+    if (Number.isNaN(Number(resolvedAmount))) {
+      return res.status(400).json({ message: "amount must be a number" });
+    }
 
     const payment = await prisma.payment.create({
       data: {
-        petId,
+        petId: resolvedPetId,
         ownerId: resolvedOwnerId,
         appointmentId,
-        service,
-        amount: parseFloat(amount),
+        service: resolvedService,
+        amount: parseFloat(resolvedAmount),
+        adjustmentReason,
         method,
         status,
         reference,
@@ -115,7 +207,15 @@ exports.createPayment = async (req, res) => {
 // PATCH /api/payments/:id
 exports.updatePayment = async (req, res) => {
   try {
-    const { status, method, reference, notes, service, amount } = req.body;
+    const {
+      status,
+      method,
+      reference,
+      notes,
+      service,
+      amount,
+      adjustmentReason,
+    } = req.body;
     const data = {};
     if (status !== undefined) data.status = status;
     if (method !== undefined) data.method = method;
@@ -123,6 +223,8 @@ exports.updatePayment = async (req, res) => {
     if (notes !== undefined) data.notes = notes;
     if (service !== undefined) data.service = service;
     if (amount !== undefined) data.amount = parseFloat(amount);
+    if (adjustmentReason !== undefined)
+      data.adjustmentReason = adjustmentReason;
 
     const payment = await prisma.payment.update({
       where: { id: req.params.id },

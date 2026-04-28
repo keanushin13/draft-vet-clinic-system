@@ -290,6 +290,19 @@
   resize: vertical;
 }
 
+.billing-summary-box {
+  border: 1px solid #dbe5eb;
+  border-radius: 10px;
+  background: #f8fbfd;
+  padding: 10px 12px;
+}
+
+.billing-summary-box p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #374151;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

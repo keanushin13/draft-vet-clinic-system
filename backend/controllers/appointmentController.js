@@ -24,6 +24,84 @@ const APPOINTMENT_STATUSES = new Set([
   "Cancelled",
 ]);
 
+const getGlobalCheckupRate = () => {
+  const raw =
+    process.env.GLOBAL_CHECKUP_RATE || process.env.CHECKUP_RATE || "500";
+  const parsed = Number(raw);
+  if (Number.isNaN(parsed) || parsed < 0) return 500;
+  return parsed;
+};
+
+const computeInventoryStatus = (stock) => {
+  if (stock <= 0) return "OutOfStock";
+  if (stock <= 10) return "LowStock";
+  return "InStock";
+};
+
+const getAppointmentForAccess = async (appointmentId) =>
+  prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    include: appointmentInclude,
+  });
+
+const canAccessAppointment = (user, appt) => {
+  if (["admin", "staff"].includes(user.role)) return true;
+  if (user.role === "pet_owner") return appt.ownerId === user.id;
+  if (user.role === "veterinarian") return appt.vetId === user.id;
+  return false;
+};
+
+const getBillingSummaryByAppointmentId = async (appointmentId) => {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    include: {
+      ...appointmentInclude,
+      inventoryUsages: {
+        include: {
+          inventoryItem: {
+            select: { id: true, name: true, unit: true },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!appointment) return null;
+
+  const checkupRate = getGlobalCheckupRate();
+  const inventorySubtotal = appointment.inventoryUsages.reduce(
+    (sum, usage) => sum + Number(usage.lineTotal || 0),
+    0,
+  );
+  const total = checkupRate + inventorySubtotal;
+
+  return {
+    appointment: {
+      id: appointment.id,
+      scheduledAt: appointment.scheduledAt,
+      status: appointment.status,
+      reason: appointment.reason,
+      notes: appointment.notes,
+      pet: appointment.pet,
+      owner: appointment.owner,
+      vet: appointment.vet,
+    },
+    checkupRate,
+    inventorySubtotal,
+    total,
+    usageLines: appointment.inventoryUsages.map((usage) => ({
+      id: usage.id,
+      inventoryItemId: usage.inventoryItemId,
+      inventoryItemName: usage.inventoryItem?.name,
+      unit: usage.inventoryItem?.unit,
+      quantityUsed: usage.quantityUsed,
+      unitCostSnapshot: Number(usage.unitCostSnapshot || 0),
+      lineTotal: Number(usage.lineTotal || 0),
+    })),
+  };
+};
+
 const canSetStatus = (role, fromStatus, toStatus) => {
   if (role === "admin" || role === "staff") return true;
 
@@ -110,6 +188,169 @@ exports.getAppointment = async (req, res) => {
     }
 
     res.json(appt);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// GET /api/appointments/:id/billing-summary
+exports.getAppointmentBillingSummary = async (req, res) => {
+  try {
+    const summary = await getBillingSummaryByAppointmentId(req.params.id);
+    if (!summary) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const appt = await getAppointmentForAccess(req.params.id);
+    if (!appt) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    if (!canAccessAppointment(req.user, appt)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    res.json(summary);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// POST /api/appointments/:id/inventory-usage
+exports.addAppointmentInventoryUsage = async (req, res) => {
+  try {
+    if (!["admin", "staff", "veterinarian"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const appt = await getAppointmentForAccess(req.params.id);
+    if (!appt) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    if (!canAccessAppointment(req.user, appt)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const rawUsages = Array.isArray(req.body.usages)
+      ? req.body.usages
+      : [
+          {
+            inventoryItemId: req.body.inventoryItemId,
+            quantityUsed: req.body.quantityUsed,
+          },
+        ];
+
+    if (!rawUsages.length) {
+      return res.status(400).json({ message: "No usage items provided" });
+    }
+
+    for (const usage of rawUsages) {
+      if (!usage.inventoryItemId || !usage.quantityUsed) {
+        return res.status(400).json({
+          message:
+            "inventoryItemId and quantityUsed are required for each item",
+        });
+      }
+      const qty = Number(usage.quantityUsed);
+      if (!Number.isInteger(qty) || qty <= 0) {
+        return res.status(400).json({
+          message: "quantityUsed must be a positive integer",
+        });
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (const usage of rawUsages) {
+        const item = await tx.inventoryItem.findUnique({
+          where: { id: usage.inventoryItemId },
+        });
+        if (!item || item.isArchived) {
+          throw new Error("Inventory item not found");
+        }
+
+        const qty = Number(usage.quantityUsed);
+        if (item.stock < qty) {
+          throw new Error(`Insufficient stock for ${item.name}`);
+        }
+
+        const unitCost = Number(item.price || 0);
+        const lineTotal = unitCost * qty;
+        const nextStock = item.stock - qty;
+
+        await tx.appointmentInventoryUsage.create({
+          data: {
+            appointmentId: appt.id,
+            inventoryItemId: item.id,
+            quantityUsed: qty,
+            unitCostSnapshot: unitCost,
+            lineTotal,
+            createdById: req.user.id,
+          },
+        });
+
+        await tx.inventoryItem.update({
+          where: { id: item.id },
+          data: {
+            stock: nextStock,
+            status: computeInventoryStatus(nextStock),
+          },
+        });
+      }
+    });
+
+    const summary = await getBillingSummaryByAppointmentId(appt.id);
+    res.status(201).json(summary);
+  } catch (e) {
+    if (e.message?.startsWith("Insufficient stock")) {
+      return res.status(400).json({ message: e.message });
+    }
+    if (e.message === "Inventory item not found") {
+      return res.status(404).json({ message: e.message });
+    }
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/appointments/:id/inventory-usage/:usageId
+exports.deleteAppointmentInventoryUsage = async (req, res) => {
+  try {
+    if (!["admin", "staff", "veterinarian"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const appt = await getAppointmentForAccess(req.params.id);
+    if (!appt) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    if (!canAccessAppointment(req.user, appt)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const usage = await prisma.appointmentInventoryUsage.findUnique({
+      where: { id: req.params.usageId },
+      include: { inventoryItem: true },
+    });
+    if (!usage || usage.appointmentId !== appt.id) {
+      return res.status(404).json({ message: "Usage entry not found" });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.appointmentInventoryUsage.delete({ where: { id: usage.id } });
+
+      const nextStock = (usage.inventoryItem?.stock || 0) + usage.quantityUsed;
+      await tx.inventoryItem.update({
+        where: { id: usage.inventoryItemId },
+        data: {
+          stock: nextStock,
+          status: computeInventoryStatus(nextStock),
+        },
+      });
+    });
+
+    const summary = await getBillingSummaryByAppointmentId(appt.id);
+    res.json(summary);
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });

@@ -8,6 +8,8 @@ import { useSidebar } from "../../../components/useSidebar";
 import {
   createPayment,
   deletePayment,
+  getAppointmentBillingSummary,
+  getAppointments,
   getPayments,
   getPets,
   restorePayment,
@@ -25,13 +27,18 @@ const StaffPaymentHistory = () => {
 
   const [payments, setPayments] = useState([]);
   const [pets, setPets] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [useAppointmentMode, setUseAppointmentMode] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [billingSummary, setBillingSummary] = useState(null);
   const [form, setForm] = useState({
+    appointmentId: "",
     petId: "",
     service: "",
     amount: "",
@@ -39,11 +46,12 @@ const StaffPaymentHistory = () => {
     status: "Pending",
     reference: "",
     notes: "",
+    adjustmentReason: "",
   });
   const [expandedStatus, setExpandedStatus] = useState({
     Paid: false,
     Pending: true,
-    Failed: false,
+    Refunded: false,
   });
 
   useEffect(() => {
@@ -58,12 +66,14 @@ const StaffPaymentHistory = () => {
   const loadData = async (includeArchived = false) => {
     setError("");
     try {
-      const [paymentRes, petRes] = await Promise.all([
+      const [paymentRes, petRes, appointmentRes] = await Promise.all([
         getPayments({ includeArchived }),
         getPets(),
+        getAppointments(),
       ]);
       setPayments(paymentRes.data || []);
       setPets(petRes.data || []);
+      setAppointments(appointmentRes.data || []);
     } catch {
       setError("Failed to load payments");
     }
@@ -100,7 +110,7 @@ const StaffPaymentHistory = () => {
   }, {});
 
   // Define status order for consistent display
-  const statusOrder = ["Paid", "Pending", "Failed"];
+  const statusOrder = ["Paid", "Pending", "Refunded"];
   const sortedStatuses = statusOrder.filter(
     (s) => groupedPayments[s]?.length > 0,
   );
@@ -118,14 +128,60 @@ const StaffPaymentHistory = () => {
     const configs = {
       Paid: { icon: "✓", color: "#4caf50" },
       Pending: { icon: "⏳", color: "#ff9800" },
-      Failed: { icon: "✕", color: "#f44336" },
+      Refunded: { icon: "↺", color: "#607d8b" },
     };
     return configs[status] || configs.Pending;
   };
 
+  const getPetDisplayById = (petId) => {
+    const pet = pets.find((p) => p.id === petId);
+    return pet ? `${pet.name} (${pet.species})` : "Unknown Pet";
+  };
+
+  const formatAppointmentOption = (appointment) => {
+    const ownerName = appointment.owner
+      ? `${appointment.owner.firstName ?? ""} ${appointment.owner.lastName ?? ""}`.trim() ||
+        appointment.owner.username
+      : "Unknown Owner";
+
+    return `${new Date(appointment.scheduledAt).toLocaleString()} - ${appointment.pet?.name || "Unknown Pet"} (${ownerName})`;
+  };
+
+  const fetchAppointmentSummary = async (appointmentId) => {
+    if (!appointmentId) {
+      setBillingSummary(null);
+      return;
+    }
+
+    setLoadingSummary(true);
+    try {
+      const { data } = await getAppointmentBillingSummary(appointmentId);
+      setBillingSummary(data);
+      setForm((prev) => ({
+        ...prev,
+        appointmentId,
+        petId: data.appointment?.pet?.id || prev.petId,
+        service:
+          prev.service || data.appointment?.reason || "Veterinary Checkup",
+        amount:
+          prev.amount && Number(prev.amount) > 0
+            ? prev.amount
+            : String(data.total ?? ""),
+      }));
+    } catch (err) {
+      setBillingSummary(null);
+      setError(err.response?.data?.message || "Failed to load billing summary");
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
+    setUseAppointmentMode(true);
+    setBillingSummary(null);
     setForm({
+      appointmentId: "",
       petId: pets[0]?.id || "",
       service: "",
       amount: "",
@@ -133,6 +189,7 @@ const StaffPaymentHistory = () => {
       status: "Pending",
       reference: "",
       notes: "",
+      adjustmentReason: "",
     });
     setError("");
     setShowModal(true);
@@ -140,7 +197,10 @@ const StaffPaymentHistory = () => {
 
   const openEdit = (payment) => {
     setEditing(payment);
+    setUseAppointmentMode(Boolean(payment.appointment?.id));
+    setBillingSummary(null);
     setForm({
+      appointmentId: payment.appointment?.id || "",
       petId: payment.petId || payment.pet?.id || "",
       service: payment.service || "",
       amount: String(payment.amount ?? ""),
@@ -148,27 +208,62 @@ const StaffPaymentHistory = () => {
       status: payment.status || "Pending",
       reference: payment.reference || "",
       notes: payment.notes || "",
+      adjustmentReason: payment.adjustmentReason || "",
     });
     setError("");
     setShowModal(true);
+
+    if (payment.appointment?.id) {
+      fetchAppointmentSummary(payment.appointment.id);
+    }
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditing(null);
     setSaving(false);
+    setLoadingSummary(false);
+    setBillingSummary(null);
     setError("");
   };
 
-  const onChange = (e) => {
+  const onChange = async (e) => {
     const { name, value } = e.target;
+
+    if (name === "appointmentId") {
+      setForm((prev) => ({ ...prev, appointmentId: value }));
+      await fetchAppointmentSummary(value);
+      return;
+    }
+
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (useAppointmentMode && !editing && !form.appointmentId) {
+      setError(
+        "Please select an appointment or turn off appointment-based billing",
+      );
+      return;
+    }
+
     if (!form.petId || !form.service || !form.amount) {
       setError("Pet, service, and amount are required");
+      return;
+    }
+
+    if (
+      useAppointmentMode &&
+      form.appointmentId &&
+      billingSummary &&
+      Math.abs(Number(form.amount) - Number(billingSummary.total || 0)) >
+        0.009 &&
+      !form.adjustmentReason
+    ) {
+      setError(
+        "Adjustment reason is required when overriding auto-computed total",
+      );
       return;
     }
 
@@ -183,9 +278,13 @@ const StaffPaymentHistory = () => {
           status: form.status,
           reference: form.reference,
           notes: form.notes,
+          adjustmentReason: form.adjustmentReason,
         });
       } else {
         await createPayment({
+          appointmentId: useAppointmentMode
+            ? form.appointmentId || undefined
+            : undefined,
           petId: form.petId,
           service: form.service,
           amount: Number(form.amount),
@@ -193,6 +292,7 @@ const StaffPaymentHistory = () => {
           status: form.status,
           reference: form.reference,
           notes: form.notes,
+          adjustmentReason: form.adjustmentReason,
         });
       }
       closeModal();
@@ -623,17 +723,98 @@ const StaffPaymentHistory = () => {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <form className="user-modal-form" onSubmit={onSubmit}>
               <h3>{editing ? "Edit Payment" : "Add Payment"}</h3>
+
+              {!editing && (
+                <div className="form-group">
+                  <label className="archived-toggle">
+                    <input
+                      type="checkbox"
+                      checked={useAppointmentMode}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        setUseAppointmentMode(enabled);
+                        setBillingSummary(null);
+                        setError("");
+                        setForm((prev) => ({
+                          ...prev,
+                          appointmentId: "",
+                          adjustmentReason: "",
+                          amount: enabled ? "" : prev.amount,
+                        }));
+                      }}
+                      disabled={Boolean(editing && form.appointmentId)}
+                    />
+                    Appointment-based billing
+                  </label>
+                </div>
+              )}
+
+              {useAppointmentMode && !editing && (
+                <div className="form-group">
+                  <label>Appointment</label>
+                  <select
+                    name="appointmentId"
+                    value={form.appointmentId}
+                    onChange={onChange}
+                  >
+                    <option value="">Select appointment</option>
+                    {appointments.map((appointment) => (
+                      <option key={appointment.id} value={appointment.id}>
+                        {formatAppointmentOption(appointment)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {(form.appointmentId || (editing && useAppointmentMode)) && (
+                <div className="form-group">
+                  <label>Appointment Summary</label>
+                  <div className="billing-summary-box">
+                    {loadingSummary ? (
+                      <p>Loading billing summary...</p>
+                    ) : billingSummary ? (
+                      <>
+                        <p>
+                          Owner: {billingSummary.appointment?.owner?.firstName}{" "}
+                          {billingSummary.appointment?.owner?.lastName}
+                        </p>
+                        <p>Pet: {billingSummary.appointment?.pet?.name}</p>
+                        <p>
+                          Vet: {billingSummary.appointment?.vet?.firstName}{" "}
+                          {billingSummary.appointment?.vet?.lastName}
+                        </p>
+                        <p>
+                          Checkup Rate: ₱
+                          {Number(
+                            billingSummary.checkupRate || 0,
+                          ).toLocaleString()}
+                        </p>
+                        <p>
+                          Inventory Subtotal: ₱
+                          {Number(
+                            billingSummary.inventorySubtotal || 0,
+                          ).toLocaleString()}
+                        </p>
+                        <p>
+                          Auto Total: ₱
+                          {Number(billingSummary.total || 0).toLocaleString()}
+                        </p>
+                      </>
+                    ) : (
+                      <p>No summary available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="form-row">
                 <div className="form-group">
                   <label>Pet</label>
-                  {editing ? (
+                  {editing || (useAppointmentMode && form.petId) ? (
                     <input
                       type="text"
-                      value={
-                        pets.find((p) => p.id === form.petId)
-                          ? `${pets.find((p) => p.id === form.petId)?.name} (${pets.find((p) => p.id === form.petId)?.species})`
-                          : "Unknown Pet"
-                      }
+                      value={getPetDisplayById(form.petId)}
                       readOnly
                       style={{ backgroundColor: "#f5f5f5", cursor: "default" }}
                     />
@@ -710,6 +891,20 @@ const StaffPaymentHistory = () => {
                 <label>Notes</label>
                 <textarea name="notes" value={form.notes} onChange={onChange} />
               </div>
+
+              {(useAppointmentMode || Boolean(editing?.appointment?.id)) && (
+                <div className="form-group">
+                  <label>
+                    Adjustment Reason (required if amount is overridden)
+                  </label>
+                  <input
+                    name="adjustmentReason"
+                    value={form.adjustmentReason}
+                    onChange={onChange}
+                    placeholder="e.g., Manual discount approved by admin"
+                  />
+                </div>
+              )}
 
               {error && <p className="modal-error">{error}</p>}
               <div className="modal-actions">

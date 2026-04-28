@@ -127,6 +127,7 @@ model User {
   receivedMessages         Message[]              @relation("MessageReceiver")
   notifications            Notification[]
   activityLogs             ActivityLog[]
+  appointmentInventoryUsagesCreated AppointmentInventoryUsage[] @relation("AppointmentInventoryUsageCreator")
   vetWeeklySchedules       VetSchedule[]          @relation("VetWeeklySchedule")
   vetScheduleExceptions    VetScheduleException[] @relation("VetScheduleException")
 }
@@ -179,6 +180,7 @@ model Appointment {
 
   medicalRecord MedicalRecord?
   payment       Payment?
+  inventoryUsages AppointmentInventoryUsage[]
 }
 
 // ─── Vet Availability ────────────────────────────────────────────────────────
@@ -249,6 +251,7 @@ model Payment {
   archivedAt    DateTime?
   reference     String?
   notes         String?
+  adjustmentReason String?
 
   appointmentId String?       @unique
   appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
@@ -279,6 +282,26 @@ model InventoryItem {
 
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+
+  usages    AppointmentInventoryUsage[]
+}
+
+model AppointmentInventoryUsage {
+  id               String        @id @default(cuid())
+  appointmentId    String
+  appointment      Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  inventoryItemId  String
+  inventoryItem    InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantityUsed     Int
+  unitCostSnapshot Decimal       @db.Decimal(10, 2)
+  lineTotal        Decimal       @db.Decimal(10, 2)
+  createdById      String?
+  createdBy        User?         @relation("AppointmentInventoryUsageCreator", fields: [createdById], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([appointmentId])
+  @@index([inventoryItemId])
 }
 
 // ─── Message ──────────────────────────────────────────────────────────────────
