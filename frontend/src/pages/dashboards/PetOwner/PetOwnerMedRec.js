@@ -238,6 +238,9 @@ const PetOwnerMedRec = () => {
               <p className="ai-insight-subheading">
                 {aiModal.record?.diagnosis}
               </p>
+              <p className="ai-insight-subheading">
+                Analyzed from full medical history across all records.
+              </p>
             </div>
 
             {aiModal.loading && (

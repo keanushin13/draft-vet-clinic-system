@@ -378,8 +378,40 @@ exports.getAiInsight = async (req, res) => {
     }
 
     const pet = record.pet || {};
+    const historyRecords = await prisma.medicalRecord.findMany({
+      where: { petId: record.petId },
+      select: {
+        id: true,
+        createdAt: true,
+        diagnosis: true,
+        treatment: true,
+        prescription: true,
+        notes: true,
+        status: true,
+        followUpDate: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const historyLines = historyRecords.map((hist, idx) => {
+      const createdAtText = hist.createdAt
+        ? new Date(hist.createdAt).toLocaleDateString()
+        : "Unknown date";
+      const followUpText = hist.followUpDate
+        ? new Date(hist.followUpDate).toLocaleDateString()
+        : "None scheduled";
+      return [
+        `${idx + 1}. Record ID: ${hist.id} | Date: ${createdAtText}`,
+        `   Diagnosis: ${hist.diagnosis || "Not specified"}`,
+        `   Treatment: ${hist.treatment || "Not specified"}`,
+        `   Prescription: ${hist.prescription || "None"}`,
+        `   Notes: ${hist.notes || "None"}`,
+        `   Status: ${hist.status || "Unknown"} | Follow-up: ${followUpText}`,
+      ].join("\n");
+    });
+
     const prompt = [
-      "You are a veterinary health assistant. Based on the following pet medical record, provide a brief, helpful health insight for the pet owner.",
+      "You are a veterinary health assistant. Based on the current medical record and the pet's full medical history, provide a brief, helpful health insight for the pet owner.",
       "Be clear, compassionate, and informative. Do NOT provide a new diagnosis — only educational context and general wellness guidance relevant to the existing findings.",
       "",
       "Pet Information:",
@@ -397,11 +429,17 @@ exports.getAiInsight = async (req, res) => {
       `- Status: ${record.status}`,
       `- Follow-up Date: ${record.followUpDate ? new Date(record.followUpDate).toLocaleDateString() : "None scheduled"}`,
       "",
+      "Full Medical History Across All Records (oldest to newest):",
+      historyLines.length > 0
+        ? historyLines.join("\n\n")
+        : "No medical history records found.",
+      "",
       "Please provide:",
       "1. A brief plain-language explanation of the diagnosis",
-      "2. What the pet owner should watch for at home",
-      "3. General care tips relevant to this condition",
-      "4. When to seek immediate veterinary attention",
+      "2. Any notable pattern or trend across the full medical history",
+      "3. What the pet owner should watch for at home",
+      "4. General care tips relevant to this condition",
+      "5. When to seek immediate veterinary attention",
       "",
       "Keep your response under 300 words. Use clear, non-technical language suitable for a general pet owner.",
     ].join("\n");
