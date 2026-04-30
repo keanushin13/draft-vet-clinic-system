@@ -309,6 +309,14 @@ model AppointmentInventoryUsage {
   @@index([inventoryItemId])
 }
 
+model InventoryAiReport {
+  id          String   @id
+  aiInsight   String
+  aiInsightModel String
+  generatedAt DateTime
+  createdAt   DateTime @default(now())
+}
+
 // ─── Message ──────────────────────────────────────────────────────────────────
 
 model Message {

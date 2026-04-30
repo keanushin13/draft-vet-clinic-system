@@ -12,6 +12,7 @@ import {
   updateInventoryItem,
   deleteInventoryItem,
   restoreInventoryItem,
+  getInventoryAiAnalysis,
 } from "../../../api/api";
 import {
   INVENTORY_CATEGORY_OPTIONS,
@@ -36,6 +37,7 @@ const StaffInventory = () => {
   const [items, setItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [aiModal, setAiModal] = useState(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -153,6 +155,22 @@ const StaffInventory = () => {
     }
   };
 
+  const openAiAnalysis = async (refresh = false) => {
+    setAiModal({ insight: null, loading: true, error: "" });
+    try {
+      const res = await getInventoryAiAnalysis(refresh);
+      setAiModal({ loading: false, error: "", ...res.data });
+    } catch (err) {
+      setAiModal((prev) => ({
+        ...prev,
+        loading: false,
+        error:
+          err.response?.data?.message ||
+          "Failed to generate AI inventory analysis",
+      }));
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <StaffSidebar isOpen={isOpen} onClose={close} />
@@ -197,9 +215,14 @@ const StaffInventory = () => {
                 <span className="stat-num">{lowStockCount}</span>
               </div>
             </div>
-            <button className="add-item-btn" onClick={openCreate}>
-              + Add New Item
-            </button>
+            <div className="inventory-header-actions">
+              <button className="inv-ai-btn" onClick={() => openAiAnalysis()}>
+                AI Analysis
+              </button>
+              <button className="add-item-btn" onClick={openCreate}>
+                + Add New Item
+              </button>
+            </div>
           </div>
 
           <>
@@ -582,6 +605,69 @@ const StaffInventory = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {aiModal && (
+        <div className="modal-overlay" onClick={() => setAiModal(null)}>
+          <div
+            className="modal-box ai-insight-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ai-insight-header">
+              <span className="ai-generated-badge">AI Generated</span>
+              <h3>Inventory Intelligence Report</h3>
+              <p className="ai-insight-subheading">
+                Fast-moving products and near-expiry promotion opportunities.
+              </p>
+            </div>
+
+            {aiModal.loading && (
+              <div className="ai-insight-loading">
+                <span className="ai-loading-spinner" />
+                Generating inventory analysis...
+              </div>
+            )}
+
+            {!aiModal.loading && aiModal.error && (
+              <div className="ai-insight-error">{aiModal.error}</div>
+            )}
+
+            {!aiModal.loading && !aiModal.error && aiModal.insight && (
+              <div className="ai-insight-body">
+                <div className="ai-insight-content">
+                  {aiModal.insight
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))}
+                </div>
+                <div className="ai-disclaimer">{aiModal.disclaimer}</div>
+                <div className="ai-meta">
+                  {aiModal.fromCache
+                    ? "Cached analysis · "
+                    : "Freshly generated · "}
+                  {aiModal.aiModel} &middot;{" "}
+                  {new Date(aiModal.generatedAt).toLocaleString()}
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              {!aiModal.loading && aiModal.insight && (
+                <button
+                  className="cancel-btn"
+                  onClick={() => openAiAnalysis(true)}
+                >
+                  Refresh
+                </button>
+              )}
+              <button className="save-btn" onClick={() => setAiModal(null)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

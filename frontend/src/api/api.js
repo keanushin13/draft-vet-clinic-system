@@ -128,6 +128,8 @@ export const updateStock = (id, stock) =>
 export const deleteInventoryItem = (id) => API.delete(`/inventory/${id}`);
 export const restoreInventoryItem = (id) =>
   API.patch(`/inventory/${id}/restore`);
+export const getInventoryAiAnalysis = (refresh = false) =>
+  API.post(`/inventory/ai-analysis${refresh ? "?refresh=true" : ""}`);
 
 // ─── MESSAGES ─────────────────────────────────────────────────────────────────
 export const getMessageThreads = () => API.get("/messages/threads");

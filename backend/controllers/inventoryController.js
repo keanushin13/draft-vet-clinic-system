@@ -19,6 +19,11 @@ const ALLOWED_INVENTORY_CATEGORIES = new Set([
   "Others",
 ]);
 
+const INVENTORY_AI_REPORT_ID = "singleton";
+const INVENTORY_AI_MODEL = "gemini-2.0-flash";
+const INVENTORY_AI_DISCLAIMER =
+  "This analysis is AI-generated for inventory planning support only. Validate all recommendations with your veterinary team before making procurement, treatment, or pricing decisions.";
+
 // GET /api/inventory
 exports.getInventory = async (req, res) => {
   try {
@@ -219,6 +224,194 @@ exports.restoreInventoryItem = async (req, res) => {
     res.json(restored);
   } catch (e) {
     console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// POST /api/inventory/ai-analysis
+exports.getInventoryAiAnalysis = async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === "true";
+    const isVet = req.user.role === "veterinarian";
+
+    if (isVet && forceRefresh) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const cached = await prisma.inventoryAiReport.findUnique({
+      where: { id: INVENTORY_AI_REPORT_ID },
+    });
+
+    if (cached && (!forceRefresh || isVet)) {
+      return res.json({
+        insight: cached.aiInsight,
+        isAiGenerated: true,
+        fromCache: true,
+        aiModel: cached.aiInsightModel,
+        generatedAt: cached.generatedAt.toISOString(),
+        disclaimer: INVENTORY_AI_DISCLAIMER,
+      });
+    }
+
+    if (isVet && !cached) {
+      return res.status(503).json({
+        message:
+          "AI inventory analysis has not been generated yet. Please ask staff to generate it.",
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res
+        .status(503)
+        .json({ message: "AI service is not configured on this server" });
+    }
+
+    const [items, usageRows] = await Promise.all([
+      prisma.inventoryItem.findMany({
+        where: { isArchived: false },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          stock: true,
+          unit: true,
+          status: true,
+          price: true,
+          expirationDate: true,
+        },
+      }),
+      prisma.appointmentInventoryUsage.groupBy({
+        by: ["inventoryItemId"],
+        _sum: { quantityUsed: true },
+      }),
+    ]);
+
+    const usageByItemId = new Map(
+      usageRows.map((row) => [row.inventoryItemId, row._sum.quantityUsed || 0]),
+    );
+
+    const usageSorted = [...items]
+      .map((item) => ({
+        ...item,
+        usedQty: usageByItemId.get(item.id) || 0,
+      }))
+      .sort((a, b) => b.usedQty - a.usedQty);
+
+    const now = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const nearExpiry = items
+      .filter((item) => item.expirationDate)
+      .map((item) => {
+        const expiry = new Date(item.expirationDate);
+        const daysUntilExpiry = Math.ceil((expiry - now) / msPerDay);
+        return { item, daysUntilExpiry };
+      })
+      .filter(({ daysUntilExpiry }) => daysUntilExpiry <= 60)
+      .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+
+    const fastMovingLines = usageSorted.slice(0, 20).map((entry, idx) => {
+      const price =
+        entry.price === null || entry.price === undefined
+          ? "N/A"
+          : Number(entry.price).toFixed(2);
+      return `${idx + 1}. ${entry.name} | Category: ${entry.category} | Stock: ${entry.stock} ${entry.unit} | Status: ${entry.status} | Used in treatments: ${entry.usedQty} | Unit Price: PHP ${price}`;
+    });
+
+    const nearExpiryLines = nearExpiry
+      .slice(0, 30)
+      .map(({ item, daysUntilExpiry }) => {
+        const price =
+          item.price === null || item.price === undefined
+            ? "N/A"
+            : Number(item.price).toFixed(2);
+        return `- ${item.name} | Category: ${item.category} | Stock: ${item.stock} ${item.unit} | Status: ${item.status} | Days to expiry: ${daysUntilExpiry} | Unit Price: PHP ${price}`;
+      });
+
+    const prompt = [
+      "You are an inventory planning assistant for a veterinary clinic.",
+      "Analyze inventory usage and expiration risk to support staff and veterinarians.",
+      "",
+      "Return your response in plain text with these exact section headings:",
+      "FAST-MOVING PRODUCTS (AI Generated)",
+      "NEAR-EXPIRY PRODUCTS (AI Generated)",
+      "PROMOTION SUGGESTIONS (AI Generated)",
+      "",
+      "Rules:",
+      "- Keep total response under 350 words.",
+      "- Focus on practical action items for this clinic.",
+      "- Mention products used in pet treatments as high-priority stock.",
+      "- For near-expiry items, suggest safe promotions/bundles to clear stock responsibly.",
+      "",
+      `Total active inventory items: ${items.length}`,
+      "",
+      "Top usage items:",
+      fastMovingLines.length > 0
+        ? fastMovingLines.join("\n")
+        : "No usage records yet.",
+      "",
+      "Near-expiry items (<= 60 days):",
+      nearExpiryLines.length > 0
+        ? nearExpiryLines.join("\n")
+        : "No near-expiry items found.",
+    ].join("\n");
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${INVENTORY_AI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 800, temperature: 0.5 },
+        }),
+      },
+    );
+
+    if (!geminiRes.ok) {
+      const errBody = await geminiRes.json().catch(() => ({}));
+      console.error("Gemini API error:", errBody);
+      return res.status(502).json({
+        message: "AI service returned an error",
+        detail: errBody?.error?.message || "Unknown error",
+      });
+    }
+
+    const data = await geminiRes.json();
+    const insight = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!insight) {
+      return res
+        .status(502)
+        .json({ message: "No analysis returned from AI service" });
+    }
+
+    const generatedAt = new Date();
+    await prisma.inventoryAiReport.upsert({
+      where: { id: INVENTORY_AI_REPORT_ID },
+      update: {
+        aiInsight: insight,
+        aiInsightModel: INVENTORY_AI_MODEL,
+        generatedAt,
+      },
+      create: {
+        id: INVENTORY_AI_REPORT_ID,
+        aiInsight: insight,
+        aiInsightModel: INVENTORY_AI_MODEL,
+        generatedAt,
+      },
+    });
+
+    return res.json({
+      insight,
+      isAiGenerated: true,
+      fromCache: false,
+      aiModel: INVENTORY_AI_MODEL,
+      generatedAt: generatedAt.toISOString(),
+      disclaimer: INVENTORY_AI_DISCLAIMER,
+    });
+  } catch (e) {
+    console.error("Inventory AI analysis error:", e);
     res.status(500).json({ message: "Server error" });
   }
 };

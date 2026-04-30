@@ -33,5 +33,11 @@ router.patch(
   authorizeRoles("admin", "staff"),
   c.restoreInventoryItem,
 );
+router.post(
+  "/ai-analysis",
+  protect,
+  authorizeRoles("admin", "staff", "veterinarian"),
+  c.getInventoryAiAnalysis,
+);
 
 module.exports = router;
