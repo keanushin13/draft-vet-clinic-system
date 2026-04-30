@@ -249,7 +249,7 @@ const StaffPetsProfile = () => {
                           <button
                             className="btn-view-records icon-btn"
                             onClick={() =>
-                              navigate(`/vet-medical-records?petId=${pet.id}`)
+                              navigate(`/staff-medical-records?petId=${pet.id}`)
                             }
                             title="View records"
                             aria-label="View records"
@@ -399,7 +399,7 @@ const StaffPetsProfile = () => {
                         <button
                           className="btn-view-records icon-btn"
                           onClick={() =>
-                            navigate(`/vet-medical-records?petId=${pet.id}`)
+                            navigate(`/staff-medical-records?petId=${pet.id}`)
                           }
                           title="View records"
                           aria-label="View records"

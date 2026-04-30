@@ -39,6 +39,7 @@ import StaffProfile from "./pages/dashboards/Staff/StaffProfile";
 import StaffUserManagement from "./pages/dashboards/Staff/StaffUserManagement";
 import StaffOwnerPets from "./pages/dashboards/Staff/StaffOwnerPets";
 import StaffVetSchedule from "./pages/dashboards/Staff/StaffVetSchedule";
+import StaffMedRec from "./pages/dashboards/Staff/StaffMedRec";
 
 // VETERINARIAN IMPORTS
 import VetCalendar from "./pages/dashboards/Veterinary/VetCalendar";
@@ -126,6 +127,7 @@ function App() {
         <Route path="/staff-users" element={<StaffUserManagement />} />
         <Route path="/staff-users/:id/pets" element={<StaffOwnerPets />} />
         <Route path="/staff-pets" element={<StaffPetsProfile />} />
+        <Route path="/staff-medical-records" element={<StaffMedRec />} />
         <Route path="/staff-messages" element={<StaffMessages />} />
         <Route path="/staff-inventory" element={<StaffInventory />} />
         <Route path="/staff-payments" element={<StaffPaymentHistory />} />
