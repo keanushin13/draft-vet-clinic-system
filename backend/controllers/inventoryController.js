@@ -21,6 +21,7 @@ const ALLOWED_INVENTORY_CATEGORIES = new Set([
 
 const INVENTORY_AI_REPORT_ID = "singleton";
 const INVENTORY_AI_MODEL = "gemini-2.0-flash";
+const INVENTORY_GROQ_AI_MODEL = "llama-3.1-8b-instant";
 const INVENTORY_AI_DISCLAIMER =
   "This analysis is AI-generated for inventory planning support only. Validate all recommendations with your veterinary team before making procurement, treatment, or pricing decisions.";
 
@@ -260,8 +261,9 @@ exports.getInventoryAiAnalysis = async (req, res) => {
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!geminiApiKey && !groqApiKey) {
       return res
         .status(503)
         .json({ message: "AI service is not configured on this server" });
@@ -357,33 +359,91 @@ exports.getInventoryAiAnalysis = async (req, res) => {
         : "No near-expiry items found.",
     ].join("\n");
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${INVENTORY_AI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 800, temperature: 0.5 },
-        }),
-      },
-    );
+    let insight = "";
+    let selectedModel = "";
+    let geminiRateLimitMessage = "";
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.json().catch(() => ({}));
-      console.error("Gemini API error:", errBody);
-      return res.status(502).json({
-        message: "AI service returned an error",
-        detail: errBody?.error?.message || "Unknown error",
-      });
+    if (geminiApiKey) {
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${INVENTORY_AI_MODEL}:generateContent?key=${geminiApiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 800, temperature: 0.5 },
+          }),
+        },
+      );
+
+      if (geminiRes.ok) {
+        const data = await geminiRes.json();
+        insight = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (insight) {
+          selectedModel = INVENTORY_AI_MODEL;
+        }
+      } else {
+        const errBody = await geminiRes.json().catch(() => ({}));
+        console.error("Gemini API error:", errBody);
+        const errMsg = errBody?.error?.message || "";
+        const isRateLimit =
+          geminiRes.status === 429 ||
+          errMsg.toLowerCase().includes("quota") ||
+          errMsg.toLowerCase().includes("rate");
+        const retryMatch = errMsg.match(/(\d+\.?\d*)s/);
+        const retrySeconds = retryMatch
+          ? Math.ceil(parseFloat(retryMatch[1]))
+          : 60;
+        if (isRateLimit) {
+          geminiRateLimitMessage = `AI service is temporarily rate-limited. Please try again in about ${retrySeconds} second${retrySeconds === 1 ? "" : "s"}.`;
+        }
+      }
     }
 
-    const data = await geminiRes.json();
-    const insight = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!insight && groqApiKey) {
+      const groqRes = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${groqApiKey}`,
+          },
+          body: JSON.stringify({
+            model: INVENTORY_GROQ_AI_MODEL,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an inventory planning assistant for a veterinary clinic. Give concise, actionable recommendations.",
+              },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.5,
+            max_tokens: 900,
+          }),
+        },
+      );
+
+      if (groqRes.ok) {
+        const groqData = await groqRes.json();
+        insight = groqData.choices?.[0]?.message?.content?.trim() || "";
+        if (insight) {
+          selectedModel = `groq:${INVENTORY_GROQ_AI_MODEL}`;
+        }
+      } else {
+        const groqErr = await groqRes.json().catch(() => ({}));
+        console.error("Groq API error:", groqErr);
+      }
+    }
+
     if (!insight) {
-      return res
-        .status(502)
-        .json({ message: "No analysis returned from AI service" });
+      if (geminiRateLimitMessage && !groqApiKey) {
+        return res.status(429).json({ message: geminiRateLimitMessage });
+      }
+      return res.status(502).json({
+        message: "AI service returned an error. Please try again.",
+      });
     }
 
     const generatedAt = new Date();
@@ -391,13 +451,13 @@ exports.getInventoryAiAnalysis = async (req, res) => {
       where: { id: INVENTORY_AI_REPORT_ID },
       update: {
         aiInsight: insight,
-        aiInsightModel: INVENTORY_AI_MODEL,
+        aiInsightModel: selectedModel,
         generatedAt,
       },
       create: {
         id: INVENTORY_AI_REPORT_ID,
         aiInsight: insight,
-        aiInsightModel: INVENTORY_AI_MODEL,
+        aiInsightModel: selectedModel,
         generatedAt,
       },
     });
@@ -406,7 +466,7 @@ exports.getInventoryAiAnalysis = async (req, res) => {
       insight,
       isAiGenerated: true,
       fromCache: false,
-      aiModel: INVENTORY_AI_MODEL,
+      aiModel: selectedModel,
       generatedAt: generatedAt.toISOString(),
       disclaimer: INVENTORY_AI_DISCLAIMER,
     });
