@@ -9,6 +9,7 @@ import {
   createMedicalRecord,
   deleteMedicalRecord,
   getMedicalRecords,
+  getMedicalRecordAiInsight,
   getPets,
   restoreMedicalRecord,
   updateMedicalRecord,
@@ -26,13 +27,14 @@ const VetMedRec = () => {
   const [records, setRecords] = useState([]);
   const [pets, setPets] = useState([]);
   const [search, setSearch] = useState("");
-  const [includeArchived, setIncludeArchived] = useState(false);
+  const [includeArchived] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [aiModal, setAiModal] = useState(null); // { record, insight, loading, error }
   const [form, setForm] = useState({
     petId: "",
     appointmentId: "",
@@ -133,6 +135,20 @@ const VetMedRec = () => {
     setShowModal(false);
     setEditing(null);
     setSaving(false);
+  };
+
+  const openAiInsight = async (record, refresh = false) => {
+    setAiModal({ record, insight: null, loading: true, error: "" });
+    try {
+      const res = await getMedicalRecordAiInsight(record.id, refresh);
+      setAiModal({ record, loading: false, error: "", ...res.data });
+    } catch (err) {
+      setAiModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to generate AI insight",
+      }));
+    }
   };
 
   const onChange = (e) => {
@@ -267,6 +283,25 @@ const VetMedRec = () => {
                       <td>
                         <div className="row-actions">
                           <button
+                            className="row-btn icon-btn row-btn-ai"
+                            onClick={() => openAiInsight(rec)}
+                            title="AI Health Insight"
+                            aria-label="AI Health Insight"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
                             className="row-btn icon-btn"
                             onClick={() => openEdit(rec)}
                             title="Edit record"
@@ -383,6 +418,25 @@ const VetMedRec = () => {
                     <div className="record-card-row">
                       <span className="record-card-label">Actions</span>
                       <div className="row-actions">
+                        <button
+                          className="row-btn icon-btn row-btn-ai"
+                          onClick={() => openAiInsight(rec)}
+                          title="AI Health Insight"
+                          aria-label="AI Health Insight"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
                         <button
                           className="row-btn icon-btn"
                           onClick={() => openEdit(rec)}
@@ -576,6 +630,107 @@ const VetMedRec = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {aiModal && (
+        <div className="modal-overlay" onClick={() => setAiModal(null)}>
+          <div
+            className="modal-box ai-insight-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ai-insight-header">
+              <div className="ai-generated-badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                >
+                  <path
+                    d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                AI Generated
+              </div>
+              <h3>Health Insight — {aiModal.record?.pet?.name}</h3>
+              <p className="ai-insight-subheading">
+                {aiModal.record?.diagnosis}
+              </p>
+            </div>
+
+            {aiModal.loading && (
+              <div className="ai-insight-loading">
+                <div className="ai-loading-spinner" />
+                <span>Generating health insight...</span>
+              </div>
+            )}
+
+            {aiModal.error && (
+              <p className="ai-insight-error">{aiModal.error}</p>
+            )}
+
+            {!aiModal.loading && aiModal.insight && (
+              <div className="ai-insight-body">
+                <div className="ai-insight-content">
+                  {aiModal.insight
+                    .split("\n")
+                    .map((line, i) =>
+                      line.trim() ? <p key={i}>{line}</p> : <br key={i} />,
+                    )}
+                </div>
+                <div className="ai-disclaimer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M12 8v4m0 4h.01"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {aiModal.disclaimer}
+                </div>
+                <div className="ai-meta">
+                  {aiModal.fromCache
+                    ? "Cached insight · "
+                    : "Freshly generated · "}
+                  {aiModal.aiModel} &middot;{" "}
+                  {new Date(aiModal.generatedAt).toLocaleString()}
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              {!aiModal.loading && aiModal.insight && (
+                <button
+                  className="cancel-btn"
+                  onClick={() => openAiInsight(aiModal.record, true)}
+                >
+                  Refresh
+                </button>
+              )}
+              <button className="save-btn" onClick={() => setAiModal(null)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

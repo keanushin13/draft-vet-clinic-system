@@ -29,7 +29,7 @@ const StaffPaymentHistory = () => {
   const [pets, setPets] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [linkedAppointmentIds, setLinkedAppointmentIds] = useState([]);
-  const [showArchived, setShowArchived] = useState(false);
+  const [showArchived] = useState(false);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);

@@ -4,7 +4,7 @@ import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/PetOwnerMedRec.css";
 import PetOwnerSidebar from "../../../components/PetOwnerSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getMedicalRecords } from "../../../api/api";
+import { getMedicalRecords, getMedicalRecordAiInsight } from "../../../api/api";
 
 import bellIcon from "../../../assets/Bell_Icon.png";
 import userIcon from "../../../assets/Profile.png";
@@ -17,6 +17,7 @@ const PetOwnerMedRec = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [aiModal, setAiModal] = useState(null); // { record, insight, loading, error }
 
   useEffect(() => {
     if (!user || user.role !== "pet_owner") {
@@ -37,6 +38,20 @@ const PetOwnerMedRec = () => {
       setError(err.response?.data?.message || "Failed to load medical records");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openAiInsight = async (record) => {
+    setAiModal({ record, insight: null, loading: true, error: "" });
+    try {
+      const res = await getMedicalRecordAiInsight(record.id);
+      setAiModal({ record, loading: false, error: "", ...res.data });
+    } catch (err) {
+      setAiModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.response?.data?.message || "Failed to generate AI insight",
+      }));
     }
   };
 
@@ -143,18 +158,50 @@ const PetOwnerMedRec = () => {
                         {new Date(r.createdAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <span
+                    <div
                       style={{
-                        padding: "5px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        background:
-                          r.status === "Finalized" ? "#dcfce7" : "#fef9c3",
-                        color: r.status === "Finalized" ? "#166534" : "#854d0e",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: "8px",
                       }}
                     >
-                      {r.status}
-                    </span>
+                      <span
+                        style={{
+                          padding: "5px 12px",
+                          borderRadius: "20px",
+                          fontSize: "12px",
+                          background:
+                            r.status === "Finalized" ? "#dcfce7" : "#fef9c3",
+                          color:
+                            r.status === "Finalized" ? "#166534" : "#854d0e",
+                        }}
+                      >
+                        {r.status}
+                      </span>
+                      <button
+                        className="ai-insight-btn"
+                        onClick={() => openAiInsight(r)}
+                        title="Get AI Health Insight"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                          width="14"
+                          height="14"
+                          style={{ marginRight: "5px" }}
+                        >
+                          <path
+                            d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        AI Insight
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -162,6 +209,96 @@ const PetOwnerMedRec = () => {
           )}
         </section>
       </main>
+
+      {aiModal && (
+        <div className="modal-overlay" onClick={() => setAiModal(null)}>
+          <div
+            className="modal-box ai-insight-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ai-insight-header">
+              <div className="ai-generated-badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                >
+                  <path
+                    d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                AI Generated
+              </div>
+              <h3>Health Insight — {aiModal.record?.pet?.name}</h3>
+              <p className="ai-insight-subheading">
+                {aiModal.record?.diagnosis}
+              </p>
+            </div>
+
+            {aiModal.loading && (
+              <div className="ai-insight-loading">
+                <div className="ai-loading-spinner" />
+                <span>Generating health insight...</span>
+              </div>
+            )}
+
+            {aiModal.error && (
+              <p className="ai-insight-error">{aiModal.error}</p>
+            )}
+
+            {!aiModal.loading && aiModal.insight && (
+              <div className="ai-insight-body">
+                <div className="ai-insight-content">
+                  {aiModal.insight
+                    .split("\n")
+                    .map((line, i) =>
+                      line.trim() ? <p key={i}>{line}</p> : <br key={i} />,
+                    )}
+                </div>
+                <div className="ai-disclaimer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M12 8v4m0 4h.01"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {aiModal.disclaimer}
+                </div>
+                <div className="ai-meta">
+                  {aiModal.aiModel} &middot;{" "}
+                  {new Date(aiModal.generatedAt).toLocaleString()}
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button className="save-btn" onClick={() => setAiModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

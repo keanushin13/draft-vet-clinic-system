@@ -319,6 +319,147 @@ exports.deleteMedicalRecord = async (req, res) => {
   }
 };
 
+// POST /api/medical-records/:id/ai-insight
+exports.getAiInsight = async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === "true";
+
+    const record = await prisma.medicalRecord.findUnique({
+      where: { id: req.params.id },
+      include: {
+        pet: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            breed: true,
+            age: true,
+            gender: true,
+          },
+        },
+      },
+    });
+    if (!record) return res.status(404).json({ message: "Record not found" });
+
+    const allowed = await canAccessRecord(req.user, record);
+    if (!allowed) return res.status(403).json({ message: "Forbidden" });
+
+    const DISCLAIMER =
+      "This insight is AI-generated for informational purposes only. It is not a substitute for professional veterinary advice. Always consult your veterinarian.";
+
+    // ── Return cached insight unless a refresh is explicitly requested ──
+    if (!forceRefresh && record.aiInsight) {
+      return res.json({
+        insight: record.aiInsight,
+        isAiGenerated: true,
+        fromCache: true,
+        aiModel: record.aiInsightModel || "gemini-2.0-flash",
+        generatedAt: record.aiInsightGeneratedAt?.toISOString(),
+        disclaimer: DISCLAIMER,
+      });
+    }
+
+    // ── Only veterinarians/staff/admin may trigger (or refresh) a generation ──
+    if (req.user.role === "pet_owner" && !record.aiInsight) {
+      return res.status(503).json({
+        message:
+          "AI insight has not been generated for this record yet. Please ask your veterinarian.",
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res
+        .status(503)
+        .json({ message: "AI service is not configured on this server" });
+    }
+
+    const pet = record.pet || {};
+    const prompt = [
+      "You are a veterinary health assistant. Based on the following pet medical record, provide a brief, helpful health insight for the pet owner.",
+      "Be clear, compassionate, and informative. Do NOT provide a new diagnosis — only educational context and general wellness guidance relevant to the existing findings.",
+      "",
+      "Pet Information:",
+      `- Name: ${pet.name || "Unknown"}`,
+      `- Species: ${pet.species || "Unknown"}`,
+      `- Breed: ${pet.breed || "Not specified"}`,
+      `- Age: ${pet.age != null ? pet.age + " year(s)" : "Unknown"}`,
+      `- Gender: ${pet.gender || "Unknown"}`,
+      "",
+      "Medical Record:",
+      `- Diagnosis: ${record.diagnosis}`,
+      `- Treatment: ${record.treatment || "Not specified"}`,
+      `- Prescription: ${record.prescription || "None"}`,
+      `- Notes: ${record.notes || "None"}`,
+      `- Status: ${record.status}`,
+      `- Follow-up Date: ${record.followUpDate ? new Date(record.followUpDate).toLocaleDateString() : "None scheduled"}`,
+      "",
+      "Please provide:",
+      "1. A brief plain-language explanation of the diagnosis",
+      "2. What the pet owner should watch for at home",
+      "3. General care tips relevant to this condition",
+      "4. When to seek immediate veterinary attention",
+      "",
+      "Keep your response under 300 words. Use clear, non-technical language suitable for a general pet owner.",
+    ].join("\n");
+
+    const AI_MODEL = "gemini-2.0-flash";
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 600, temperature: 0.6 },
+        }),
+      },
+    );
+
+    if (!geminiRes.ok) {
+      const errBody = await geminiRes.json().catch(() => ({}));
+      console.error("Gemini API error:", errBody);
+      return res.status(502).json({
+        message: "AI service returned an error",
+        detail: errBody?.error?.message || "Unknown error",
+      });
+    }
+
+    const data = await geminiRes.json();
+    const insight = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!insight) {
+      return res
+        .status(502)
+        .json({ message: "No insight returned from AI service" });
+    }
+
+    const generatedAt = new Date();
+
+    // ── Persist the insight so all users share the same result ──
+    await prisma.medicalRecord.update({
+      where: { id: record.id },
+      data: {
+        aiInsight: insight,
+        aiInsightModel: AI_MODEL,
+        aiInsightGeneratedAt: generatedAt,
+      },
+    });
+
+    return res.json({
+      insight,
+      isAiGenerated: true,
+      fromCache: false,
+      aiModel: AI_MODEL,
+      generatedAt: generatedAt.toISOString(),
+      disclaimer: DISCLAIMER,
+    });
+  } catch (e) {
+    console.error("AI insight error:", e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // PATCH /api/medical-records/:id/restore
 exports.restoreMedicalRecord = async (req, res) => {
   try {
