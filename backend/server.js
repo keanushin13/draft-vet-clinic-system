@@ -91,6 +91,7 @@ app.use("/api/messages", require("./routes/messageRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 app.use("/api/stats", require("./routes/statsRoutes"));
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 /* =========================
    SERVER
