@@ -1,4 +1,5 @@
 const { QUICK_ASSIST_SYSTEM_PROMPT } = require("../constants/quickAssistSystemPrompt");
+const { fetchPetOwnerAccountContext } = require("./petOwnerAccountContext");
 
 const API_BASE_URL =
   process.env.APP_PUBLIC_BASE_URL || process.env.PUBLIC_BASE_URL || "";
@@ -48,6 +49,120 @@ const buildRuleBasedReply = (message) => {
   );
 };
 
+const formatLocalDateTime = (iso) => {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return String(iso);
+  }
+};
+
+/**
+ * When LLM providers fail, still answer account questions from DB snapshot.
+ * @param {string} message
+ * @param {object | null} snap
+ * @returns {string | null}
+ */
+const buildOfflineAccountReply = (message, snap) => {
+  if (!snap || snap.error || snap.kind !== "pet_owner_account_snapshot") {
+    return null;
+  }
+  const m = normalize(message);
+  const chunks = [];
+
+  const wantsAppt =
+    /\b(appointment|appointments|booking|bookings|schedule|scheduled|visit|visits|when)\b/.test(
+      m,
+    ) ||
+    (/\b(my|our|i have|i've)\b/.test(m) &&
+      /\b(appointment|appointments|booking)\b/.test(m));
+  const wantsRecords =
+    /\b(medical|record|records|diagnosis|treatment|prescription|history)\b/.test(
+      m,
+    );
+  const wantsPets =
+    /\b(my|our)\s+(pet|pets)\b/.test(m) ||
+    /\b(how many pets|list my pets|my pet names)\b/.test(m);
+
+  if (wantsAppt) {
+    const up = snap.appointmentsUpcoming || [];
+    const past = snap.appointmentsPast || [];
+    if (up.length) {
+      chunks.push("Here are your upcoming appointment(s):");
+      up.slice(0, 10).forEach((a) => {
+        chunks.push(
+          `• ${formatLocalDateTime(a.scheduledAt)} — ${a.petName || "Pet"} (${a.status})${a.reason ? ` — ${a.reason}` : ""}${a.vetName ? ` — ${a.vetName}` : ""}`,
+        );
+      });
+    } else {
+      chunks.push(
+        "You have no upcoming appointments scheduled from today onward in your PawCruz account.",
+      );
+    }
+    if (/\b(last|past|previous|recent)\b/.test(m) && past.length) {
+      chunks.push("Recent past appointment(s):");
+      past.slice(0, 8).forEach((a) => {
+        chunks.push(
+          `• ${formatLocalDateTime(a.scheduledAt)} — ${a.petName || "Pet"} (${a.status})`,
+        );
+      });
+    }
+  }
+
+  if (wantsRecords) {
+    const recs = snap.medicalRecords || [];
+    if (recs.length) {
+      chunks.push("Medical record summary on file:");
+      recs.slice(0, 10).forEach((r) => {
+        chunks.push(
+          `• ${formatLocalDateTime(r.date)} — ${r.petName || "Pet"} — ${r.diagnosis || r.status}${r.vetName ? ` (${r.vetName})` : ""}`,
+        );
+      });
+    } else {
+      chunks.push("There are no medical records listed for your pets yet.");
+    }
+  }
+
+  if (wantsPets && snap.pets?.length) {
+    chunks.push(
+      "Your pet profile(s): " +
+        snap.pets.map((p) => `${p.name} (${p.species})`).join(", ") +
+        ".",
+    );
+  }
+
+  if (!chunks.length) return null;
+  return chunks.join("\n\n");
+};
+
+/**
+ * @param {{ user: object, context: object, accountSnapshot: object | null }} p
+ * @returns {string}
+ */
+const buildSystemContent = ({ user, context, accountSnapshot }) => {
+  const parts = [
+    QUICK_ASSIST_SYSTEM_PROMPT,
+    "",
+    `Current user (JWT): role=${user?.role ?? "unknown"}, id=${user?.id ?? "unknown"}.`,
+  ];
+  if (accountSnapshot && typeof accountSnapshot === "object") {
+    parts.push(
+      "",
+      "AUTHENTICATED ACCOUNT SNAPSHOT (this logged-in user only). JSON follows. Use it for questions about their pets, appointments, and medical records. Empty arrays mean none on file.",
+      JSON.stringify(accountSnapshot),
+    );
+  }
+  parts.push(
+    "",
+    `Extra context JSON: ${JSON.stringify(context && typeof context === "object" ? context : {})}`,
+  );
+  return parts.join("\n");
+};
+
 /**
  * @param {unknown} raw
  * @param {string} latestUserMessage
@@ -91,13 +206,18 @@ const sanitizeConversationHistory = (raw, latestUserMessage) => {
 /**
  * OpenAI-style messages array (system + thread).
  */
-const buildChatMessages = ({ message, user, context, conversationHistory }) => {
-  const systemContent = [
-    QUICK_ASSIST_SYSTEM_PROMPT,
-    "",
-    `Current user (JWT): role=${user?.role ?? "unknown"}, id=${user?.id ?? "unknown"}.`,
-    `Extra context JSON: ${JSON.stringify(context && typeof context === "object" ? context : {})}`,
-  ].join("\n");
+const buildChatMessages = ({
+  message,
+  user,
+  context,
+  conversationHistory,
+  accountSnapshot,
+}) => {
+  const systemContent = buildSystemContent({
+    user,
+    context,
+    accountSnapshot,
+  });
 
   const thread = sanitizeConversationHistory(conversationHistory, message);
 
@@ -177,12 +297,11 @@ const callGemini = async (params) => {
     params.message,
   );
 
-  const systemContent = [
-    QUICK_ASSIST_SYSTEM_PROMPT,
-    "",
-    `Current user (JWT): role=${params.user?.role ?? "unknown"}, id=${params.user?.id ?? "unknown"}.`,
-    `Extra context JSON: ${JSON.stringify(params.context && typeof params.context === "object" ? params.context : {})}`,
-  ].join("\n");
+  const systemContent = buildSystemContent({
+    user: params.user,
+    context: params.context,
+    accountSnapshot: params.accountSnapshot,
+  });
 
   /** @type {Array<{ role: string; parts: Array<{ text: string }> }>} */
   const contents = [];
@@ -327,20 +446,34 @@ exports.buildPetOwnerReply = async ({
   context,
   conversationHistory,
 }) => {
+  let accountSnapshot = null;
+  if (user?.role === "pet_owner" && user?.id) {
+    try {
+      accountSnapshot = await fetchPetOwnerAccountContext(user.id);
+    } catch (err) {
+      console.error("fetchPetOwnerAccountContext", err?.message);
+    }
+  }
+
   try {
     const ai = await callAiInPriorityOrder({
       message,
       user,
       context,
       conversationHistory,
+      accountSnapshot,
     });
     if (ai) return ai;
+    const offline = buildOfflineAccountReply(message, accountSnapshot);
+    if (offline) return offline;
     return buildRuleBasedReply(message);
   } catch (error) {
     console.error("Chatbot provider error", {
       message: error?.message,
       baseUrl: API_BASE_URL,
     });
+    const offline = buildOfflineAccountReply(message, accountSnapshot);
+    if (offline) return offline;
     return buildRuleBasedReply(message);
   }
 };
