@@ -17,7 +17,7 @@ const buildRuleBasedReply = (message) => {
 
   if (/\b(hours|open|close|closing|schedule|clinic hours)\b/.test(m)) {
     return (
-      "We are open Monday to Saturday, 8:00 AM to 6:00 PM. Closed on Sundays and public holidays."
+      "We are open Monday to Sunday, 9:00 AM to 7:00 PM. On some public holidays hours may differ or we may be closed—call the clinic to confirm."
     );
   }
 
