@@ -6,6 +6,9 @@ const API_BASE_URL =
 const MAX_HISTORY_MESSAGES = 24;
 const MAX_MESSAGE_CHARS = 4000;
 
+const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
+const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
+
 const normalize = (s) => String(s || "").toLowerCase();
 
 const buildRuleBasedReply = (message) => {
@@ -86,18 +89,9 @@ const sanitizeConversationHistory = (raw, latestUserMessage) => {
 };
 
 /**
- * @param {{ message: string, user: object, context: object, conversationHistory: Array<{role: string, content: string}> }} params
+ * OpenAI-style messages array (system + thread).
  */
-const callOpenAi = async ({
-  message,
-  user,
-  context,
-  conversationHistory,
-}) => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const buildChatMessages = ({ message, user, context, conversationHistory }) => {
   const systemContent = [
     QUICK_ASSIST_SYSTEM_PROMPT,
     "",
@@ -108,25 +102,156 @@ const callOpenAi = async ({
   const thread = sanitizeConversationHistory(conversationHistory, message);
 
   /** @type {Array<{ role: string; content: string }>} */
-  const openAiMessages = [{ role: "system", content: systemContent }];
+  const messages = [{ role: "system", content: systemContent }];
 
   for (const turn of thread) {
-    openAiMessages.push({
+    messages.push({
       role: turn.role,
       content: turn.content,
     });
   }
 
-  const temp = Number(process.env.OPENAI_TEMPERATURE);
-  const maxTok = Number(process.env.OPENAI_MAX_TOKENS);
+  return messages;
+};
+
+/**
+ * Groq is OpenAI-compatible and offers a generous free API tier.
+ * @param {object} params
+ * @returns {Promise<string|null>}
+ */
+const callGroq = async (params) => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+
+  const model =
+    process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+  const messages = buildChatMessages(params);
+
+  const temp = Number(process.env.GROQ_TEMPERATURE ?? process.env.OPENAI_TEMPERATURE);
+  const maxTok = Number(process.env.GROQ_MAX_TOKENS ?? process.env.OPENAI_MAX_TOKENS);
+
   const payload = {
     model,
-    messages: openAiMessages,
+    messages,
     temperature: Number.isFinite(temp) ? temp : 0.35,
     max_tokens: Number.isFinite(maxTok) ? maxTok : 700,
   };
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch(GROQ_CHAT_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    const err = new Error(
+      `Groq request failed (${res.status}): ${text || res.statusText}`,
+    );
+    err.statusCode = 502;
+    throw err;
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) return null;
+  return content.trim();
+};
+
+/**
+ * Google Gemini (often has free quota). Uses generateContent API.
+ * @param {object} params
+ * @returns {Promise<string|null>}
+ */
+const callGemini = async (params) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const model =
+    process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const thread = sanitizeConversationHistory(
+    params.conversationHistory,
+    params.message,
+  );
+
+  const systemContent = [
+    QUICK_ASSIST_SYSTEM_PROMPT,
+    "",
+    `Current user (JWT): role=${params.user?.role ?? "unknown"}, id=${params.user?.id ?? "unknown"}.`,
+    `Extra context JSON: ${JSON.stringify(params.context && typeof params.context === "object" ? params.context : {})}`,
+  ].join("\n");
+
+  /** @type {Array<{ role: string; parts: Array<{ text: string }> }>} */
+  const contents = [];
+  for (const turn of thread) {
+    contents.push({
+      role: turn.role === "user" ? "user" : "model",
+      parts: [{ text: turn.content }],
+    });
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const body = {
+    systemInstruction: {
+      parts: [{ text: systemContent }],
+    },
+    contents,
+    generationConfig: {
+      temperature: 0.35,
+      maxOutputTokens: 700,
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    const err = new Error(
+      `Gemini request failed (${res.status}): ${text || res.statusText}`,
+    );
+    err.statusCode = 502;
+    throw err;
+  }
+
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts;
+  const textOut = Array.isArray(parts)
+    ? parts.map((p) => p?.text || "").join("")
+    : "";
+  if (typeof textOut !== "string" || !textOut.trim()) return null;
+  return textOut.trim();
+};
+
+/**
+ * OpenAI (paid — used only if Groq/Gemini unavailable or no keys).
+ * @param {object} params
+ * @returns {Promise<string|null>}
+ */
+const callOpenAi = async (params) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const messages = buildChatMessages(params);
+
+  const temp = Number(process.env.OPENAI_TEMPERATURE);
+  const maxTok = Number(process.env.OPENAI_MAX_TOKENS);
+  const payload = {
+    model,
+    messages,
+    temperature: Number.isFinite(temp) ? temp : 0.35,
+    max_tokens: Number.isFinite(maxTok) ? maxTok : 700,
+  };
+
+  const res = await fetch(OPENAI_CHAT_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -151,8 +276,48 @@ const callOpenAi = async ({
 };
 
 /**
+ * Prefer free/cheap providers first: Groq → Gemini → OpenAI → rules.
+ * Set CHATBOT_PROVIDER_ORDER=groq,gemini,openai to override (comma-separated).
+ */
+const callAiInPriorityOrder = async (params) => {
+  const orderRaw =
+    process.env.CHATBOT_PROVIDER_ORDER || "groq,gemini,openai";
+  const order = orderRaw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const runners = {
+    groq: callGroq,
+    gemini: callGemini,
+    openai: callOpenAi,
+  };
+
+  let lastError = null;
+  for (const name of order) {
+    const fn = runners[name];
+    if (!fn) continue;
+    try {
+      const keyPresent =
+        (name === "groq" && process.env.GROQ_API_KEY) ||
+        (name === "gemini" && process.env.GEMINI_API_KEY) ||
+        (name === "openai" && process.env.OPENAI_API_KEY);
+      if (!keyPresent) continue;
+
+      const out = await fn(params);
+      if (out) return out;
+    } catch (e) {
+      lastError = e;
+      console.error(`Chatbot provider ${name} failed`, e?.message);
+    }
+  }
+
+  if (lastError) throw lastError;
+  return null;
+};
+
+/**
  * Build a chatbot reply for pet owners (Quick Assist).
- * Uses OpenAI if OPENAI_API_KEY is configured; otherwise falls back to rule-based replies.
  * @param {{ message: string, user: {id?: string, role?: string}, context: object, conversationHistory?: Array<{role: string, content: string}> }} params
  * @returns {Promise<string>}
  */
@@ -163,7 +328,7 @@ exports.buildPetOwnerReply = async ({
   conversationHistory,
 }) => {
   try {
-    const ai = await callOpenAi({
+    const ai = await callAiInPriorityOrder({
       message,
       user,
       context,
