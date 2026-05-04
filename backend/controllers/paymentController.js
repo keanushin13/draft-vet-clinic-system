@@ -223,8 +223,7 @@ exports.updatePayment = async (req, res) => {
     if (notes !== undefined) data.notes = notes;
     if (service !== undefined) data.service = service;
     if (amount !== undefined) data.amount = parseFloat(amount);
-    if (adjustmentReason !== undefined)
-      data.adjustmentReason = adjustmentReason;
+    if (adjustmentReason !== undefined) data.adjustmentReason = adjustmentReason;
 
     const payment = await prisma.payment.update({
       where: { id: req.params.id },

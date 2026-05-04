@@ -5,7 +5,7 @@ import "../../../css/VetMedRec.css";
 import "../../../css/responsive-tables.css";
 import StaffSidebar from "../../../components/StaffSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getMedicalRecords, getPets } from "../../../api/api";
+import { getMedicalRecords } from "../../../api/api";
 
 // ASSETS
 import bellIcon from "../../../assets/Bell_Icon.png";
@@ -18,7 +18,6 @@ const StaffMedRec = () => {
   const { isOpen, toggle, close } = useSidebar();
 
   const [records, setRecords] = useState([]);
-  const [pets, setPets] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,12 +35,8 @@ const StaffMedRec = () => {
     setLoading(true);
     setError("");
     try {
-      const [recordRes, petRes] = await Promise.all([
-        getMedicalRecords({ includeArchived: false }),
-        getPets(),
-      ]);
+      const recordRes = await getMedicalRecords({ includeArchived: false });
       setRecords(recordRes.data || []);
-      setPets(petRes.data || []);
     } catch {
       setError("Failed to load medical records");
     } finally {

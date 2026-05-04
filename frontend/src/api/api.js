@@ -105,6 +105,10 @@ export const updateMedicalRecord = (id, data) =>
 export const deleteMedicalRecord = (id) => API.delete(`/medical-records/${id}`);
 export const restoreMedicalRecord = (id) =>
   API.patch(`/medical-records/${id}/restore`);
+export const getMedicalRecordAiInsight = (id, refresh = false) =>
+  API.post(
+    `/medical-records/${id}/ai-insight${refresh ? "?refresh=true" : ""}`,
+  );
 
 // ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 export const getPayments = (params) => API.get("/payments", { params });
@@ -124,6 +128,8 @@ export const updateStock = (id, stock) =>
 export const deleteInventoryItem = (id) => API.delete(`/inventory/${id}`);
 export const restoreInventoryItem = (id) =>
   API.patch(`/inventory/${id}/restore`);
+export const getInventoryAiAnalysis = (refresh = false) =>
+  API.post(`/inventory/ai-analysis${refresh ? "?refresh=true" : ""}`);
 
 // ─── MESSAGES ─────────────────────────────────────────────────────────────────
 export const getMessageThreads = () => API.get("/messages/threads");

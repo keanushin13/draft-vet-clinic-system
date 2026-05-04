@@ -4,7 +4,7 @@ import TopbarUserMenu from "../../../components/TopbarUserMenu";
 import "../../../css/VetInventory.css";
 import VetSidebar from "../../../components/VetSidebar";
 import { useSidebar } from "../../../components/useSidebar";
-import { getInventory } from "../../../api/api";
+import { getInventory, getInventoryAiAnalysis } from "../../../api/api";
 import { formatInventoryCategory } from "../../../constants/inventoryCategories";
 
 // ASSETS
@@ -22,6 +22,7 @@ const VetInventory = () => {
   });
 
   const [items, setItems] = useState([]);
+  const [aiModal, setAiModal] = useState(null);
 
   // FUNCTION: Guard Clause (Matches your PetOwner format)
   useEffect(() => {
@@ -34,6 +35,21 @@ const VetInventory = () => {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openAiAnalysis = async () => {
+    setAiModal({ insight: null, loading: true, error: "" });
+    try {
+      const res = await getInventoryAiAnalysis(false);
+      setAiModal({ loading: false, error: "", ...res.data });
+    } catch (err) {
+      setAiModal((prev) => ({
+        ...prev,
+        loading: false,
+        error:
+          err.response?.data?.message || "Failed to load AI inventory analysis",
+      }));
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -81,6 +97,9 @@ const VetInventory = () => {
             <p style={{ color: "#555", marginBottom: "25px" }}>
               Monitor and manage your medical supplies and pharmaceutical stock.
             </p>
+            <button className="inv-ai-btn" onClick={openAiAnalysis}>
+              AI Analysis
+            </button>
           </div>
 
           <div
@@ -170,6 +189,61 @@ const VetInventory = () => {
           </div>
         </section>
       </main>
+
+      {aiModal && (
+        <div className="modal-overlay" onClick={() => setAiModal(null)}>
+          <div
+            className="modal-box ai-insight-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ai-insight-header">
+              <span className="ai-generated-badge">AI Generated</span>
+              <h3>Inventory Intelligence Report</h3>
+              <p className="ai-insight-subheading">
+                Fast-moving products and near-expiry promotion opportunities.
+              </p>
+            </div>
+
+            {aiModal.loading && (
+              <div className="ai-insight-loading">
+                <span className="ai-loading-spinner" />
+                Loading cached inventory analysis...
+              </div>
+            )}
+
+            {!aiModal.loading && aiModal.error && (
+              <div className="ai-insight-error">{aiModal.error}</div>
+            )}
+
+            {!aiModal.loading && !aiModal.error && aiModal.insight && (
+              <div className="ai-insight-body">
+                <div className="ai-insight-content">
+                  {aiModal.insight
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))}
+                </div>
+                <div className="ai-disclaimer">{aiModal.disclaimer}</div>
+                <div className="ai-meta">
+                  {aiModal.fromCache
+                    ? "Cached analysis · "
+                    : "Freshly generated · "}
+                  {aiModal.aiModel} &middot;{" "}
+                  {new Date(aiModal.generatedAt).toLocaleString()}
+                </div>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button className="save-btn" onClick={() => setAiModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

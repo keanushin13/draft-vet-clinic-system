@@ -248,8 +248,7 @@ exports.addAppointmentInventoryUsage = async (req, res) => {
     for (const usage of rawUsages) {
       if (!usage.inventoryItemId || !usage.quantityUsed) {
         return res.status(400).json({
-          message:
-            "inventoryItemId and quantityUsed are required for each item",
+          message: "inventoryItemId and quantityUsed are required for each item",
         });
       }
       const qty = Number(usage.quantityUsed);

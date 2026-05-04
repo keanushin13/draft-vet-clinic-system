@@ -226,6 +226,11 @@ model MedicalRecord {
   isArchived    Boolean             @default(false)
   archivedAt    DateTime?
 
+  // AI-generated health insight (cached to avoid repeated API calls)
+  aiInsight            String?
+  aiInsightModel       String?
+  aiInsightGeneratedAt DateTime?
+
   appointmentId String?             @unique
   appointment   Appointment?        @relation(fields: [appointmentId], references: [id])
 
@@ -302,6 +307,14 @@ model AppointmentInventoryUsage {
 
   @@index([appointmentId])
   @@index([inventoryItemId])
+}
+
+model InventoryAiReport {
+  id          String   @id
+  aiInsight   String
+  aiInsightModel String
+  generatedAt DateTime
+  createdAt   DateTime @default(now())
 }
 
 // ─── Message ──────────────────────────────────────────────────────────────────

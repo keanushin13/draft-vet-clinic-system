@@ -38,5 +38,11 @@ router.patch(
   authorizeRoles("admin", "staff", "veterinarian"),
   c.restoreMedicalRecord,
 );
+router.post(
+  "/:id/ai-insight",
+  protect,
+  authorizeRoles("admin", "staff", "veterinarian", "pet_owner"),
+  c.getAiInsight,
+);
 
 module.exports = router;
