@@ -15,6 +15,8 @@ const allowedOrigins = new Set(
   [
     "http://localhost:3000", // React Web Admin
     "http://localhost:8081", // Expo Web
+    "https://localhost", // Capacitor Mobile App
+    "http://localhost", // Capacitor Mobile App (HTTP fallback)
     process.env.CLIENT_URL, // LAN web frontend used by email links
   ].filter(Boolean),
 );
