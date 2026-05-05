@@ -14,6 +14,9 @@ const app = express();
 const allowedOrigins = new Set(
   [
     "http://localhost:3000", // React Web Admin
+    "https://localhost:3000",
+    "https://localhost",
+    "http://localhost",
     "http://127.0.0.1:3000", // same site as localhost (different Origin header)
     "http://localhost:8081", // Expo Web
     process.env.CLIENT_URL, // production frontend (e.g. Vercel)
