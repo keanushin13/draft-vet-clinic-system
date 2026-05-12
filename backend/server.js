@@ -14,16 +14,10 @@ const app = express();
 const allowedOrigins = new Set(
   [
     "http://localhost:3000", // React Web Admin
-    "https://localhost:3000",
-    "https://localhost",
-    "http://localhost",
-    "http://127.0.0.1:3000", // same site as localhost (different Origin header)
     "http://localhost:8081", // Expo Web
-    process.env.CLIENT_URL, // production frontend (e.g. Vercel)
-    ...(process.env.ALLOWED_ORIGINS || "")
-      .split(",")
-      .map((o) => o.trim())
-      .filter(Boolean), // e.g. http://192.168.1.5:3000 for phone/LAN testing
+    "https://localhost", // Capacitor Mobile App
+    "http://localhost", // Capacitor Mobile App (HTTP fallback)
+    process.env.CLIENT_URL, // LAN web frontend used by email links
   ].filter(Boolean),
 );
 
@@ -99,7 +93,6 @@ app.use("/api/messages", require("./routes/messageRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 app.use("/api/stats", require("./routes/statsRoutes"));
-app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 /* =========================
    SERVER

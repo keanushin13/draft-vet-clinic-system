@@ -88,9 +88,10 @@ model User {
   // Profile
   firstName                String?
   lastName                 String?
-  phone                    String?
+  phone                    String?   @unique
   address                  String?
   profileImage             String?
+  profileCompleted         Boolean   @default(false)
 
   // Email verification
   isVerified               Boolean   @default(false)
@@ -100,6 +101,7 @@ model User {
   // Login OTP
   otp                      String?
   otpExpires               DateTime?
+  lastOtpVerified          DateTime?
 
   // Forgot password
   resetPasswordToken       String?

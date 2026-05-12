@@ -4,6 +4,7 @@ const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const prisma = require("../lib/prisma");
 const sendEmail = require("../utils/sendEmail");
+const sendSms = require("../utils/sendSms");
 
 const JWT_SECRET = process.env.JWT_SECRET || "pawcruz_dev_secret";
 const JWT_EXPIRES_IN = "7d";
@@ -11,7 +12,9 @@ const JWT_EXPIRES_IN = "7d";
 // ===================== CONFIG =====================
 const MAX_ATTEMPTS = 5;
 const TIME_EXPIRATION = 5 * 60 * 1000; // 5 minutes
+const OTP_REQUIREMENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+const PHONE_REGEX = /^\d{11}$/;
 const PUBLIC_SERVER_URL =
   process.env.PUBLIC_SERVER_URL ||
   `http://localhost:${process.env.PORT || 5000}`;
@@ -20,9 +23,9 @@ const PUBLIC_SERVER_URL =
 // POST /api/users/register
 exports.registerUser = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, phone } = req.body;
 
-    if (!username || !email || !password || !role) {
+    if (!username || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -36,6 +39,12 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
+    if (!PHONE_REGEX.test(String(phone))) {
+      return res
+        .status(400)
+        .json({ message: "Phone number must be exactly 11 digits" });
+    }
+
     if (!PASSWORD_REGEX.test(password)) {
       return res.status(400).json({
         message:
@@ -43,19 +52,14 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    const allowedRoles = ["pet_owner", "veterinarian", "staff"];
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role selected" });
-    }
-
     const userExists = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: { OR: [{ email }, { username }, { phone }] },
     });
 
     if (userExists) {
-      return res
-        .status(400)
-        .json({ message: "Email or username already exists" });
+      return res.status(400).json({
+        message: "Email, username, or phone number already exists",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -65,8 +69,9 @@ exports.registerUser = async (req, res) => {
       data: {
         username,
         email,
+        phone,
         password: hashedPassword,
-        role,
+        role: "pet_owner",
         isVerified: false,
         emailVerificationToken: emailToken,
         emailVerificationExpires: new Date(Date.now() + TIME_EXPIRATION),
@@ -202,11 +207,30 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Please verify your email first." });
     }
 
-    // OTP disabled — issue JWT directly
     await prisma.user.update({
       where: { id: user.id },
       data: { loginAttempts: 0 },
     });
+
+    if (shouldRequireMonthlyOtp(user.lastOtpVerified)) {
+      const otp = generateOtp();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          otp: await bcrypt.hash(otp, 10),
+          otpExpires: new Date(Date.now() + TIME_EXPIRATION),
+        },
+      });
+
+      const channel = await sendLoginOtp(user, otp);
+
+      return res.status(200).json({
+        message: `OTP sent via ${channel}.`,
+        requiresOtp: true,
+        email: user.email,
+        channel,
+      });
+    }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
@@ -222,6 +246,8 @@ exports.loginUser = async (req, res) => {
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
+        phone: user.phone,
+        profileCompleted: user.profileCompleted,
       },
     });
   } catch (error) {
@@ -429,7 +455,12 @@ exports.verifyLoginOtp = async (req, res) => {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { otp: null, otpExpires: null },
+      data: {
+        otp: null,
+        otpExpires: null,
+        lastOtpVerified: new Date(),
+        loginAttempts: 0,
+      },
     });
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
@@ -444,6 +475,10 @@ exports.verifyLoginOtp = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        profileCompleted: user.profileCompleted,
       },
     });
   } catch (error) {
@@ -483,9 +518,9 @@ exports.resendLoginOtp = async (req, res) => {
       },
     });
 
-    await sendOtpEmail(user.email, otp, "Your Login OTP (Resent)");
+    const channel = await sendLoginOtp(user, otp, "Your Login OTP (Resent)");
 
-    res.status(200).json({ message: "OTP resent successfully" });
+    res.status(200).json({ message: `OTP resent successfully via ${channel}` });
   } catch (error) {
     console.error("Resend Login OTP Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -936,6 +971,14 @@ exports.updateUserAdmin = async (req, res) => {
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+const shouldRequireMonthlyOtp = (lastOtpVerified) => {
+  if (!lastOtpVerified) return true;
+  return (
+    Date.now() - new Date(lastOtpVerified).getTime() >=
+    OTP_REQUIREMENT_WINDOW_MS
+  );
+};
+
 const escapeHtml = (value = "") =>
   String(value)
     .replace(/&/g, "&amp;")
@@ -1021,4 +1064,21 @@ const sendOtpEmail = async (email, otp, subject) => {
     subject,
     `<h2>Login Verification</h2><p>Your OTP code is:</p><h1 style="letter-spacing:4px;">${otp}</h1><p>This code expires in ${TIME_EXPIRATION / 60000} minutes.</p>`,
   );
+};
+
+const sendLoginOtp = async (user, otp, subject = "Your Login OTP") => {
+  if (user.phone) {
+    try {
+      await sendSms(
+        user.phone,
+        `Your PawCruz login OTP is ${otp}. It expires in ${TIME_EXPIRATION / 60000} minutes.`,
+      );
+      return "sms";
+    } catch (error) {
+      console.warn("SMS OTP failed, falling back to email:", error.message);
+    }
+  }
+
+  await sendOtpEmail(user.email, otp, subject);
+  return "email";
 };
