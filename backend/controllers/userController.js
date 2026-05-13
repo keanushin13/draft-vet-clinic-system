@@ -439,6 +439,7 @@ exports.verifyLoginOtp = async (req, res) => {
     const { email, otp } = req.body;
 
     const user = await prisma.user.findUnique({ where: { email } });
+
     if (
       !user ||
       !user.otp ||
@@ -449,6 +450,7 @@ exports.verifyLoginOtp = async (req, res) => {
     }
 
     const isValid = await bcrypt.compare(otp, user.otp);
+
     if (!isValid) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
