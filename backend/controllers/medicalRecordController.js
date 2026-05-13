@@ -246,14 +246,40 @@ exports.updateMedicalRecord = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const { diagnosis, treatment, prescription, notes, status, followUpDate } =
-      req.body;
+    const {
+      diagnosis,
+      treatment,
+      prescription,
+      notes,
+      status,
+      followUpDate,
+      modificationReason,
+    } = req.body;
 
     if (status && !ALLOWED_STATUSES.has(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
     if (followUpDate !== undefined && !isValidDateValue(followUpDate)) {
       return res.status(400).json({ message: "Invalid followUpDate" });
+    }
+
+    // admin/staff must supply a modification reason
+    if (["admin", "staff"].includes(req.user.role) && !modificationReason) {
+      return res
+        .status(400)
+        .json({
+          message: "modificationReason is required for admin/staff edits",
+        });
+    }
+
+    const ALLOWED_MOD_REASONS = new Set([
+      "Typographical Error",
+      "Duplicate Entries",
+      "Ownership Transfer",
+      "Wrong Species",
+    ]);
+    if (modificationReason && !ALLOWED_MOD_REASONS.has(modificationReason)) {
+      return res.status(400).json({ message: "Invalid modificationReason" });
     }
 
     const data = {};
@@ -265,6 +291,8 @@ exports.updateMedicalRecord = async (req, res) => {
     if (followUpDate !== undefined) {
       data.followUpDate = followUpDate ? new Date(followUpDate) : null;
     }
+    if (modificationReason !== undefined)
+      data.modificationReason = modificationReason;
 
     const record = await prisma.medicalRecord.update({
       where: { id: req.params.id },

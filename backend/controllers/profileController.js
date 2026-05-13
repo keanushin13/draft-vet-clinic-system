@@ -1,6 +1,7 @@
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
+const logActivity = require("../utils/logActivity");
 
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 const PHONE_REGEX = /^\d{11}$/;
@@ -17,6 +18,7 @@ const userSelect = {
   profileCompleted: true,
   isActive: true,
   isVerified: true,
+  deletedAt: true,
   createdAt: true,
   _count: { select: { pets: true } },
 };
@@ -24,7 +26,11 @@ const userSelect = {
 // GET /api/users  (admin: all; staff: pet_owner only)
 exports.getUsers = async (req, res) => {
   try {
-    const { role } = req.query;
+    const { role, showDeleted, page = 1, limit = 10, q } = req.query;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
     const where = {};
 
     if (req.user.role === "staff") {
@@ -33,13 +39,41 @@ exports.getUsers = async (req, res) => {
       where.role = role;
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: userSelect,
-      orderBy: { createdAt: "desc" },
-    });
+    // Hide soft-deleted by default; admin can request them
+    if (showDeleted === "true" && req.user.role === "admin") {
+      // show all including deleted
+    } else {
+      where.deletedAt = null;
+    }
 
-    res.json(users);
+    if (q) {
+      where.OR = [
+        { username: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+        { firstName: { contains: q, mode: "insensitive" } },
+        { lastName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const [users, total] = await prisma.$transaction([
+      prisma.user.findMany({
+        where,
+        select: userSelect,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limitNum,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    res.json({
+      users,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages: Math.ceil(total / limitNum),
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });
@@ -254,8 +288,16 @@ exports.updateMe = async (req, res) => {
 // POST /api/users/create  (admin/staff creates a client)
 exports.createUser = async (req, res) => {
   try {
-    const { username, email, password, role, firstName, lastName, phone } =
-      req.body;
+    const {
+      username,
+      email,
+      password,
+      role,
+      firstName,
+      lastName,
+      phone,
+      address,
+    } = req.body;
 
     if (!username || !email || !password || !role) {
       return res
@@ -282,18 +324,30 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
+    if (phone && !PHONE_REGEX.test(String(phone))) {
+      return res
+        .status(400)
+        .json({ message: "Phone number must be exactly 11 digits" });
+    }
+
     const duplicateChecks = [{ email }, { username }];
     if (phone) duplicateChecks.push({ phone });
 
     const exists = await prisma.user.findFirst({
       where: { OR: duplicateChecks },
     });
-
     if (exists) {
       return res
         .status(400)
         .json({ message: "Email, username, or phone already exists" });
     }
+
+    const fn = firstName?.trim() || null;
+    const ln = lastName?.trim() || null;
+    const addr = address?.trim() || null;
+
+    const isPetOwner = role === "pet_owner";
+    const profileCompleted = isPetOwner ? Boolean(fn && ln && addr) : false;
 
     const created = await prisma.user.create({
       data: {
@@ -301,13 +355,21 @@ exports.createUser = async (req, res) => {
         email,
         password: await bcrypt.hash(password, 10),
         role,
-        firstName: firstName || null,
-        lastName: lastName || null,
+        firstName: fn,
+        lastName: ln,
         phone: phone || null,
+        address: addr,
         isVerified: true,
         isActive: true,
+        profileCompleted,
       },
-      select: { id: true },
+      select: { id: true, username: true },
+    });
+
+    await logActivity({
+      action: `Created ${role} account: ${username}`,
+      target: created.id,
+      staffId: req.user.id,
     });
 
     const createdWithMeta = await prisma.user.findUnique({
@@ -318,10 +380,9 @@ exports.createUser = async (req, res) => {
     res.status(201).json(createdWithMeta);
   } catch (e) {
     console.error(e);
-    res.status(500).json({
-      message: "Server error",
-      error: e?.message || "Unknown error",
-    });
+    res
+      .status(500)
+      .json({ message: "Server error", error: e?.message || "Unknown error" });
   }
 };
 
@@ -408,10 +469,24 @@ exports.updateUser = async (req, res) => {
       data.password = await bcrypt.hash(password, 10);
     }
 
+    // Recalculate profileCompleted for pet_owner if names/address changed
+    if (existing.role === "pet_owner") {
+      const fn = (firstName ?? existing.firstName)?.trim();
+      const ln = (lastName ?? existing.lastName)?.trim();
+      const addr = (address ?? existing.address)?.trim();
+      data.profileCompleted = Boolean(fn && ln && addr);
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data,
       select: userSelect,
+    });
+
+    await logActivity({
+      action: `Updated user account: ${existing.username}`,
+      target: id,
+      staffId: req.user.id,
     });
 
     res.json(user);
@@ -441,7 +516,100 @@ exports.toggleUserActive = async (req, res) => {
       select: userSelect,
     });
 
+    await logActivity({
+      action: `${updated.isActive ? "Activated" : "Suspended"} user: ${existing.username}`,
+      target: id,
+      staffId: req.user.id,
+    });
+
     res.json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/users/delete/:id — soft delete (admin only)
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ message: "User not found" });
+
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await logActivity({
+      action: `Deleted user account: ${existing.username}`,
+      target: id,
+      staffId: req.user.id,
+    });
+
+    res.json({ message: "User deleted successfully" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// PATCH /api/users/:id/restore — restore soft-deleted user (admin only)
+exports.restoreUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ message: "User not found" });
+    if (!existing.deletedAt)
+      return res.status(400).json({ message: "User is not deleted" });
+
+    const restored = await prisma.user.update({
+      where: { id },
+      data: { deletedAt: null },
+      select: userSelect,
+    });
+
+    await logActivity({
+      action: `Restored user account: ${existing.username}`,
+      target: id,
+      staffId: req.user.id,
+    });
+
+    res.json(restored);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// POST /api/users/:id/reset-password — admin resets any user's password
+exports.adminResetPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required" });
+    }
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      return res.status(400).json({ message: "Weak password" });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ message: "User not found" });
+
+    await prisma.user.update({
+      where: { id },
+      data: { password: await bcrypt.hash(newPassword, 10) },
+    });
+
+    await logActivity({
+      action: `Reset password for user: ${existing.username}`,
+      target: id,
+      staffId: req.user.id,
+    });
+
+    res.json({ message: "Password reset successfully" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error" });

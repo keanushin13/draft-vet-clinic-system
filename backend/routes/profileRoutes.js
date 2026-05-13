@@ -13,5 +13,13 @@ router.patch(
   authorizeRoles("admin", "staff"),
   c.toggleUserActive,
 );
+router.delete("/:id", protect, authorizeRoles("admin"), c.deleteUser);
+router.patch("/:id/restore", protect, authorizeRoles("admin"), c.restoreUser);
+router.post(
+  "/:id/reset-password",
+  protect,
+  authorizeRoles("admin"),
+  c.adminResetPassword,
+);
 
 module.exports = router;

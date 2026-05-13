@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const prisma = require("../lib/prisma");
 const sendEmail = require("../utils/sendEmail");
 const sendSms = require("../utils/sendSms");
+const logActivity = require("../utils/logActivity");
 
 const JWT_SECRET = process.env.JWT_SECRET || "pawcruz_dev_secret";
 const JWT_EXPIRES_IN = "7d";
@@ -198,6 +199,12 @@ exports.loginUser = async (req, res) => {
         data: { loginAttempts: newAttempts },
       });
 
+      logActivity({
+        action: "Failed Login Attempt",
+        target: user.email,
+        staffId: user.id,
+        status: "Pending",
+      });
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
@@ -212,7 +219,10 @@ exports.loginUser = async (req, res) => {
       data: { loginAttempts: 0 },
     });
 
-    if (shouldRequireMonthlyOtp(user.lastOtpVerified)) {
+    if (
+      user.role === "pet_owner" &&
+      shouldRequireMonthlyOtp(user.lastOtpVerified)
+    ) {
       const otp = generateOtp();
       await prisma.user.update({
         where: { id: user.id },
@@ -250,6 +260,7 @@ exports.loginUser = async (req, res) => {
         profileCompleted: user.profileCompleted,
       },
     });
+    logActivity({ action: "User Login", target: user.email, staffId: user.id });
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -644,7 +655,10 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
     res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {

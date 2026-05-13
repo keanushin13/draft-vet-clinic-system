@@ -116,6 +116,9 @@ model User {
   unlockToken              String?
   unlockTokenExpires       DateTime?
 
+  // Soft delete
+  deletedAt                DateTime?
+
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
@@ -145,6 +148,9 @@ model Pet {
   gender       String?
   status       PetStatus @default(Healthy)
   isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  birthday     DateTime?
+  weight       Float?
   image        String?
   notes        String?
 
@@ -225,6 +231,7 @@ model MedicalRecord {
   notes         String?
   status        MedicalRecordStatus @default(Finalized)
   followUpDate  DateTime?
+  modificationReason String?
   isArchived    Boolean             @default(false)
   archivedAt    DateTime?
 
@@ -360,8 +367,22 @@ model ActivityLog {
   target    String?
   status    ActivityStatus @default(Completed)
 
-  staffId   String
-  staff     User           @relation(fields: [staffId], references: [id])
+  staffId   String?
+  staff     User?          @relation(fields: [staffId], references: [id])
 
   createdAt DateTime       @default(now())
+}
+
+// ─── Clinic Settings ──────────────────────────────────────────────────────────
+
+model ClinicSettings {
+  id         String   @id @default(cuid())
+  dayOfWeek  Int      @unique   // 0=Sun, 1=Mon … 6=Sat
+  isOpen     Boolean  @default(true)
+  openTime   String   @default("08:00")
+  closeTime  String   @default("17:00")
+  breakStart String?
+  breakEnd   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

@@ -93,10 +93,11 @@ app.use("/api/messages", require("./routes/messageRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/activity-logs", require("./routes/activityLogRoutes"));
 app.use("/api/stats", require("./routes/statsRoutes"));
+app.use("/api/clinic-settings", require("./routes/clinicSettingsRoutes"));
 
 /* =========================
    SERVER
 ========================= */
-app.listen(process.env.PORT || 5000, "0.0.0.0", () => {
+app.listen(process.env.PORT || 5000, "127.0.0.1", () => {
   console.log(`Server running on port ${process.env.PORT || 5000}`);
 });

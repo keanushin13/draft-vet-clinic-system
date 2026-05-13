@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const logActivity = require("../utils/logActivity");
 
 // GET /api/pets
 exports.getPets = async (req, res) => {
@@ -62,8 +63,18 @@ exports.getPet = async (req, res) => {
 // POST /api/pets
 exports.createPet = async (req, res) => {
   try {
-    const { name, species, breed, age, gender, status, notes, ownerId } =
-      req.body;
+    const {
+      name,
+      species,
+      breed,
+      age,
+      gender,
+      status,
+      notes,
+      ownerId,
+      birthday,
+      weight,
+    } = req.body;
     if (!name || !species)
       return res.status(400).json({ message: "name and species are required" });
 
@@ -81,10 +92,21 @@ exports.createPet = async (req, res) => {
         gender,
         status,
         notes,
+        birthday: birthday ? new Date(birthday) : null,
+        weight: weight ? parseFloat(weight) : null,
         isArchived: false,
         ownerId: resolvedOwnerId,
       },
     });
+
+    if (req.user.role !== "pet_owner") {
+      await logActivity({
+        action: `Created pet: ${name}`,
+        target: pet.id,
+        staffId: req.user.id,
+      });
+    }
+
     res.status(201).json(pet);
   } catch (e) {
     console.error(e);
@@ -95,7 +117,17 @@ exports.createPet = async (req, res) => {
 // PUT /api/pets/:id
 exports.updatePet = async (req, res) => {
   try {
-    const { name, species, breed, age, gender, status, notes } = req.body;
+    const {
+      name,
+      species,
+      breed,
+      age,
+      gender,
+      status,
+      notes,
+      birthday,
+      weight,
+    } = req.body;
     const existing = await prisma.pet.findUnique({
       where: { id: req.params.id },
     });
@@ -109,10 +141,22 @@ exports.updatePet = async (req, res) => {
         name,
         species,
         breed,
-        age: age ? parseInt(age) : null,
+        age: age !== undefined ? (age ? parseInt(age) : null) : undefined,
         gender,
         status,
         notes,
+        birthday:
+          birthday !== undefined
+            ? birthday
+              ? new Date(birthday)
+              : null
+            : undefined,
+        weight:
+          weight !== undefined
+            ? weight
+              ? parseFloat(weight)
+              : null
+            : undefined,
       },
     });
     res.json(pet);
@@ -134,8 +178,17 @@ exports.deletePet = async (req, res) => {
 
     await prisma.pet.update({
       where: { id: req.params.id },
-      data: { isArchived: true },
+      data: { isArchived: true, archivedAt: new Date() },
     });
+
+    if (req.user.role !== "pet_owner") {
+      await logActivity({
+        action: `Archived pet: ${existing.name}`,
+        target: existing.id,
+        staffId: req.user.id,
+      });
+    }
+
     res.json({ message: "Pet archived" });
   } catch (e) {
     console.error(e);
@@ -155,8 +208,17 @@ exports.restorePet = async (req, res) => {
 
     await prisma.pet.update({
       where: { id: req.params.id },
-      data: { isArchived: false },
+      data: { isArchived: false, archivedAt: null },
     });
+
+    if (req.user.role !== "pet_owner") {
+      await logActivity({
+        action: `Restored pet: ${existing.name}`,
+        target: existing.id,
+        staffId: req.user.id,
+      });
+    }
+
     res.json({ message: "Pet restored" });
   } catch (e) {
     console.error(e);

@@ -1,9 +1,15 @@
 const router = require("express").Router();
-const { protect } = require("../middleware/auth");
+const { protect, authorizeRoles } = require("../middleware/auth");
 const c = require("../controllers/notificationController");
 
 router.get("/", protect, c.getNotifications);
 router.patch("/mark-all-read", protect, c.markAllRead);
+router.post(
+  "/broadcast",
+  protect,
+  authorizeRoles("admin"),
+  c.broadcastNotification,
+);
 router.patch("/:id/read", protect, c.markOneRead);
 
 module.exports = router;

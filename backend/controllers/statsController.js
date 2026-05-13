@@ -3,25 +3,136 @@ const prisma = require("../lib/prisma");
 // GET /api/stats/admin
 exports.getAdminStats = async (req, res) => {
   try {
-    const [totalUsers, activeAppointments, lowStockCount, totalRevenue] =
-      await Promise.all([
-        prisma.user.count(),
-        prisma.appointment.count({
-          where: { status: { in: ["Pending", "Confirmed"] } },
-        }),
-        prisma.inventoryItem.count({
-          where: { status: { in: ["LowStock", "OutOfStock"] } },
-        }),
-        prisma.payment.aggregate({
-          where: { status: "Paid" },
-          _sum: { amount: true },
-        }),
-      ]);
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const [
+      totalUsers,
+      activeAppointments,
+      lowStockCount,
+      totalRevenue,
+      usersByRole,
+      totalPets,
+      topDiagnosesRaw,
+      revenueRaw,
+      appointmentsRaw,
+      appointmentsByStatus,
+      expiringCount,
+    ] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.appointment.count({
+        where: { status: { in: ["Pending", "Confirmed"] } },
+      }),
+      prisma.inventoryItem.count({
+        where: {
+          status: { in: ["LowStock", "OutOfStock"] },
+          isArchived: false,
+        },
+      }),
+      prisma.payment.aggregate({
+        where: { status: "Paid" },
+        _sum: { amount: true },
+      }),
+      // users per role
+      prisma.user.groupBy({
+        by: ["role"],
+        where: { deletedAt: null },
+        _count: { _all: true },
+      }),
+      prisma.pet.count({ where: { isArchived: false } }),
+      // top 5 diagnoses
+      prisma.medicalRecord.groupBy({
+        by: ["diagnosis"],
+        where: { isArchived: false },
+        _count: { _all: true },
+        orderBy: { _count: { diagnosis: "desc" } },
+        take: 5,
+      }),
+      // revenue by month (last 6)
+      prisma.payment.findMany({
+        where: {
+          status: "Paid",
+          createdAt: { gte: sixMonthsAgo },
+        },
+        select: { amount: true, createdAt: true },
+      }),
+      // appointments by month (last 6)
+      prisma.appointment.findMany({
+        where: { createdAt: { gte: sixMonthsAgo } },
+        select: { createdAt: true, status: true },
+      }),
+      // appointments by status
+      prisma.appointment.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
+      // expiring in 30 days
+      prisma.inventoryItem.count({
+        where: {
+          isArchived: false,
+          expirationDate: {
+            gte: now,
+            lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+      }),
+    ]);
+
+    // Build roles map
+    const roleMap = {};
+    usersByRole.forEach((r) => {
+      roleMap[r.role] = r._count._all;
+    });
+
+    // Build monthly buckets (last 6 months)
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        label: d.toLocaleString("default", { month: "short", year: "2-digit" }),
+        year: d.getFullYear(),
+        month: d.getMonth(),
+      });
+    }
+
+    const revenueByMonth = months.map(({ label, year, month }) => ({
+      month: label,
+      revenue: revenueRaw
+        .filter((p) => {
+          const d = new Date(p.createdAt);
+          return d.getFullYear() === year && d.getMonth() === month;
+        })
+        .reduce((sum, p) => sum + Number(p.amount), 0),
+    }));
+
+    const appointmentsByMonth = months.map(({ label, year, month }) => ({
+      month: label,
+      count: appointmentsRaw.filter((a) => {
+        const d = new Date(a.createdAt);
+        return d.getFullYear() === year && d.getMonth() === month;
+      }).length,
+    }));
+
+    const statusMap = {};
+    appointmentsByStatus.forEach((s) => {
+      statusMap[s.status] = s._count._all;
+    });
+
     res.json({
       totalUsers,
       activeAppointments,
       lowStockCount,
       monthlyRevenue: totalRevenue._sum.amount || 0,
+      usersByRole: roleMap,
+      totalPets,
+      topDiagnoses: topDiagnosesRaw.map((d) => ({
+        diagnosis: d.diagnosis,
+        count: d._count._all,
+      })),
+      revenueByMonth,
+      appointmentsByMonth,
+      appointmentsByStatus: statusMap,
+      expiringCount,
     });
   } catch (e) {
     console.error(e);
