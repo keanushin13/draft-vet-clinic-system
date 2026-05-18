@@ -11,7 +11,21 @@ const include = {
       email: true,
     },
   },
-  appointment: { select: { id: true, scheduledAt: true } },
+  appointment: {
+    select: {
+      id: true,
+      scheduledAt: true,
+      owner: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      pet: { select: { id: true, name: true } },
+    },
+  },
 };
 
 const getGlobalCheckupRate = () => {
