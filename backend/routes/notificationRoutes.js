@@ -7,7 +7,7 @@ router.patch("/mark-all-read", protect, c.markAllRead);
 router.post(
   "/broadcast",
   protect,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "staff"),
   c.broadcastNotification,
 );
 router.patch("/:id/read", protect, c.markOneRead);

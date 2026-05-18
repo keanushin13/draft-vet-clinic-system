@@ -46,7 +46,16 @@ exports.getPayments = async (req, res) => {
     const where = {};
     const includeArchived =
       String(req.query.includeArchived || "").toLowerCase() === "true";
-    if (req.user.role === "pet_owner") where.ownerId = req.user.id;
+    if (req.user.role === "pet_owner") {
+      where.ownerId = req.user.id;
+      const account = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { isActive: true, deletedAt: true },
+      });
+      if (!account || !account.isActive || account.deletedAt) {
+        return res.status(403).json({ message: "Account suspended or deleted" });
+      }
+    }
     if (!includeArchived) where.isArchived = false;
 
     const payments = await prisma.payment.findMany({
@@ -197,6 +206,20 @@ exports.createPayment = async (req, res) => {
       },
       include,
     });
+
+    // Notify pet owner of the payment/invoice
+    if (resolvedOwnerId) {
+      prisma.notification.create({
+        data: {
+          userId: resolvedOwnerId,
+          title:  "Payment Invoice",
+          body:   `A payment of ₱${Number(resolvedAmount).toFixed(2)} for ${resolvedService} has been recorded. Please check your payment history.`,
+          type:   "payment",
+          isRead: false,
+        },
+      }).catch(() => {});
+    }
+
     res.status(201).json(payment);
   } catch (e) {
     console.error(e);

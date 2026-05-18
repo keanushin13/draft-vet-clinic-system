@@ -560,6 +560,25 @@ exports.updateAppointment = async (req, res) => {
         : "Updated appointment details";
     await logStaffActivity(req, updateAction, `Appointment ${appt.id}`);
 
+    // Notify pet owner when status changes
+    if (data.status && data.status !== existing.status) {
+      const statusMessages = {
+        Confirmed: "Your appointment has been confirmed.",
+        Cancelled:  "Your appointment has been cancelled.",
+        Completed:  "Your appointment is now marked as completed.",
+        Pending:    "Your appointment status has been updated to pending.",
+      };
+      prisma.notification.create({
+        data: {
+          userId: existing.ownerId,
+          title:  `Appointment ${data.status}`,
+          body:   statusMessages[data.status] || `Your appointment status changed to ${data.status}.`,
+          type:   "appointment",
+          isRead: false,
+        },
+      }).catch(() => {});
+    }
+
     res.json(appt);
   } catch (e) {
     console.error(e);
