@@ -14,8 +14,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.11",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.1.11"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
@@ -33,6 +33,7 @@
     "nodemailer": "^7.0.13",
     "pg": "^8.20.0",
     "prisma": "^7.7.0",
+    "resend": "^6.12.3",
     "twilio": "^5.6.0",
     "validator": "^13.15.26",
     "xss-clean": "^0.1.4"
