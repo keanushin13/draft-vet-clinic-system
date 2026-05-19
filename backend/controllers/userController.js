@@ -4,7 +4,6 @@ const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const prisma = require("../lib/prisma");
 const sendEmail = require("../utils/sendEmail");
-const sendSms = require("../utils/sendSms");
 const logActivity = require("../utils/logActivity");
 
 const JWT_SECRET = process.env.JWT_SECRET || "pawcruz_dev_secret";
@@ -1083,18 +1082,6 @@ const sendOtpEmail = async (email, otp, subject) => {
 };
 
 const sendLoginOtp = async (user, otp, subject = "Your Login OTP") => {
-  if (user.phone) {
-    try {
-      await sendSms(
-        user.phone,
-        `Your PawCruz login OTP is ${otp}. It expires in ${TIME_EXPIRATION / 60000} minutes.`,
-      );
-      return "sms";
-    } catch (error) {
-      console.warn("SMS OTP failed, falling back to email:", error.message);
-    }
-  }
-
   await sendOtpEmail(user.email, otp, subject);
   return "email";
 };
