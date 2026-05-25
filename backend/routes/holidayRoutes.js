@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, authorizeRoles } = require("../middleware/auth");
 const c = require("../controllers/holidayController");
 
 router.get("/", protect, c.getHolidays);
