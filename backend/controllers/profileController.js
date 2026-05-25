@@ -599,6 +599,39 @@ exports.restoreUser = async (req, res) => {
   }
 };
 
+// POST /api/users/:id/send-reset-link — admin/staff sends a reset-password email
+exports.sendResetLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    await prisma.user.update({
+      where: { id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    const resetLink = `${PUBLIC_SERVER_URL}/api/users/reset-password/${resetToken}`;
+    sendEmail(
+      user.email,
+      "Reset Your PawCruz Password",
+      `<h2>Password Reset</h2>
+<p>An admin has requested a password reset for your account. Click the button below to set a new password.</p>
+<p><a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0f766e;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Reset Password</a></p>
+<p>This link expires in 24 hours. If you did not expect this email, you can safely ignore it.</p>`,
+    ).catch((err) => console.error("Reset-password email failed:", err));
+
+    res.json({ message: "Reset link sent" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // POST /api/users/:id/reset-password — admin resets any user's password
 exports.adminResetPassword = async (req, res) => {
   try {
@@ -703,6 +736,42 @@ const renderSetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
       <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required placeholder="Repeat password" />
       ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
       <button type="submit">Activate Account</button>
+    </form>
+    <p class="help">Must be at least 8 characters with a letter, number, and special character.</p>
+  </div></div>
+</body>
+</html>`;
+
+const renderResetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password — PawCruz</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#dbeafe,#f8fafc);color:#0f172a}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:460px;background:#fff;border-radius:20px;padding:28px;box-shadow:0 18px 50px rgba(15,23,42,.12)}
+    h1{margin:0 0 6px;font-size:26px}
+    .subtitle{margin:0 0 20px;color:#475569;font-size:14px;line-height:1.5}
+    label{display:block;margin:12px 0 6px;font-size:14px;font-weight:700}
+    input{width:100%;box-sizing:border-box;padding:14px 16px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px}
+    button{width:100%;margin-top:18px;padding:14px 16px;border:0;border-radius:12px;background:#0f766e;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+    .help{margin-top:14px;font-size:13px;color:#64748b}
+    .error{margin:12px 0 0;color:#b91c1c;font-weight:700;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap"><div class="card">
+    <h1>Reset Your Password</h1>
+    <p class="subtitle">Enter a new password for your PawCruz account.</p>
+    <form method="POST" action="/api/users/reset-password/${escapeHtml(token)}">
+      <label for="newPassword">New Password</label>
+      <input id="newPassword" name="newPassword" type="password" minlength="8" required placeholder="At least 8 characters" />
+      <label for="confirmPassword">Confirm Password</label>
+      <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required placeholder="Repeat password" />
+      ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+      <button type="submit">Reset Password</button>
     </form>
     <p class="help">Must be at least 8 characters with a letter, number, and special character.</p>
   </div></div>
@@ -817,7 +886,95 @@ exports.setPassword = async (req, res) => {
   } catch (e) {
     console.error("setPassword error:", e);
     return res.status(500).send(
-      renderStatusPage({ title: "Error", message: "Server error. Please try again.", tone: "error" }),
+      renderStatusPage({ title: "Error", message: `Server error: ${e?.message || "Unknown"}`, tone: "error" }),
+    );
+  }
+};
+
+// ─── reset-password (public — no JWT) ────────────────────────────────────────
+
+// GET /api/users/reset-password/:token
+exports.getResetPasswordPage = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const user = await prisma.user.findFirst({
+      where: { resetPasswordToken: token },
+      select: { id: true, resetPasswordExpires: true },
+    });
+
+    if (!user || (user.resetPasswordExpires && user.resetPasswordExpires < new Date())) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Link Invalid",
+          message: "This password reset link has already been used or has expired.",
+          tone: "error",
+        }),
+      );
+    }
+
+    return res.send(renderResetPasswordPage(token));
+  } catch (e) {
+    console.error("getResetPasswordPage error:", e);
+    return res.status(500).send(
+      renderStatusPage({ title: "Error", message: `Server error: ${e?.message || "Unknown"}`, tone: "error" }),
+    );
+  }
+};
+
+// POST /api/users/reset-password/:token
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword) {
+      return res.send(renderResetPasswordPage(token, { error: "Password is required." }));
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.send(renderResetPasswordPage(token, { error: "Passwords do not match." }));
+    }
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      return res.send(
+        renderResetPasswordPage(token, {
+          error: "Password must be at least 8 characters and include a letter, number, and special character.",
+        }),
+      );
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { resetPasswordToken: token },
+      select: { id: true, resetPasswordExpires: true },
+    });
+    if (!user || (user.resetPasswordExpires && user.resetPasswordExpires < new Date())) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Link Invalid",
+          message: "This password reset link has already been used or has expired.",
+          tone: "error",
+        }),
+      );
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await bcrypt.hash(newPassword, 10),
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    return res.send(
+      renderStatusPage({
+        title: "Password Updated",
+        message: "Your password has been reset successfully. You can now log in to the PawCruz app.",
+        tone: "success",
+      }),
+    );
+  } catch (e) {
+    console.error("resetPassword error:", e);
+    return res.status(500).send(
+      renderStatusPage({ title: "Error", message: `Server error: ${e?.message || "Unknown"}`, tone: "error" }),
     );
   }
 };

@@ -9,6 +9,8 @@ router.post("/create", protect, authorizeRoles("admin", "staff"), c.createUser);
 // public — no JWT (token is the credential)
 router.get("/set-password/:token", c.getSetPasswordPage);
 router.post("/set-password/:token", c.setPassword);
+router.get("/reset-password/:token", c.getResetPasswordPage);
+router.post("/reset-password/:token", c.resetPassword);
 
 router.put("/:id", protect, authorizeRoles("admin", "staff"), c.updateUser);
 router.patch(
@@ -24,6 +26,12 @@ router.post(
   protect,
   authorizeRoles("admin"),
   c.adminResetPassword,
+);
+router.post(
+  "/:id/send-reset-link",
+  protect,
+  authorizeRoles("admin", "staff"),
+  c.sendResetLink,
 );
 
 module.exports = router;
