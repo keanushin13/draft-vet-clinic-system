@@ -6,6 +6,10 @@ router.get("/", protect, authorizeRoles("admin", "staff"), c.getUsers);
 router.get("/me", protect, c.getMe);
 router.put("/me", protect, c.updateMe);
 router.post("/create", protect, authorizeRoles("admin", "staff"), c.createUser);
+// public — no JWT (token is the credential)
+router.get("/set-password/:token", c.getSetPasswordPage);
+router.post("/set-password/:token", c.setPassword);
+
 router.put("/:id", protect, authorizeRoles("admin", "staff"), c.updateUser);
 router.patch(
   "/:id/toggle-active",

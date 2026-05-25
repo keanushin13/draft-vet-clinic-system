@@ -632,3 +632,172 @@ exports.adminResetPassword = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const escapeHtml = (value = "") =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const renderStatusPage = ({ title, message, tone }) => {
+  const palette =
+    tone === "success"
+      ? { accent: "#0f766e", chip: "#ccfbf1", card: "#f0fdfa" }
+      : { accent: "#b91c1c", chip: "#fee2e2", card: "#fef2f2" };
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#e0f2fe,#f8fafc);color:#0f172a}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:460px;background:${palette.card};border:1px solid rgba(15,23,42,.08);border-radius:20px;padding:28px;box-shadow:0 18px 50px rgba(15,23,42,.12)}
+    .chip{display:inline-block;padding:6px 12px;border-radius:999px;background:${palette.chip};color:${palette.accent};font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    h1{margin:14px 0 10px;font-size:28px}
+    p{margin:0;font-size:16px;line-height:1.6;color:#334155}
+  </style>
+</head>
+<body>
+  <div class="wrap"><div class="card">
+    <div class="chip">PawCruz</div>
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(message)}</p>
+  </div></div>
+</body>
+</html>`;
+};
+
+const renderSetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set Password — PawCruz</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#dbeafe,#f8fafc);color:#0f172a}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:460px;background:#fff;border-radius:20px;padding:28px;box-shadow:0 18px 50px rgba(15,23,42,.12)}
+    h1{margin:0 0 6px;font-size:26px}
+    .subtitle{margin:0 0 20px;color:#475569;font-size:14px;line-height:1.5}
+    label{display:block;margin:12px 0 6px;font-size:14px;font-weight:700}
+    input{width:100%;box-sizing:border-box;padding:14px 16px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px}
+    button{width:100%;margin-top:18px;padding:14px 16px;border:0;border-radius:12px;background:#0f766e;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+    .help{margin-top:14px;font-size:13px;color:#64748b}
+    .error{margin:12px 0 0;color:#b91c1c;font-weight:700;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap"><div class="card">
+    <h1>Set Your Password</h1>
+    <p class="subtitle">Choose a password to activate your PawCruz account.</p>
+    <form method="POST" action="/api/users/set-password/${escapeHtml(token)}">
+      <label for="newPassword">Password</label>
+      <input id="newPassword" name="newPassword" type="password" minlength="8" required placeholder="At least 8 characters" />
+      <label for="confirmPassword">Confirm Password</label>
+      <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required placeholder="Repeat password" />
+      ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+      <button type="submit">Activate Account</button>
+    </form>
+    <p class="help">Must be at least 8 characters with a letter, number, and special character.</p>
+  </div></div>
+</body>
+</html>`;
+
+// ─── set-password (public — no JWT) ──────────────────────────────────────────
+
+// GET /api/users/set-password/:token
+exports.getSetPasswordPage = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: { gt: new Date() },
+        isVerified: false,
+      },
+    });
+    if (!user) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Link Invalid",
+          message: "This set-password link has already been used or has expired.",
+          tone: "error",
+        }),
+      );
+    }
+    return res.send(renderSetPasswordPage(token));
+  } catch (e) {
+    console.error("getSetPasswordPage error:", e);
+    return res.status(500).send(
+      renderStatusPage({ title: "Error", message: "Server error. Please try again.", tone: "error" }),
+    );
+  }
+};
+
+// POST /api/users/set-password/:token
+exports.setPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword) {
+      return res.send(renderSetPasswordPage(token, { error: "Password is required." }));
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.send(renderSetPasswordPage(token, { error: "Passwords do not match." }));
+    }
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      return res.send(
+        renderSetPasswordPage(token, {
+          error: "Password must be at least 8 characters and include a letter, number, and special character.",
+        }),
+      );
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: { gt: new Date() },
+        isVerified: false,
+      },
+    });
+    if (!user) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Link Invalid",
+          message: "This set-password link has already been used or has expired.",
+          tone: "error",
+        }),
+      );
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await bcrypt.hash(newPassword, 10),
+        isVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+
+    return res.send(
+      renderStatusPage({
+        title: "Account Activated",
+        message: "Password set successfully! You can now log in to the PawCruz app.",
+        tone: "success",
+      }),
+    );
+  } catch (e) {
+    console.error("setPassword error:", e);
+    return res.status(500).send(
+      renderStatusPage({ title: "Error", message: "Server error. Please try again.", tone: "error" }),
+    );
+  }
+};
