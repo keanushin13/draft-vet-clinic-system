@@ -5,7 +5,14 @@ const MEDICAL_AI_MODEL = "gemini-2.0-flash";
 const MEDICAL_GROQ_AI_MODEL = "llama-3.1-8b-instant";
 
 const include = {
-  pet: { select: { id: true, name: true, species: true } },
+  pet: {
+    select: {
+      id: true,
+      name: true,
+      species: true,
+      owner: { select: { id: true, firstName: true, lastName: true, username: true } },
+    },
+  },
   vet: {
     select: { id: true, username: true, firstName: true, lastName: true },
   },
