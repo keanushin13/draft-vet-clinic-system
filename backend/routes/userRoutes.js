@@ -25,6 +25,9 @@ const {
   updateUserAdmin,
   getMe,
   updateMe,
+  adminVerifyUser,
+  getSetPasswordPage,
+  setPassword,
 } = require("../controllers/userController");
 
 /* =====================
@@ -59,6 +62,8 @@ router.post("/reset-password/:token", resetPassword);
    EMAIL LINKS (NO CSRF)
 ===================== */
 router.get("/verify-email/:token", verifyEmail);
+router.get("/set-password/:token", getSetPasswordPage);
+router.post("/set-password/:token", setPassword);
 router.get("/unlock/:token", unlockAccount);
 router.post("/send-unlock-email", sendUnlockEmail);
 
@@ -75,5 +80,6 @@ router.put("/me", protect, updateMe);
 router.get("/", protect, authorizeRoles("admin"), getUsers);
 router.post("/create", protect, authorizeRoles("admin"), createUser);
 router.put("/:id", protect, authorizeRoles("admin"), updateUserAdmin);
+router.patch("/:id/verify", protect, authorizeRoles("admin"), adminVerifyUser);
 
 module.exports = router;

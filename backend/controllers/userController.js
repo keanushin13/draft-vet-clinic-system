@@ -795,34 +795,62 @@ exports.updateMe = async (req, res) => {
 // GET /api/users
 exports.getUsers = async (req, res) => {
   try {
-    const { role } = req.query;
+    const { role, q, showDeleted, page = "1", limit = "25" } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
 
     const where = {};
-    if (role) {
-      where.role = role;
+
+    // soft-delete filter
+    if (showDeleted !== "true") where.deletedAt = null;
+
+    if (role) where.role = role;
+
+    // search across name, email, phone
+    if (q) {
+      where.OR = [
+        { firstName: { contains: q, mode: "insensitive" } },
+        { lastName:  { contains: q, mode: "insensitive" } },
+        { username:  { contains: q, mode: "insensitive" } },
+        { email:     { contains: q, mode: "insensitive" } },
+        { phone:     { contains: q, mode: "insensitive" } },
+      ];
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        address: true,
-        isActive: true,
-        isVerified: true,
-        createdAt: true,
-        _count: {
-          select: { pets: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
+    const select = {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      address: true,
+      isActive: true,
+      isVerified: true,
+      deletedAt: true,
+      createdAt: true,
+      _count: { select: { pets: true } },
+    };
+
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select,
+        orderBy: { createdAt: "desc" },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      }),
+    ]);
+
+    res.status(200).json({
+      users,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum) || 1,
     });
-    res.status(200).json(users);
   } catch (error) {
     console.error("Get Users Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -833,56 +861,70 @@ exports.getUsers = async (req, res) => {
 // POST /api/users/create
 exports.createUser = async (req, res) => {
   try {
-    const {
-      username,
-      email,
-      password,
-      role,
-      firstName,
-      lastName,
-      phone,
-      address,
-    } = req.body;
+    const { username, email, role, firstName, lastName, phone, address } =
+      req.body;
 
-    if (!username || !email || !password || !role) {
-      return res
-        .status(400)
-        .json({ message: "username, email, password, and role are required" });
-    }
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-    if (!PASSWORD_REGEX.test(password)) {
-      return res.status(400).json({
-        message:
-          "Password must be at least 8 characters with a letter, number, and special character",
+    const errors = {};
+    if (!username) errors.username = "Username is required";
+    if (!email) errors.email = "Email is required";
+    else if (!validator.isEmail(email)) errors.email = "Invalid email format";
+    if (!role) errors.role = "Role is required";
+
+    const allowedRoles = ["pet_owner", "veterinarian", "staff", "admin"];
+    if (role && !allowedRoles.includes(role))
+      errors.role = "Invalid role selected";
+
+    if (phone && !PHONE_REGEX.test(phone))
+      errors.phone = "Phone must be exactly 11 digits";
+
+    if (Object.keys(errors).length)
+      return res.status(400).json({ message: "Validation failed", errors });
+
+    const existingUsername = await prisma.user.findFirst({ where: { username } });
+    if (existingUsername) {
+      return res.status(409).json({
+        message: "Validation failed",
+        errors: { username: "Username is already taken" },
       });
     }
-    const allowedRoles = ["pet_owner", "veterinarian", "staff", "admin"];
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
+    const existingEmail = await prisma.user.findFirst({ where: { email } });
+    if (existingEmail) {
+      return res.status(409).json({
+        message: "Validation failed",
+        errors: { email: "Email is already in use" },
+      });
+    }
+    if (phone) {
+      const existingPhone = await prisma.user.findFirst({ where: { phone } });
+      if (existingPhone) {
+        return res.status(409).json({
+          message: "Validation failed",
+          errors: { phone: "Phone number is already in use" },
+        });
+      }
     }
 
-    const existing = await prisma.user.findFirst({
-      where: { OR: [{ username }, { email }] },
-    });
-    if (existing)
-      return res
-        .status(409)
-        .json({ message: "Username or email already in use" });
+    // Placeholder password — account cannot be used until user sets a real one
+    const placeholderPassword = await bcrypt.hash(
+      crypto.randomBytes(32).toString("hex"),
+      10,
+    );
+    const setPasswordToken = crypto.randomBytes(32).toString("hex");
+    const SET_PASSWORD_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
-    const hashed = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
       data: {
         username,
         email,
-        password: hashed,
+        password: placeholderPassword,
         role,
         firstName: firstName || null,
         lastName: lastName || null,
         phone: phone || null,
         address: address || null,
-        isVerified: true,
+        isVerified: false,
+        emailVerificationToken: setPasswordToken,
+        emailVerificationExpires: new Date(Date.now() + SET_PASSWORD_EXPIRY),
       },
       select: {
         id: true,
@@ -897,9 +939,124 @@ exports.createUser = async (req, res) => {
         createdAt: true,
       },
     });
+
+    const setPasswordLink = `${PUBLIC_SERVER_URL}/api/users/set-password/${setPasswordToken}`;
+
+    // fire-and-forget — user is created regardless of email delivery
+    sendEmail(
+      email,
+      "Set Your PawCruz Password",
+      `<h2>Welcome to PawCruz!</h2>
+<p>An account has been created for you. Click the button below to set your password and activate your account.</p>
+<p><a href="${setPasswordLink}" style="display:inline-block;padding:12px 24px;background:#0f766e;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Set Password</a></p>
+<p>This link expires in 24 hours. If you did not expect this email, you can safely ignore it.</p>`,
+    ).catch((err) => console.error("Set-password email failed:", err));
+
     res.status(201).json(newUser);
   } catch (error) {
     console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===================== SET PASSWORD PAGE =====================
+// GET /api/users/set-password/:token
+exports.getSetPasswordPage = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: { gt: new Date() },
+        isVerified: false,
+      },
+    });
+    if (!user) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Link Invalid",
+          message: "This set-password link has already been used or has expired.",
+          tone: "error",
+        }),
+      );
+    }
+    return res.status(200).send(renderSetPasswordPage(token));
+  } catch (error) {
+    console.error("Get Set Password Page Error:", error);
+    return res.status(500).send(
+      renderStatusPage({ title: "Error", message: "Server error", tone: "error" }),
+    );
+  }
+};
+
+// ===================== SET PASSWORD =====================
+// POST /api/users/set-password/:token
+exports.setPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+    const isBrowserForm = req.is("application/x-www-form-urlencoded");
+
+    if (!newPassword) {
+      if (isBrowserForm)
+        return res
+          .status(400)
+          .send(renderSetPasswordPage(token, { error: "Password is required." }));
+      return res.status(400).json({ message: "Password is required" });
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+      if (isBrowserForm)
+        return res
+          .status(400)
+          .send(renderSetPasswordPage(token, { error: "Passwords do not match." }));
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      const message =
+        "Password must be at least 8 characters and include a letter, number, and special character";
+      if (isBrowserForm)
+        return res.status(400).send(renderSetPasswordPage(token, { error: message }));
+      return res.status(400).json({ message });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: { gt: new Date() },
+        isVerified: false,
+      },
+    });
+    if (!user) {
+      const message = "This set-password link has already been used or has expired";
+      if (isBrowserForm)
+        return res.status(400).send(
+          renderStatusPage({ title: "Link Invalid", message, tone: "error" }),
+        );
+      return res.status(400).json({ message });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await bcrypt.hash(newPassword, 10),
+        isVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+
+    const message = "Password set successfully! You can now log in to the app.";
+    if (isBrowserForm)
+      return res.status(200).send(
+        renderStatusPage({ title: "Account Activated", message, tone: "success" }),
+      );
+    res.status(200).json({ message });
+  } catch (error) {
+    console.error("Set Password Error:", error);
+    if (req.is("application/x-www-form-urlencoded"))
+      return res.status(500).send(
+        renderStatusPage({ title: "Error", message: "Server error", tone: "error" }),
+      );
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -978,6 +1135,31 @@ exports.updateUserAdmin = async (req, res) => {
     res.status(200).json(updated);
   } catch (error) {
     console.error("Update User Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===================== VERIFY USER (Admin) =====================
+// PATCH /api/users/:id/verify
+exports.adminVerifyUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isVerified)
+      return res.status(400).json({ message: "User is already verified" });
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        isVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+    res.status(200).json({ message: "User verified successfully" });
+  } catch (error) {
+    console.error("Admin Verify User Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -1068,6 +1250,44 @@ const renderResetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
         <button type="submit">Update Password</button>
       </form>
       <p class="help">After updating your password, return to the mobile app and sign in again.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+const renderSetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set Password — PawCruz</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: linear-gradient(135deg, #dbeafe, #f8fafc); color: #0f172a; }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { width: 100%; max-width: 460px; background: #ffffff; border-radius: 20px; padding: 28px; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12); }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    .subtitle { margin: 0 0 20px; color: #475569; font-size: 14px; line-height: 1.5; }
+    label { display: block; margin: 12px 0 6px; font-size: 14px; font-weight: 700; }
+    input { width: 100%; box-sizing: border-box; padding: 14px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 15px; }
+    button { width: 100%; margin-top: 18px; padding: 14px 16px; border: 0; border-radius: 12px; background: #0f766e; color: #ffffff; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .help { margin-top: 14px; font-size: 13px; color: #64748b; }
+    .error { margin: 12px 0 0; color: #b91c1c; font-weight: 700; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Set Your Password</h1>
+      <p class="subtitle">Choose a password to activate your PawCruz account. You only need to do this once.</p>
+      <form method="POST" action="/api/users/set-password/${escapeHtml(token)}">
+        <label for="newPassword">Password</label>
+        <input id="newPassword" name="newPassword" type="password" minlength="8" required placeholder="At least 8 characters" />
+        <label for="confirmPassword">Confirm Password</label>
+        <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" required placeholder="Repeat password" />
+        ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+        <button type="submit">Activate Account</button>
+      </form>
+      <p class="help">Password must be at least 8 characters and include a letter, number, and special character.</p>
     </div>
   </div>
 </body>
