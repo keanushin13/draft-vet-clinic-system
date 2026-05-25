@@ -1,7 +1,13 @@
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const validator = require("validator");
 const logActivity = require("../utils/logActivity");
+const sendEmail = require("../utils/sendEmail");
+
+const PUBLIC_SERVER_URL =
+  process.env.PUBLIC_SERVER_URL ||
+  `http://localhost:${process.env.PORT || 5000}`;
 
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 const PHONE_REGEX = /^\d{11}$/;
@@ -285,92 +291,105 @@ exports.updateMe = async (req, res) => {
   }
 };
 
-// POST /api/users/create  (admin/staff creates a client)
+// POST /api/users/create  (admin/staff creates a user account)
 exports.createUser = async (req, res) => {
   try {
-    const {
-      username,
-      email,
-      password,
-      role,
-      firstName,
-      lastName,
-      phone,
-      address,
-    } = req.body;
+    const { username, email, role, firstName, lastName, phone, address } =
+      req.body;
 
-    if (!username || !email || !password || !role) {
-      return res
-        .status(400)
-        .json({ message: "username, email, password, role are required" });
-    }
-
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Invalid email" });
-    }
-
-    if (!PASSWORD_REGEX.test(password)) {
-      return res.status(400).json({ message: "Weak password" });
-    }
-
-    if (req.user.role === "staff" && role !== "pet_owner") {
-      return res
-        .status(403)
-        .json({ message: "Staff can only create pet owner clients" });
-    }
+    // field-level validation
+    const errors = {};
+    if (!username) errors.username = "Username is required";
+    if (!email) errors.email = "Email is required";
+    else if (!validator.isEmail(email)) errors.email = "Invalid email format";
+    if (!role) errors.role = "Role is required";
 
     const allowedRoles = ["pet_owner", "veterinarian", "staff", "admin"];
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
-    }
+    if (role && !allowedRoles.includes(role))
+      errors.role = "Invalid role selected";
 
-    if (phone && !PHONE_REGEX.test(String(phone))) {
+    if (req.user.role === "staff" && role && role !== "pet_owner")
       return res
-        .status(400)
-        .json({ message: "Phone number must be exactly 11 digits" });
-    }
+        .status(403)
+        .json({ message: "Staff can only create pet owner accounts" });
 
-    const duplicateChecks = [{ email }, { username }];
-    if (phone) duplicateChecks.push({ phone });
+    if (phone && !PHONE_REGEX.test(String(phone)))
+      errors.phone = "Phone must be exactly 11 digits";
 
-    const exists = await prisma.user.findFirst({
-      where: { OR: duplicateChecks },
-    });
-    if (exists) {
-      return res
-        .status(400)
-        .json({ message: "Email, username, or phone already exists" });
+    if (Object.keys(errors).length)
+      return res.status(400).json({ message: "Validation failed", errors });
+
+    // duplicate checks — report per field
+    const existingUsername = await prisma.user.findFirst({ where: { username } });
+    if (existingUsername)
+      return res.status(409).json({
+        message: "Validation failed",
+        errors: { username: "Username is already taken" },
+      });
+
+    const existingEmail = await prisma.user.findFirst({ where: { email } });
+    if (existingEmail)
+      return res.status(409).json({
+        message: "Validation failed",
+        errors: { email: "Email is already in use" },
+      });
+
+    if (phone) {
+      const existingPhone = await prisma.user.findFirst({ where: { phone } });
+      if (existingPhone)
+        return res.status(409).json({
+          message: "Validation failed",
+          errors: { phone: "Phone number is already in use" },
+        });
     }
 
     const fn = firstName?.trim() || null;
     const ln = lastName?.trim() || null;
     const addr = address?.trim() || null;
-
     const isPetOwner = role === "pet_owner";
     const profileCompleted = isPetOwner ? Boolean(fn && ln && addr) : false;
+
+    // Placeholder password — unusable until user sets a real one via email link
+    const placeholderPassword = await bcrypt.hash(
+      crypto.randomBytes(32).toString("hex"),
+      10,
+    );
+    const setPasswordToken = crypto.randomBytes(32).toString("hex");
 
     const created = await prisma.user.create({
       data: {
         username,
         email,
-        password: await bcrypt.hash(password, 10),
+        password: placeholderPassword,
         role,
         firstName: fn,
         lastName: ln,
         phone: phone || null,
         address: addr,
-        isVerified: true,
+        isVerified: false,
         isActive: true,
         profileCompleted,
+        emailVerificationToken: setPasswordToken,
+        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
       select: { id: true, username: true },
     });
 
-    await logActivity({
+    logActivity({
       action: `Created ${role} account: ${username}`,
       target: created.id,
       staffId: req.user.id,
-    });
+    }).catch(() => {});
+
+    const setPasswordLink = `${PUBLIC_SERVER_URL}/api/users/set-password/${setPasswordToken}`;
+    sendEmail(
+      email,
+      "Set Your PawCruz Password",
+      `<h2>Welcome to PawCruz!</h2>
+<p>An account has been created for you. Click the button below to set your password and activate your account.</p>
+<p><a href="${setPasswordLink}" style="display:inline-block;padding:12px 24px;background:#0f766e;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Set Password</a></p>
+<p>This link expires in 24 hours. If you did not expect this email, you can safely ignore it.</p>`,
+    ).catch((err) => console.error("Set-password email failed:", err));
 
     const createdWithMeta = await prisma.user.findUnique({
       where: { id: created.id },
@@ -380,9 +399,7 @@ exports.createUser = async (req, res) => {
     res.status(201).json(createdWithMeta);
   } catch (e) {
     console.error(e);
-    res
-      .status(500)
-      .json({ message: "Server error", error: e?.message || "Unknown error" });
+    res.status(500).json({ message: "Server error", error: e?.message || "Unknown error" });
   }
 };
 
