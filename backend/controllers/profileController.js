@@ -715,13 +715,17 @@ const renderSetPasswordPage = (token, { error = "" } = {}) => `<!DOCTYPE html>
 exports.getSetPasswordPage = async (req, res) => {
   try {
     const { token } = req.params;
+    console.log("[set-password GET] token:", token);
+
     const user = await prisma.user.findFirst({
       where: {
         emailVerificationToken: token,
         emailVerificationExpires: { gt: new Date() },
-        isVerified: false,
       },
     });
+
+    console.log("[set-password GET] user found:", user ? user.id : null, "isVerified:", user?.isVerified);
+
     if (!user) {
       return res.status(400).send(
         renderStatusPage({
@@ -731,6 +735,17 @@ exports.getSetPasswordPage = async (req, res) => {
         }),
       );
     }
+
+    if (user.isVerified) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Already Activated",
+          message: "Your account is already activated. You can log in to the PawCruz app.",
+          tone: "success",
+        }),
+      );
+    }
+
     return res.send(renderSetPasswordPage(token));
   } catch (e) {
     console.error("getSetPasswordPage error:", e);
@@ -764,7 +779,6 @@ exports.setPassword = async (req, res) => {
       where: {
         emailVerificationToken: token,
         emailVerificationExpires: { gt: new Date() },
-        isVerified: false,
       },
     });
     if (!user) {
@@ -773,6 +787,16 @@ exports.setPassword = async (req, res) => {
           title: "Link Invalid",
           message: "This set-password link has already been used or has expired.",
           tone: "error",
+        }),
+      );
+    }
+
+    if (user.isVerified) {
+      return res.status(400).send(
+        renderStatusPage({
+          title: "Already Activated",
+          message: "Your account is already activated. You can log in to the PawCruz app.",
+          tone: "success",
         }),
       );
     }
