@@ -13,23 +13,29 @@ const app = express();
 ========================= */
 const allowedOrigins = new Set(
   [
-    "http://localhost:3000", // React Web Admin
-    "http://localhost:8081", // Expo Web
-    "https://localhost", // Capacitor Mobile App
-    "http://localhost", // Capacitor Mobile App (HTTP fallback)
-    process.env.CLIENT_URL, // LAN web frontend used by email links
+    "http://localhost:3000",
+    "http://localhost:8081",
+    "https://localhost",
+    "http://localhost",
+    // Single URL (legacy)
+    process.env.CLIENT_URL,
+    // Comma-separated list for production — set ALLOWED_ORIGINS on Render
+    ...(process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+      : []),
   ].filter(Boolean),
 );
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin like Postman
+      // allow requests with no origin (Postman, mobile apps, server-to-server)
       if (!origin) return callback(null, true);
       if (!allowedOrigins.has(origin)) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
+        return callback(
+          new Error(`CORS: origin '${origin}' is not allowed`),
+          false,
+        );
       }
       return callback(null, true);
     },
