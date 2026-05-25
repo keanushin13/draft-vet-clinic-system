@@ -273,7 +273,7 @@ exports.createScheduleException = async (req, res) => {
       return res.status(404).json({ message: "Veterinarian not found" });
     }
 
-    const { startsAt, endsAt, reason } = req.body;
+    const { startsAt, endsAt, reason, name, exceptionType } = req.body;
     const startDate = new Date(startsAt);
     const endDate = new Date(endsAt);
 
@@ -288,6 +288,8 @@ exports.createScheduleException = async (req, res) => {
     const exception = await prisma.vetScheduleException.create({
       data: {
         vetId,
+        name: name || null,
+        exceptionType: exceptionType || null,
         startsAt: startDate,
         endsAt: endDate,
         reason: reason || null,

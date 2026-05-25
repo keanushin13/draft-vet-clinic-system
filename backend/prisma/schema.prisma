@@ -210,15 +210,28 @@ model VetSchedule {
 }
 
 model VetScheduleException {
+  id            String   @id @default(cuid())
+  vetId         String
+  name          String?
+  exceptionType String?
+  startsAt      DateTime
+  endsAt        DateTime
+  reason        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  vet           User     @relation("VetScheduleException", fields: [vetId], references: [id])
+}
+
+// ─── Clinic Holiday ───────────────────────────────────────────────────────────
+
+model ClinicHoliday {
   id        String   @id @default(cuid())
-  vetId     String
-  startsAt  DateTime
-  endsAt    DateTime
-  reason    String?
+  date      DateTime
+  name      String
+  reason    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  vet       User     @relation("VetScheduleException", fields: [vetId], references: [id])
 }
 
 // ─── Medical Record ───────────────────────────────────────────────────────────
