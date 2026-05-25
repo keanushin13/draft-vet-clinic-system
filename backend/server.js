@@ -19,6 +19,8 @@ const allowedOrigins = new Set(
     "http://localhost",
     // Single URL (legacy)
     process.env.CLIENT_URL,
+    // The backend's own public URL — needed for server-rendered HTML form submissions
+    process.env.PUBLIC_SERVER_URL,
     // Comma-separated list for production — set ALLOWED_ORIGINS on Render
     ...(process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
@@ -26,22 +28,28 @@ const allowedOrigins = new Set(
   ].filter(Boolean),
 );
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (Postman, mobile apps, server-to-server)
-      if (!origin) return callback(null, true);
-      if (!allowedOrigins.has(origin)) {
-        return callback(
-          new Error(`CORS: origin '${origin}' is not allowed`),
-          false,
-        );
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-  }),
-);
+const corsMiddleware = cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin or null origin (Postman, mobile apps, email link clicks)
+    if (!origin || origin === "null") return callback(null, true);
+    if (!allowedOrigins.has(origin)) {
+      return callback(
+        new Error(`CORS: origin '${origin}' is not allowed`),
+        false,
+      );
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+});
+
+app.use((req, res, next) => {
+  // Skip CORS for same-origin browser navigations (e.g. server-rendered HTML form submissions).
+  // Browsers set Sec-Fetch-Site: same-origin on these requests; they are not cross-origin.
+  const fetchSite = req.headers["sec-fetch-site"];
+  if (fetchSite === "same-origin" || fetchSite === "same-site") return next();
+  return corsMiddleware(req, res, next);
+});
 
 /* =========================
    SECURITY HEADERS
