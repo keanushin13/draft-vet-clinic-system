@@ -718,15 +718,13 @@ exports.getSetPasswordPage = async (req, res) => {
     console.log("[set-password GET] token:", token);
 
     const user = await prisma.user.findFirst({
-      where: {
-        emailVerificationToken: token,
-        emailVerificationExpires: { gt: new Date() },
-      },
+      where: { emailVerificationToken: token },
+      select: { id: true, isVerified: true, emailVerificationExpires: true },
     });
 
-    console.log("[set-password GET] user found:", user ? user.id : null, "isVerified:", user?.isVerified);
+    console.log("[set-password GET] token:", token.slice(0, 8), "user:", user?.id, "isVerified:", user?.isVerified, "expires:", user?.emailVerificationExpires);
 
-    if (!user) {
+    if (!user || (user.emailVerificationExpires && user.emailVerificationExpires < new Date())) {
       return res.status(400).send(
         renderStatusPage({
           title: "Link Invalid",
@@ -750,7 +748,7 @@ exports.getSetPasswordPage = async (req, res) => {
   } catch (e) {
     console.error("getSetPasswordPage error:", e);
     return res.status(500).send(
-      renderStatusPage({ title: "Error", message: "Server error. Please try again.", tone: "error" }),
+      renderStatusPage({ title: "Error", message: `Server error: ${e?.message || "Unknown"}`, tone: "error" }),
     );
   }
 };
@@ -776,12 +774,10 @@ exports.setPassword = async (req, res) => {
     }
 
     const user = await prisma.user.findFirst({
-      where: {
-        emailVerificationToken: token,
-        emailVerificationExpires: { gt: new Date() },
-      },
+      where: { emailVerificationToken: token },
+      select: { id: true, isVerified: true, emailVerificationExpires: true },
     });
-    if (!user) {
+    if (!user || (user.emailVerificationExpires && user.emailVerificationExpires < new Date())) {
       return res.status(400).send(
         renderStatusPage({
           title: "Link Invalid",
