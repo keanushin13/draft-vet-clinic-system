@@ -57,9 +57,11 @@ const getAppointmentComputedTotal = async (appointmentId) => {
 // GET /api/payments
 exports.getPayments = async (req, res) => {
   try {
+    const { status, method, fromDate, toDate, includeArchived: inclArch } = req.query;
     const where = {};
-    const includeArchived =
-      String(req.query.includeArchived || "").toLowerCase() === "true";
+
+    if (String(inclArch || "").toLowerCase() !== "true") where.isArchived = false;
+
     if (req.user.role === "pet_owner") {
       where.ownerId = req.user.id;
       const account = await prisma.user.findUnique({
@@ -70,7 +72,18 @@ exports.getPayments = async (req, res) => {
         return res.status(403).json({ message: "Account suspended or deleted" });
       }
     }
-    if (!includeArchived) where.isArchived = false;
+
+    if (status) where.status = status;
+    if (method) where.method = method;
+    if (fromDate || toDate) {
+      where.createdAt = {};
+      if (fromDate) where.createdAt.gte = new Date(fromDate);
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        where.createdAt.lte = to;
+      }
+    }
 
     const payments = await prisma.payment.findMany({
       where,
