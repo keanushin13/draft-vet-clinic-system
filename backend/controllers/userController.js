@@ -213,6 +213,12 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Please verify your email first." });
     }
 
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Your account has been suspended. Please contact the clinic." });
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: { loginAttempts: 0 },
@@ -457,6 +463,12 @@ exports.verifyLoginOtp = async (req, res) => {
       user.otpExpires < new Date()
     ) {
       return res.status(400).json({ message: "OTP expired or invalid" });
+    }
+
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Your account has been suspended. Please contact the clinic." });
     }
 
     const isValid = await bcrypt.compare(otp, user.otp);
