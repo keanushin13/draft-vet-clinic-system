@@ -17,7 +17,7 @@ const buildRuleBasedReply = (message) => {
 
   if (/\b(hours|open|close|closing|schedule|clinic hours)\b/.test(m)) {
     return (
-      "We are open Monday to Sunday, 9:00 AM to 7:00 PM. On some public holidays hours may differ or we may be closed—call the clinic to confirm."
+      "We are open Monday to Saturday, 8:00 AM to 6:00 PM. We are closed on Sundays and public holidays."
     );
   }
 
@@ -39,13 +39,13 @@ const buildRuleBasedReply = (message) => {
 
   if (/\b(emergency|urgent|poison|bleeding|seizure|not breathing)\b/.test(m)) {
     return (
-      "During clinic hours we accept emergency consultations — call ahead. We do not offer overnight emergency care; after hours use the nearest 24-hour emergency clinic."
+      "We accept emergency consultations during clinic hours, Monday to Saturday, 8:00 AM to 6:00 PM. Please call ahead. For after-hours emergencies, go to the nearest 24-hour veterinary emergency clinic."
     );
   }
 
   return (
     "I don't have that information. Please check with the front desk or your supervisor. " +
-      "I can help with clinic hours (Monday to Sunday, 9:00 AM to 7:00 PM), appointments, vaccines, and general clinic FAQs."
+      "I can help with clinic hours, appointments, vaccines, payments, services, and general clinic FAQs."
   );
 };
 
