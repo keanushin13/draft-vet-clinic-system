@@ -76,6 +76,41 @@ exports.getThread = async (req, res) => {
   }
 };
 
+// GET /api/messages/contacts  — messageable users for the current role
+exports.getContacts = async (req, res) => {
+  try {
+    const { role, id } = req.user;
+
+    let roleFilter;
+    if (role === "pet_owner") {
+      roleFilter = { in: ["veterinarian", "staff"] };
+    } else if (role === "veterinarian") {
+      roleFilter = { in: ["pet_owner", "staff", "veterinarian"] };
+    } else {
+      // staff / admin can reach everyone except other admins
+      roleFilter = { in: ["pet_owner", "veterinarian", "staff"] };
+    }
+
+    const users = await prisma.user.findMany({
+      where: { id: { not: id }, role: roleFilter, isActive: true, deletedAt: null },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+      },
+      orderBy: [{ role: "asc" }, { firstName: "asc" }],
+    });
+
+    res.json(users);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // POST /api/messages
 exports.sendMessage = async (req, res) => {
   try {
@@ -84,6 +119,24 @@ exports.sendMessage = async (req, res) => {
       return res
         .status(400)
         .json({ message: "receiverId and body are required" });
+
+    // Pet owners may only message veterinarians or staff
+    if (req.user.role === "pet_owner") {
+      const receiver = await prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { role: true, isActive: true, deletedAt: true },
+      });
+      if (
+        !receiver ||
+        !["veterinarian", "staff"].includes(receiver.role) ||
+        !receiver.isActive ||
+        receiver.deletedAt
+      ) {
+        return res.status(403).json({
+          message: "Pet owners can only message veterinarians or staff",
+        });
+      }
+    }
 
     const message = await prisma.message.create({
       data: { senderId: req.user.id, receiverId, body },
