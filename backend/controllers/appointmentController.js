@@ -1,5 +1,12 @@
 const prisma = require("../lib/prisma");
 const { validateSlotForAppointment } = require("../utils/availability");
+const notify = require("../utils/notify");
+
+const formatDate = (d) =>
+  new Date(d).toLocaleString("en-PH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 
 const appointmentInclude = {
   pet: { select: { id: true, name: true, species: true } },
@@ -428,6 +435,44 @@ exports.createAppointment = async (req, res) => {
       `Appointment ${appt.id}`,
     );
 
+    const petName = appt.pet?.name || "your pet";
+    const dateStr = formatDate(appt.scheduledAt);
+
+    // Notify pet owner
+    notify(appt.ownerId, {
+      type: "appointment",
+      title: "Appointment Booked",
+      body: `Your appointment for ${petName} on ${dateStr} has been booked successfully.`,
+    });
+
+    // Notify assigned vet
+    if (appt.vetId) {
+      notify(appt.vetId, {
+        type: "appointment",
+        title: "New Appointment Assigned",
+        body: `A new appointment for ${petName} has been assigned to you on ${dateStr}.`,
+      });
+    }
+
+    // Notify all staff when a pet owner books
+    if (req.user.role === "pet_owner") {
+      prisma.user
+        .findMany({
+          where: { role: "staff", isActive: true, deletedAt: null },
+          select: { id: true },
+        })
+        .then((staff) => {
+          staff.forEach((s) =>
+            notify(s.id, {
+              type: "appointment",
+              title: "New Appointment Request",
+              body: `New appointment request for ${petName} on ${dateStr}.`,
+            }),
+          );
+        })
+        .catch(() => {});
+    }
+
     res.status(201).json(appt);
   } catch (e) {
     console.error(e);
@@ -560,23 +605,54 @@ exports.updateAppointment = async (req, res) => {
         : "Updated appointment details";
     await logStaffActivity(req, updateAction, `Appointment ${appt.id}`);
 
+    const apptPetName = appt.pet?.name || "your pet";
+
     // Notify pet owner when status changes
     if (data.status && data.status !== existing.status) {
-      const statusMessages = {
-        Confirmed: "Your appointment has been confirmed.",
-        Cancelled:  "Your appointment has been cancelled.",
-        Completed:  "Your appointment is now marked as completed.",
-        Pending:    "Your appointment status has been updated to pending.",
+      const ownerStatusMessages = {
+        Confirmed: `Your appointment for ${apptPetName} has been confirmed.`,
+        Cancelled: `Your appointment for ${apptPetName} has been cancelled.`,
+        Completed: `Your appointment for ${apptPetName} is now marked as completed.`,
+        Pending:   `Your appointment for ${apptPetName} status has been updated to pending.`,
       };
-      prisma.notification.create({
-        data: {
-          userId: existing.ownerId,
-          title:  `Appointment ${data.status}`,
-          body:   statusMessages[data.status] || `Your appointment status changed to ${data.status}.`,
-          type:   "appointment",
-          isRead: false,
-        },
-      }).catch(() => {});
+      notify(existing.ownerId, {
+        type: "appointment",
+        title: `Appointment ${data.status}`,
+        body: ownerStatusMessages[data.status] || `Your appointment status changed to ${data.status}.`,
+      });
+
+      // Notify vet when their appointment is cancelled or completed
+      if (
+        (data.status === "Cancelled" || data.status === "Completed") &&
+        existing.vetId
+      ) {
+        const vetStatusMessages = {
+          Cancelled: `An appointment for ${apptPetName} has been cancelled.`,
+          Completed: `Appointment for ${apptPetName} has been marked as completed.`,
+        };
+        notify(existing.vetId, {
+          type: "appointment",
+          title: `Appointment ${data.status}`,
+          body: vetStatusMessages[data.status],
+        });
+      }
+    }
+
+    // Notify owner and vet when appointment is rescheduled
+    if (data.scheduledAt) {
+      const newDateStr = formatDate(data.scheduledAt);
+      notify(existing.ownerId, {
+        type: "appointment",
+        title: "Appointment Rescheduled",
+        body: `Your appointment for ${apptPetName} has been rescheduled to ${newDateStr}.`,
+      });
+      if (existing.vetId) {
+        notify(existing.vetId, {
+          type: "appointment",
+          title: "Appointment Rescheduled",
+          body: `Appointment for ${apptPetName} has been rescheduled to ${newDateStr}.`,
+        });
+      }
     }
 
     res.json(appt);
@@ -610,15 +686,37 @@ exports.deleteAppointment = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    await prisma.appointment.update({
+    const deleted = await prisma.appointment.update({
       where: { id: req.params.id },
       data: { status: "Cancelled" },
+      include: { pet: { select: { name: true } } },
     });
     await logStaffActivity(
       req,
       "Cancelled appointment",
       `Appointment ${existing.id}`,
     );
+
+    const deletedPetName = deleted.pet?.name || "your pet";
+
+    // Notify owner (unless they cancelled it themselves)
+    if (req.user.id !== existing.ownerId) {
+      notify(existing.ownerId, {
+        type: "appointment",
+        title: "Appointment Cancelled",
+        body: `Your appointment for ${deletedPetName} has been cancelled.`,
+      });
+    }
+
+    // Notify vet
+    if (existing.vetId && req.user.id !== existing.vetId) {
+      notify(existing.vetId, {
+        type: "appointment",
+        title: "Appointment Cancelled",
+        body: `An appointment for ${deletedPetName} has been cancelled.`,
+      });
+    }
+
     res.json({ message: "Appointment cancelled" });
   } catch (e) {
     console.error(e);

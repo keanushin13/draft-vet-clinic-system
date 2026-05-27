@@ -1,5 +1,6 @@
 const prisma = require("../lib/prisma");
 const logActivity = require("../utils/logActivity");
+const notify = require("../utils/notify");
 
 // GET /api/pets
 exports.getPets = async (req, res) => {
@@ -105,6 +106,12 @@ exports.createPet = async (req, res) => {
         target: pet.id,
         staffId: req.user.id,
       });
+      // Notify the owner that a new pet was added to their account
+      notify(resolvedOwnerId, {
+        type: "pet",
+        title: "New Pet Registered",
+        body: `${name} has been added to your account by clinic staff.`,
+      });
     }
 
     res.status(201).json(pet);
@@ -187,6 +194,11 @@ exports.deletePet = async (req, res) => {
         target: existing.id,
         staffId: req.user.id,
       });
+      notify(existing.ownerId, {
+        type: "pet",
+        title: "Pet Profile Archived",
+        body: `${existing.name}'s profile has been archived by clinic staff.`,
+      });
     }
 
     res.json({ message: "Pet archived" });
@@ -216,6 +228,11 @@ exports.restorePet = async (req, res) => {
         action: `Restored pet: ${existing.name}`,
         target: existing.id,
         staffId: req.user.id,
+      });
+      notify(existing.ownerId, {
+        type: "pet",
+        title: "Pet Profile Restored",
+        body: `${existing.name}'s profile has been restored by clinic staff.`,
       });
     }
 

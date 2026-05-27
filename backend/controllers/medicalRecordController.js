@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const notify = require("../utils/notify");
 
 const ALLOWED_STATUSES = new Set(["Finalized", "FollowUp"]);
 const MEDICAL_AI_MODEL = "gemini-2.0-flash";
@@ -214,6 +215,18 @@ exports.createMedicalRecord = async (req, res) => {
       },
       include,
     });
+    // Notify pet owner
+    const ownerIdForRecord = record.pet?.owner?.id;
+    if (ownerIdForRecord) {
+      const petNameForRecord = record.pet?.name || "your pet";
+      const statusLabel = record.status === "FollowUp" ? " (Follow-up required)" : "";
+      notify(ownerIdForRecord, {
+        type: "medical_record",
+        title: "New Medical Record",
+        body: `A new medical record has been created for ${petNameForRecord}${statusLabel}.`,
+      });
+    }
+
     res.status(201).json({
       ...record,
       autoLinkedAppointment,
@@ -306,6 +319,22 @@ exports.updateMedicalRecord = async (req, res) => {
       data,
       include,
     });
+
+    // Notify pet owner
+    const updatedOwner = record.pet?.owner?.id;
+    if (updatedOwner) {
+      const updatedPetName = record.pet?.name || "your pet";
+      const followUpNote =
+        data.followUpDate
+          ? ` Follow-up scheduled on ${new Date(data.followUpDate).toLocaleDateString("en-PH", { dateStyle: "medium" })}.`
+          : "";
+      notify(updatedOwner, {
+        type: "medical_record",
+        title: "Medical Record Updated",
+        body: `The medical record for ${updatedPetName} has been updated.${followUpNote}`,
+      });
+    }
+
     res.json(record);
   } catch (e) {
     if (e && e.code === "P2002") {

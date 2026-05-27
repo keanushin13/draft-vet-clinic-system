@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const notify = require("../utils/notify");
 
 const include = {
   pet: { select: { id: true, name: true } },
@@ -236,15 +237,11 @@ exports.createPayment = async (req, res) => {
 
     // Notify pet owner of the payment/invoice
     if (resolvedOwnerId) {
-      prisma.notification.create({
-        data: {
-          userId: resolvedOwnerId,
-          title:  "Payment Invoice",
-          body:   `A payment of ₱${Number(resolvedAmount).toFixed(2)} for ${resolvedService} has been recorded. Please check your payment history.`,
-          type:   "payment",
-          isRead: false,
-        },
-      }).catch(() => {});
+      notify(resolvedOwnerId, {
+        type: "payment",
+        title: "Payment Invoice",
+        body: `A payment of ₱${Number(resolvedAmount).toFixed(2)} for ${resolvedService} has been recorded. Please check your payment history.`,
+      });
     }
 
     res.status(201).json(payment);
@@ -275,11 +272,32 @@ exports.updatePayment = async (req, res) => {
     if (amount !== undefined) data.amount = parseFloat(amount);
     if (adjustmentReason !== undefined) data.adjustmentReason = adjustmentReason;
 
+    // Fetch existing to detect status change
+    const existing = await prisma.payment.findUnique({
+      where: { id: req.params.id },
+      select: { status: true, ownerId: true },
+    });
+
     const payment = await prisma.payment.update({
       where: { id: req.params.id },
       data,
       include,
     });
+
+    // Notify owner when payment status changes
+    if (data.status && existing && data.status !== existing.status && existing.ownerId) {
+      const statusMessages = {
+        Paid: `Your payment of ₱${Number(payment.amount).toFixed(2)} for ${payment.service} has been confirmed as paid.`,
+        Refunded: `Your payment of ₱${Number(payment.amount).toFixed(2)} for ${payment.service} has been refunded.`,
+        Pending: `Your payment for ${payment.service} status has been updated to pending.`,
+      };
+      notify(existing.ownerId, {
+        type: "payment",
+        title: `Payment ${data.status}`,
+        body: statusMessages[data.status] || `Your payment status has been updated to ${data.status}.`,
+      });
+    }
+
     res.json(payment);
   } catch (e) {
     console.error(e);
