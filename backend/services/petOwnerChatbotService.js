@@ -45,7 +45,7 @@ const buildRuleBasedReply = (message) => {
 
   return (
     "I don't have that information. Please check with the front desk or your supervisor. " +
-      "I can help with hours (Mon–Sat 8–6), appointments, vaccines, and general clinic FAQs."
+      "I can help with clinic hours (Monday to Sunday, 9:00 AM to 7:00 PM), appointments, vaccines, and general clinic FAQs."
   );
 };
 
@@ -240,15 +240,15 @@ const buildChatMessages = ({
  * @returns {Promise<string|null>}
  */
 const callGroq = async (params) => {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.CHATBOT_GROQ_API_KEY;
   if (!apiKey) return null;
 
   const model =
-    process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+    process.env.CHATBOT_GROQ_MODEL || "llama-3.3-70b-versatile";
   const messages = buildChatMessages(params);
 
-  const temp = Number(process.env.GROQ_TEMPERATURE ?? process.env.OPENAI_TEMPERATURE);
-  const maxTok = Number(process.env.GROQ_MAX_TOKENS ?? process.env.OPENAI_MAX_TOKENS);
+  const temp = Number(process.env.CHATBOT_GROQ_TEMPERATURE ?? process.env.OPENAI_TEMPERATURE);
+  const maxTok = Number(process.env.CHATBOT_GROQ_MAX_TOKENS ?? process.env.OPENAI_MAX_TOKENS);
 
   const payload = {
     model,
@@ -287,11 +287,11 @@ const callGroq = async (params) => {
  * @returns {Promise<string|null>}
  */
 const callGemini = async (params) => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.CHATBOT_GEMINI_API_KEY;
   if (!apiKey) return null;
 
   const model =
-    process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    process.env.CHATBOT_GEMINI_MODEL || "gemini-2.5-flash";
   const thread = sanitizeConversationHistory(
     params.conversationHistory,
     params.message,
@@ -400,7 +400,7 @@ const callOpenAi = async (params) => {
  */
 const callAiInPriorityOrder = async (params) => {
   const orderRaw =
-    process.env.CHATBOT_PROVIDER_ORDER || "groq,gemini,openai";
+    process.env.CHATBOT_PROVIDER_ORDER || (process.env.CHATBOT_AI_PROVIDER ? `${process.env.CHATBOT_AI_PROVIDER},groq,gemini,openai` : "groq,gemini,openai");
   const order = orderRaw
     .split(",")
     .map((s) => s.trim().toLowerCase())
@@ -418,8 +418,8 @@ const callAiInPriorityOrder = async (params) => {
     if (!fn) continue;
     try {
       const keyPresent =
-        (name === "groq" && process.env.GROQ_API_KEY) ||
-        (name === "gemini" && process.env.GEMINI_API_KEY) ||
+        (name === "groq" && process.env.CHATBOT_GROQ_API_KEY) ||
+        (name === "gemini" && process.env.CHATBOT_GEMINI_API_KEY) ||
         (name === "openai" && process.env.OPENAI_API_KEY);
       if (!keyPresent) continue;
 

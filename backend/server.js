@@ -110,6 +110,7 @@ app.use("/api/stats", require("./routes/statsRoutes"));
 app.use("/api/clinic-settings", require("./routes/clinicSettingsRoutes"));
 app.use("/api/holidays", require("./routes/holidayRoutes"));
 app.use("/api/upload", require("./routes/uploadRoutes"));
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 
 /* =========================
    SERVER
