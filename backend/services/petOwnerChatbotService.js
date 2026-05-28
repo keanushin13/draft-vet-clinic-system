@@ -144,11 +144,22 @@ const buildOfflineAccountReply = (message, snap) => {
  * @returns {string}
  */
 const buildSystemContent = ({ user, context, accountSnapshot }) => {
+  const dynamicSystemPrompt =
+    context &&
+    typeof context === "object" &&
+    typeof context.systemPrompt === "string" &&
+    context.systemPrompt.trim()
+      ? context.systemPrompt.trim()
+      : "";
   const parts = [
+    dynamicSystemPrompt
+      ? `CURRENT PET OWNER CHATBOT INSTRUCTIONS:\n${dynamicSystemPrompt}`
+      : "",
+    dynamicSystemPrompt ? "" : null,
     QUICK_ASSIST_SYSTEM_PROMPT,
     "",
     `Current user (JWT): role=${user?.role ?? "unknown"}, id=${user?.id ?? "unknown"}.`,
-  ];
+  ].filter((part) => part !== null);
   if (accountSnapshot && typeof accountSnapshot === "object") {
     parts.push(
       "",
