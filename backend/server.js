@@ -87,6 +87,10 @@ const csrfProtection = csrf({
    ROUTES
 ========================= */
 
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
+
 // CSRF token fetcher
 app.get("/api/users/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
