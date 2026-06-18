@@ -13,6 +13,8 @@ app.set("trust proxy", 1);
 /* =========================
    CORS
 ========================= */
+const normalizeOrigin = (origin) => origin?.trim().replace(/\/$/, "");
+
 const allowedOrigins = new Set(
   [
     "http://localhost:3000",
@@ -30,12 +32,13 @@ const allowedOrigins = new Set(
     ...(process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
       : []),
-  ].filter(Boolean),
+  ].filter(Boolean).map(normalizeOrigin),
 );
 
 const isAllowedOrigin = (origin) => {
-  if (allowedOrigins.has(origin)) return true;
-  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (allowedOrigins.has(normalizedOrigin)) return true;
+  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin);
 };
 
 const corsMiddleware = cors({
@@ -50,6 +53,8 @@ const corsMiddleware = cors({
   credentials: true,
   optionsSuccessStatus: 204,
 });
+
+app.options("*", corsMiddleware);
 
 app.use((req, res, next) => {
   // Skip CORS for same-origin browser navigations (e.g. server-rendered HTML form submissions).
@@ -88,6 +93,7 @@ const csrfProtection = csrf({
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
   },
 });
 
@@ -123,6 +129,14 @@ app.use("/api/clinic-settings", require("./routes/clinicSettingsRoutes"));
 app.use("/api/holidays", require("./routes/holidayRoutes"));
 app.use("/api/upload", require("./routes/uploadRoutes"));
 app.use("/api/chatbot", require("./routes/chatbotRoutes"));
+
+app.use((err, req, res, next) => {
+  if (err.code === "EBADCSRFTOKEN") {
+    return res.status(403).json({ message: "Invalid or missing CSRF token" });
+  }
+
+  return next(err);
+});
 
 /* =========================
    SERVER
