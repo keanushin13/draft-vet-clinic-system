@@ -1,9 +1,21 @@
 const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend;
+
+const getResendClient = () => {
+    if (!process.env.RESEND_API_KEY) {
+        throw new Error("Missing RESEND_API_KEY environment variable.");
+    }
+
+    if (!resend) {
+        resend = new Resend(process.env.RESEND_API_KEY);
+    }
+
+    return resend;
+};
 
 const sendEmail = async (to, subject, html) => {
-    await resend.emails.send({
+    await getResendClient().emails.send({
         from: process.env.EMAIL_FROM || "PawCruz Vet Clinic System <onboarding@resend.dev>",
         to,
         subject,
