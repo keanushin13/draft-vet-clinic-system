@@ -8,6 +8,8 @@ require("dotenv").config();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 /* =========================
    CORS
 ========================= */
@@ -17,8 +19,11 @@ const allowedOrigins = new Set(
     "http://localhost:8081",
     "https://localhost",
     "http://localhost",
+    "https://project-0pia5-lw940n1co-angelie-grace-s-projects.vercel.app",
     // Single URL (legacy)
     process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
     // The backend's own public URL — needed for server-rendered HTML form submissions
     process.env.PUBLIC_SERVER_URL,
     // Comma-separated list for production — set ALLOWED_ORIGINS on Render
@@ -28,19 +33,22 @@ const allowedOrigins = new Set(
   ].filter(Boolean),
 );
 
+const isAllowedOrigin = (origin) => {
+  if (allowedOrigins.has(origin)) return true;
+  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+};
+
 const corsMiddleware = cors({
   origin: function (origin, callback) {
     // allow requests with no origin or null origin (Postman, mobile apps, email link clicks)
     if (!origin || origin === "null") return callback(null, true);
-    if (!allowedOrigins.has(origin)) {
-      return callback(
-        new Error(`CORS: origin '${origin}' is not allowed`),
-        false,
-      );
+    if (!isAllowedOrigin(origin)) {
+      return callback(null, false);
     }
     return callback(null, true);
   },
   credentials: true,
+  optionsSuccessStatus: 204,
 });
 
 app.use((req, res, next) => {
@@ -79,7 +87,7 @@ const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   },
 });
 
